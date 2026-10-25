@@ -72,7 +72,9 @@ jobs:
             gh release create "v$VERSION" release/* --draft --verify-tag --title "烛龙纪 $VERSION" --notes-file CHANGELOG.md
             gh release edit "v$VERSION" --draft=false --latest
           else
-            gh release create "v$VERSION" release/* --draft --target "$GITHUB_SHA" --title "烛龙纪 $VERSION" --notes-file CHANGELOG.md
+            git tag "v$VERSION" "$GITHUB_SHA"
+            git push origin "v$VERSION"
+            gh release create "v$VERSION" release/* --draft --verify-tag --title "烛龙纪 $VERSION" --notes-file CHANGELOG.md
           fi
       - name: Remove signing file
         if: always()

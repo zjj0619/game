@@ -37,7 +37,7 @@ export function titleScreen(){
     h('div.t-tap', {},
       h('div.t-tap-bar', {}, latest != null ? '轻触屏幕继续' : '轻触屏幕开始')),
     h('div.t-corner', {},
-      h('button.t-ico', { type:'button', title:'从序章开始剧情旅程', onclick:e=>{e.stopPropagation();game.newGame();} }, '叙'),
+      h('button.t-ico', { type:'button', title:'从序章开始剧情旅程', onclick:async e=>{e.stopPropagation();if(latest!=null && !(await confirmBox('开始新的剧情旅程？当前自动存档会随新旅程更新，请先保留手动存档。')))return;game.newGame();} }, '叙'),
       h('button.t-ico', { type:'button', title:'检查游戏更新', onclick:e=>{e.stopPropagation();openUpdates();} }, '更'),
       h('button.t-ico', { type:'button', title:'读档', onclick:(e)=>{ e.stopPropagation(); openSaves('load'); } }, '档'),
       h('button.t-ico', { type:'button', title:'设置', onclick:(e)=>{ e.stopPropagation(); openSettings(); } }, '设')),

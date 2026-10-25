@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
 import com.getcapacitor.BridgeActivity;
+import androidx.activity.OnBackPressedCallback;
 
 public class MainActivity extends BridgeActivity {
     @Override
@@ -12,6 +13,15 @@ public class MainActivity extends BridgeActivity {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         immersive();
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (getBridge() == null || getBridge().getWebView() == null) { finish(); return; }
+                getBridge().getWebView().evaluateJavascript("window.__handleBack ? window.__handleBack() : false", result -> {
+                    if (!"true".equals(result)) finish();
+                });
+            }
+        });
     }
 
     @Override

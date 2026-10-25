@@ -12,7 +12,8 @@
 .lamp-path.selected{border-color:#d1af63;background:#252219}
 .lamp-path p{line-height:1.6;margin:8px 0}
 .panel-wrap.guide .panel,.panel-wrap.updates .panel{background:linear-gradient(160deg,#171a27,#0b0d14)!important}
-.screen.result .rs-box{height:min(88vh,550px);min-height:0;box-sizing:border-box}
+.screen.result>.rs-hero{position:absolute!important;right:0;bottom:0;height:93%;width:32%;max-height:100%;pointer-events:none}
+.screen.result .rs-box{height:min(88vh,550px);min-height:0;box-sizing:border-box;flex:0 0 auto}
 .screen.result .rs-l{min-height:0;overflow-y:auto;justify-content:flex-start;scrollbar-width:thin;padding-right:6px}
 .screen.result .rs-r{min-height:0;overflow-y:auto;scrollbar-width:thin}
 .screen.result .rs-ups>div{display:flex;align-items:center;gap:8px;margin:6px 0}

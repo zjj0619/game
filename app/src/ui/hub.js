@@ -176,7 +176,7 @@ async function signatureTutorials(stage){
   if ((id === 'jincheng_2' || id === 'jincheng_3') && !T.eye) {
     await tip('eye', '招牌 · 烛瞳', [
       ['瞳', '看见弱点', '点右下「瞳」（键 E）开启烛瞳：敌人浮出红点弱点，下一击必暴并破甲。'],
-      ['金线', '看见隐藏', '秘匣、秘径与首领大招预警，在烛瞳下会提前显形。耗蓝，可随时关掉。'],
+      ['金线', '看见隐藏', '烛瞳可看见秘匣、秘径的金线，并强化首领预警轮廓。耗蓝，可随时关掉。'],
     ]);
   }
   if ((id === 'jincheng_3' || id === 'jincheng_5') && !T.dream) {

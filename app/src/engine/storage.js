@@ -23,5 +23,6 @@ export function validatedSave(value, characters) {
       throw new Error('存档角色数据无效');
   }
   if (value.gold !== undefined && (!Number.isFinite(value.gold) || value.gold < 0)) throw new Error('存档星砂数据无效');
+  if (value.pc !== undefined && (!Number.isSafeInteger(value.pc) || value.pc < 0)) throw new Error('存档剧情位置无效');
   return value;
 }

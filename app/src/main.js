@@ -68,7 +68,14 @@ hooks.ending = async (x) => { await endingScreen(x); game.title(); };
 // 计时
 setInterval(()=>{ if (S && S.mode!=='title') S.playtime = (S.playtime||0) + 1; }, 1000);
 // 返回键（Android）
-document.addEventListener('backbutton', ()=>{ const p = app.querySelector('.panel-wrap:last-of-type .close'); if (p) p.click(); else if (S && S.mode!=='title') openMenu(); }, false);
+window.__handleBack = () => {
+  const p=app.querySelector('.panel-wrap:last-of-type .close');
+  if(p) { p.click(); return true; }
+  if(app.querySelector('.screen.action')) { window.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'})); return true; }
+  if(S && S.mode!=='title') { openMenu(); return true; }
+  return false;
+};
+document.addEventListener('backbutton',window.__handleBack,false);
 // 后台自动存档
 document.addEventListener('visibilitychange', ()=>{ if (document.hidden && S && S.mode && S.mode!=='title' && !S.inSub) { try { save(AUTO); } catch(e){} } });
 

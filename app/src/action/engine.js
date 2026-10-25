@@ -80,7 +80,7 @@ export function runStage(stage, opts = {}){
     const hud = {};
     const skBtn = (i) => h('button.ak-sk', { onpointerdown: e => { e.preventDefault(); e.stopPropagation(); useSkill(i); } }, h('img.ak-ic'), h('i.ak-cd'), h('b.ak-mp'));
     hud.sk = [0,1,2,3,4].map(skBtn);
-    const btnA = (cls, glyph, label, fn, hold) => h('button.ak-btn.' + cls, { onpointerdown: e => { e.preventDefault(); e.stopPropagation(); fn(true); }, onpointerup: () => { hold && fn(false); }, onpointerleave: () => { hold && fn(false); } }, h('span.g', {}, glyph), h('span.t', {}, label));
+    const btnA = (cls, glyph, label, fn, hold) => h('button.ak-btn.' + cls, { onpointerdown: e => { e.preventDefault(); e.stopPropagation(); fn(true); }, onpointerup: () => { hold && fn(false); }, onpointercancel: () => { hold && fn(false); }, onpointerleave: () => { hold && fn(false); } }, h('span.g', {}, glyph), h('span.t', {}, label));
     const keys = { l: false, r: false, u: false, d: false, atk: false };
     hud.atk = btnA('ak-atk', '⚔', '攻击', v => { keys.atk = v; if (v) attack(); }, true);
     hud.jump = btnA('ak-jump', '⤒', '跳跃', v => v && jump());
@@ -697,6 +697,7 @@ export function runStage(stage, opts = {}){
       set('mp', Math.round(c.mp), v => hud.mp.style.width = (100 * v / s.mp) + '%');
       set('rg', Math.round(c.rage), v => { hud.rg.style.width = v + '%'; hud.ult.classList.toggle('ready', v >= 100); });
       set('ultOn', P.ultT > 0, v => hud.ult.classList.toggle('on', v));
+      hud.ult.hidden = !ultOk(c.id); hud.reso.hidden = roster.length < 2;
       const sl = slotsOf(c.id);
       for (let i = 0; i < 5; i++) { const sid = sl[i]; const k = ASKILLS[sid]; const b = hud.sk[i];
         set('sk' + i, sid || '-', v => { b.style.display = k && (settings.combatLayout==='full' || i<2) ? '' : 'none'; b.dataset.slot=i; if (k) { b.querySelector('img').src = asset('icon/sk/' + sid); b.querySelector('b').textContent = k.mp; b.title = k.name; b.setAttribute('aria-label',k.name); } });
@@ -729,7 +730,10 @@ export function runStage(stage, opts = {}){
       root.append(pbox); }
     function fail(why){ if (st.over) return; st.over = true; say(why, 2); sfx('lose'); schedule(() => end({ win: false, why }), 1400); }
     function rating(){ const par = 50 + arenas.length * 35 + (stage.boss ? 60 : 0); let sc = 0; if (st.t < par) sc += 2; else if (st.t < par * 1.5) sc += 1; if (st.hitsTaken <= 3) sc += 2; else if (st.hitsTaken <= 10) sc += 1; if (st.maxCombo >= 30) sc += 2; else if (st.maxCombo >= 12) sc += 1; if (st.lamp && st.lamp.hp >= 70) sc += 1; sc += HK.ratingBonus(st); return sc >= 6 ? 'S' : sc >= 4 ? 'A' : sc >= 2 ? 'B' : 'C'; }
-    function finish(win){ const rt = rating(); if (win && rt === 'S') { st.gold = Math.round(st.gold * 1.35); st.exp = Math.round(st.exp * 1.25); st.dust = (st.dust || 0) + 3; say('S 评价 · 丰厚赏赐', 1.6); sfx('ach'); } end({ win, rating: rt }); }
+    function finish(win){
+      if(win) { for(const pickup of pickups) if(!pickup.got) collect(pickup); pickups.length=0; }
+      const rt = rating(); if (win && rt === 'S') { st.gold = Math.round(st.gold * 1.35); st.exp = Math.round(st.exp * 1.25); st.dust = (st.dust || 0) + 3; say('S 评价 · 丰厚赏赐', 1.6); sfx('ach'); } end({ win, rating: rt });
+    }
     let ended = false;
     function end(r){ if (ended) return; ended = true; st.over = true; clock.clear(); cancelAnimationFrame(raf); removeEventListener('keydown', kd); removeEventListener('keyup', ku); removeEventListener('blur', blur); ro.disconnect(); document.removeEventListener('visibilitychange', vis); imgC.clear();
       const res = { win: false, ...r, time: Math.round(st.t), combo: st.maxCombo, hits: st.hitsTaken, kills: st.kills, dreamFlips: st.dreamFlips||0, resoUsed: st.resoUsed||0, eyeMarks: st.eyeMarks||0, dreamSeen: !!st.dreamSeen, awakeSeen: !!st.awakeSeen, secrets: st.secretChests||0, dust: st.dust||0, gold: r.win ? st.gold : Math.floor(st.gold * 0.3), loot: r.win ? st.loot : {}, souls: r.win ? st.souls : {}, exp: r.win ? st.exp : Math.floor(st.exp * 0.3), team, hard, fps: Math.round(fpsAvg), skills: st.skillUsed || 0, ults: st.ults || 0 };
@@ -790,8 +794,8 @@ export function runStage(stage, opts = {}){
       frameTimes.push(rawDt*1000); if(frameTimes.length>600) frameTimes.shift();
       const ts = (T().actSpeed || 1) * st.slow;
       if (st.hitstop > 0) { st.hitstop -= dt; updFx(dt * 0.3); draw(); refreshHud(); return; }
-      clock.advance(dt,ts); if(ended) return;
-      if (!st.over) { const n = ts > 1 ? Math.ceil(ts) : 1; for (let i = 0; i < n; i++) { step(dt * ts / n); if (ended) return; } }
+      if (st.over) { clock.advance(dt,ts); if(ended) return; }
+      else { const n = ts > 1 ? Math.ceil(ts) : 1; for (let i = 0; i < n; i++) { clock.advance(dt/n,ts); if(ended) return; if(!st.over) step(dt * ts / n); } }
       updFx(dt); draw(); refreshHud();
     }
     window.__act = { st, P, foes, roster, arenas, stage, fx, get fps(){ return fpsAvg; }, win: () => { for (const f of foes) { f.hp = 0; kill(f); } for (const a of arenas) { a.started = true; a.done = true; a.wave = a.waves.length; } st.over = true; finish(true); }, fail: () => fail('测试失败') };
