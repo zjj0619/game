@@ -37,3 +37,10 @@
 - **程序派生 / 程序生成**：由 `tools/gen/` 下的脚本根据原画或纯算法批量生成，包括网格形变动画帧、换色外观、区域变体、特效序列帧、视差层、地面纹理、卡面与徽章。它们在数量上占大头，这里明确标注，不冒充手绘原画。
 - **每个统计到的文件都被游戏实际引用**：动画帧在战斗中按状态逐帧播放；特效帧由 vfx 播放器使用；视差层与地面纹理随关卡区域加载；卡面用于关卡详情与每日秘境；徽章用于成就页。
 - 重新生成：`python3 tools/gen/anim.py ...`、`python3 tools/gen/vfx.py`、`python3 tools/gen/px.py`、`python3 tools/gen/cards.py`。
+
+## Music (2026-10-25 free pipeline)
+- 15 loopable themes × mp3+ogg under `app/public/assets/music/` (~7.8MB mp3 + ~11MB ogg)
+- title, hub, battle, boss, dream, win, ending, sad, final, jincheng, qingqiu, donghai, kunlun, beihai, guixu
+- Source: original MIDI (`tools/gen/compose_music.py`) + FluidR3_GM via FluidSynth; MIDI backup `art_raw/music_midi/`
+- Wired in `src/engine/audio.js` THEME_BANK (aliases soft/epic/tense/regions); procedural THEMES as fallback
+- MiniMax music API: HTTP 410 — not used

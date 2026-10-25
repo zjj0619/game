@@ -34,7 +34,7 @@ export function initAudio(){
   applyVolumes();
   if (cur) { const n=cur; cur=null; playBgm(n); }
 }
-export function applyVolumes(){ if(!ctx) return; master.gain.value=settings.master; musicBus.gain.value=settings.music*0.55; sfxBus.gain.value=settings.sfx; }
+export function applyVolumes(){ if(!ctx) return; master.gain.value=settings.master; if (usingFile && trackGain) { musicBus.gain.value=1; trackGain.gain.value=trackVol(); } else { musicBus.gain.value=settings.music*0.55; } sfxBus.gain.value=settings.sfx; if (trackEl && !trackGain) trackEl.volume=trackVol(); }
 const mtof = m => 440*Math.pow(2,(m-69)/12);
 function env(g,t,a,d,peak){ g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(peak,t+a); g.gain.exponentialRampToValueAtTime(0.0001,t+a+d); }
 function pluck(m,t,vol=0.18,dur=1.6){ // 古筝式拨弦
@@ -89,40 +89,83 @@ function tick(){
   }
 }
 
-const THEME_FILES = {
-  title: 'assets/music/theme_title.mp3',
-  warm: 'assets/music/theme_hub.mp3',
-  battle: 'assets/music/theme_battle.mp3',
-  dream: 'assets/music/theme_dream.mp3',
-  dawn: 'assets/music/theme_win.mp3',
-  win: 'assets/music/theme_win.mp3',
+// 预渲染主题（MIDI+FluidSynth 原创 → mp3/ogg）；无文件时回退程序化
+const M = id => ({ mp3: `assets/music/${id}.mp3`, ogg: `assets/music/${id}.ogg` });
+const THEME_BANK = {
+  title: M('theme_title'), warm: M('theme_hub'), hub: M('theme_hub'),
+  battle: M('theme_battle'), boss: M('theme_boss'), final: M('theme_final'), epic: M('theme_final'),
+  dream: M('theme_dream'), soft: M('theme_dream'),
+  dawn: M('theme_win'), win: M('theme_win'), ending: M('theme_ending'),
+  sad: M('theme_sad'), tense: M('theme_boss'),
+  jincheng: M('theme_jincheng'), qingqiu: M('theme_qingqiu'), donghai: M('theme_donghai'),
+  kunlun: M('theme_kunlun'), beihai: M('theme_beihai'), guixu: M('theme_guixu'),
+  // 邻近区域复用
+  changyang: M('theme_jincheng'), hundun: M('theme_guixu'), yugu: M('theme_qingqiu'), youdu: M('theme_beihai'),
 };
-let trackEl = null;
-function playTrackFile(name){
-  const src = THEME_FILES[name] || THEME_FILES.title;
-  try {
-    if (trackEl) { trackEl.pause(); trackEl = null; }
-    const a = new Audio(src); a.loop = true; a.volume = Math.min(1, (settings.music||0.6)*(settings.master||1)*0.55);
-    a.play().catch(()=>{}); trackEl = a; return true;
-  } catch(e){ return false; }
+const THEME_FILES = Object.fromEntries(Object.entries(THEME_BANK).map(([k, v]) => [k, v.mp3]));
+let trackEl = null, trackNode = null, trackGain = null, usingFile = false;
+function trackVol(){ return Math.min(1, (settings.music || 0.6) * (settings.master || 1) * 0.7); }
+function resolveSrc(name){
+  const b = THEME_BANK[name]; if (!b) return null;
+  // 优先 mp3（Android WebView / Capacitor 最稳）；ogg 作解码失败回退
+  return b.mp3 || b.ogg;
 }
-export function stopTrack(){ if (trackEl) { try{ trackEl.pause(); }catch(e){} trackEl=null; } }
+function resolveSrcFallback(name){
+  const b = THEME_BANK[name]; return b ? b.ogg : null;
+}
+function detachTrack(){
+  try { if (trackEl) { trackEl.pause(); trackEl.removeAttribute('src'); trackEl.load?.(); } } catch(e){}
+  try { if (trackNode) { trackNode.disconnect(); } } catch(e){}
+  trackEl = null; trackNode = null; trackGain = null; usingFile = false;
+}
+function playTrackFile(name){
+  const src = resolveSrc(name); if (!src) return false;
+  try {
+    detachTrack();
+    initAudio();
+    const a = new Audio(src); a.loop = true; a.preload = 'auto';
+    if (ctx && musicBus) {
+      // 走混音总线，与 SFX/程序化同一音量曲线
+      trackGain = ctx.createGain(); trackGain.gain.value = trackVol();
+      trackNode = ctx.createMediaElementSource(a);
+      trackNode.connect(trackGain); trackGain.connect(musicBus);
+      // 文件轨时压低程序化垫乐
+      musicBus.gain.cancelScheduledValues(ctx.currentTime);
+      musicBus.gain.setValueAtTime(1, ctx.currentTime);
+    } else {
+      a.volume = trackVol();
+    }
+    if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
+    a.onerror = () => { const fb = resolveSrcFallback(name); if (fb && a.src.indexOf('.ogg') < 0) { a.src = fb; a.play().catch(() => {}); } };
+    const p = a.play(); if (p && p.catch) p.catch(() => {});
+    trackEl = a; usingFile = true; return true;
+  } catch(e){ detachTrack(); return false; }
+}
+export function stopTrack(){ detachTrack(); }
 
 export function playBgm(name){
+  if (name === 'none' || name === 'stop') { stopBgm(); return; }
+  // 别名兜底
+  if (!THEME_BANK[name] && !THEMES[name]) {
+    if (name === 'soft') name = 'dream';
+    else if (name === 'epic') name = 'final';
+    else name = THEMES[name] ? name : 'title';
+  }
+  if (cur === name && (usingFile || (ctx && THEMES[name]))) return;
   stopTrack();
-  if (THEME_FILES[name] && playTrackFile(name)) {
+  if (THEME_BANK[name] && playTrackFile(name)) {
     cur = name;
-    if (ctx && musicBus) { musicBus.gain.cancelScheduledValues(ctx.currentTime); musicBus.gain.setValueAtTime(0.0001, ctx.currentTime); }
+    // 停程序化 tick 垫乐，避免叠奏
+    if (timer) { clearInterval(timer); timer = null; }
     return;
   }
-  if (!THEMES[name]) name='title';
-  if (cur===name) return; cur=name;
-  if (!ctx) return; step=0; nextT=ctx.currentTime+0.1;
-  // 淡入
-  musicBus.gain.cancelScheduledValues(ctx.currentTime); musicBus.gain.setValueAtTime(0.0001,ctx.currentTime); musicBus.gain.linearRampToValueAtTime(settings.music*0.55,ctx.currentTime+1.5);
-  if (!timer) timer=setInterval(tick,80);
+  if (!THEMES[name]) name = 'title';
+  if (cur === name) return; cur = name; usingFile = false;
+  if (!ctx) return; step = 0; nextT = ctx.currentTime + 0.1;
+  musicBus.gain.cancelScheduledValues(ctx.currentTime); musicBus.gain.setValueAtTime(0.0001, ctx.currentTime); musicBus.gain.linearRampToValueAtTime(settings.music * 0.55, ctx.currentTime + 1.5);
+  if (!timer) timer = setInterval(tick, 80);
 }
-export function stopBgm(){ cur=null; stopTrack(); }
+export function stopBgm(){ cur = null; stopTrack(); if (timer) { clearInterval(timer); timer = null; } }
 export function currentBgm(){ return cur; }
 const _sfxT={};
 export function sfx(name){

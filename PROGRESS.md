@@ -1,5 +1,33 @@
 # progress notes (for agent continuity)
 
+## 免费音乐管线 + 混音接线 · 2026-10-25 ~12:30 Asia/Shanghai
+
+### 音乐（MiniMax 禁止重试）
+- Token Plan `POST /v1/music_generation` → **HTTP 410**；**未再调用** MiniMax 音乐
+- **免费管线**：原创 MIDI（`tools/gen/compose_music.py` + mido）→ FluidSynth + FluidR3_GM.sf2 → ffmpeg 精确时长 + afade → 可循环 **mp3 + ogg**
+- 产物 **15 主题** ×2：`app/public/assets/music/theme_{title,hub,battle,boss,dream,win,ending,sad,final,jincheng,qingqiu,donghai,kunlun,beihai,guixu}.{mp3,ogg}`（~7.8MB mp3 + ~11MB ogg）
+- MIDI 备份：`art_raw/music_midi/`；署名：`ATTRIBUTION.md`
+- **接线**：`src/engine/audio.js` `THEME_BANK` + 别名 soft→dream / epic→final / tense→boss / changyang|yugu|hundun|youdu 区域复用；`MediaElementSource` → `musicBus`；音量走 `applyVolumes`；文件失败回退程序化五声垫乐
+- 运行时抽测（Chrome）：title/hub/battle/boss/dream/ending/jincheng 均可 `Audio.play()`，时长约 27–69s
+- 区域闯关 / 信物秘境页切入对应 BGM（jincheng / dream 等）
+
+### 页面抛光
+- 信物秘境 / 通关札 CSS 签名感（紫辉卡片、通关札入场、下一关脉冲）
+- 截图（强）：
+  - `docs/polish_shots/hub.png` — 烬城枢纽
+  - `docs/polish_shots/secret.png` — 信物秘境（含已解锁 3 关）
+  - `docs/polish_shots/clearcard.png` — 通关札 S 卡
+  - `docs/polish_shots/adventure.png` — 山海闯关路径
+
+### 校验
+- `npm run build` OK；`boot2` mode=action（偶发 ogg 中止请求已改为优先 mp3）
+- **无 APK**
+
+### 未做
+- HF MusicGen / Spaces（本机无 GPU、无 HF token；MIDI 管线已交付可循环成品）
+- 勿再试 MiniMax music
+
+
 
 
 ## 信物秘境 + 手感/音乐/美术 · 2026-10-25 12:19 CST

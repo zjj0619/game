@@ -66,7 +66,7 @@ export function hubScreen(){
 const NODE_POS = [[7,58],[16,36],[25,56],[34,31],[43,52],[52,27],[61,48],[70,25],[79,44],[90,22],[90,62]];
 export function adventureScreen(rid){
   AP.ensureAct(); rid = rid && AP.regionUnlocked(rid) ? rid : (REGION_ORDER.filter(r => AP.regionUnlocked(r)).pop() || 'jincheng');
-  const R = REGIONS[rid]; const ids = REGION_STAGES[rid];
+  const R = REGIONS[rid]; try { playBgm(R.bgm || rid); } catch(e) {} const ids = REGION_STAGES[rid];
   const tabs = h('div.adv-tabs', {}, ...REGION_ORDER.map((r, i) => { const un = AP.regionUnlocked(r);
     return h('div.adv-tab' + (r === rid ? '.on' : '') + (un ? '' : '.lock'), { onclick: () => { if (!un) { toast(`通关「${REGIONS[REGION_ORDER[i - 1]].name.split('·')[0]}」第 10 关后开放`); return; } sfx('page'); show(adventureScreen(r)); } },
       h('b', {}, R && REGIONS[r].name.split('·')[0]), h('small', {}, un ? `★${AP.regionStars(r)}/33` : '未开放')); }));
@@ -356,7 +356,7 @@ function forgeReveal(id, done){ const it = ITEMS[id]; const r = rarOf(id); const
 
 // —— 信物秘境：关键道具开启的隐藏战场 ——
 export function secretStagesScreen(){
-  AP.ensureAct();
+  AP.ensureAct(); try { playBgm('dream'); } catch(e) {}
   const cards = KEY_SECRET_IDS.map(id => {
     const st = STAGES[id]; const un = AP.stageUnlocked(id); const best = S.act.best[id];
     const need = ITEMS[st.needItem]; const have = (S.inv[st.needItem] || 0) > 0;
@@ -379,6 +379,7 @@ export function secretStagesScreen(){
       h('p', {}, st.desc || ''),
       S.act.cleared[id] ? chip('已踏破') : (un ? chip('信物共鸣') : null));
   });
+  try { playBgm('dream'); sfx('ui_open'); } catch(e) {}
   return screen('secrets', 'cg/key_secret_realm', header('信物秘境', null, h('span.hb-n', {}, '关键道具开启的隐藏战场')),
     h('div.sec-intro', {}, h('p', {}, '主线与关卡选择会掉落信物。持有对应信物并满足旗帜后，此处会出现不写在地图上的战场——通关可获梦屑、稀有材料与隐藏剧情线索。')),
     h('div.sec-grid', {}, ...cards));

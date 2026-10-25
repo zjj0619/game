@@ -25,3 +25,7 @@ screenshots_v1crit/
 screenshots_v2/*_1000.png
 *.log
 .DS_Store
+
+.venv-music/
+shots/
+
