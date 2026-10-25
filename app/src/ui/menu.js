@@ -193,7 +193,7 @@ export async function openGallery(){
   const ENDN = { a:'长明', b:'长夜', c:'新烛', d:'归墟同眠', e:'狐梦千年', f:'昼夜双瞳' };
   const view = src => { const v = h('div.viewer', { onclick:()=>v.remove() }, h('img', { src })); document.getElementById('app').append(v); };
   const cgs = ['cg_dengjin','cg_jingwei','cg_xingtian','cg_xiwangmu','cg_baize','cg_dijiang','cg_kuafu','cg_ba','cg_baiji','cg_xiangliu','cg_fuli','cg_duijue'];
-  const keys = ['key_dream_layers','key_resonance','key_clearcard'];
+  const keys = ['key_dream_layers','key_resonance','key_clearcard','key_lamp_radius','key_candle_eye','key_hub_sanctuary'];
   const epis = [
     ['epi_dawn_common','天亮第七日', !!meta.endings.length],
     ['epi_letter_fuli','浮黎的信', meta.endings.length>0],
@@ -207,6 +207,10 @@ export async function openGallery(){
     h('h3', {}, '章末夜记'), h('div.gal', {}, ...Array.from({length:13},(_,i)=>h('div.gcell',{onclick:()=>playEpi('night_'+i)}, h('span', {}, '夜记·'+i)))),
     h('h3', {}, '营火手记'), h('div.gal', {}, ...[['yangui','晏归'],['baiji','白霁'],['xianwei','衔微'],['qi','戚'],['ali','阿篱'],['kualing','夸铃'],['fuli','浮黎'],['xuanming','玄冥']].map(([id,n]) => h('div.gcell', { onclick:()=>playEpi('journal_'+id) }, h('span', {}, n)))),
     h('h3', {}, '九州长夜志'), h('div.gal', {}, ...['jincheng','qingqiu','donghai','changyang','baize','kunlun','hundun','yugu','chishui','beihai','youdu','guixu'].map(id => h('div.gcell', { onclick:()=>playEpi('lore_'+id) }, h('span', {}, ({jincheng:'烬城',qingqiu:'青丘',donghai:'东海',changyang:'长羊',baize:'白泽',kunlun:'昆仑',hundun:'混沌',yugu:'禺谷',chishui:'赤水',beihai:'北海',youdu:'幽都',guixu:'归墟'})[id])))),
+    h('h3', {}, '灯典'), h('div.gal', {}, ...[['lamp_codex_intro','序'],['lamp_core','灯芯'],['lamp_eye','烛瞳'],['lamp_dream','闭目'],['lamp_reso','共鸣'],['lamp_loop','两分钟']].map(([lb,n]) => h('div.gcell', { onclick:()=>playEpi(lb) }, h('span', {}, n)))),
+    h('h3', {}, '同伴书简'), h('div.gal', {}, ...[['letter_baiji_01','白霁'],['letter_xianwei_01','衔微'],['letter_qi_01','戚'],['letter_ali_01','阿篱'],['letter_kualing_01','夸铃'],['letter_fuli_01','浮黎'],['letter_xuanming_01','玄冥'],['letter_zhulong_01','烛龙'],['letter_popo_01','阿婆'],['letter_kids_01','孩子们']].map(([lb,n]) => h('div.gcell', { onclick:()=>playEpi(lb) }, h('span', {}, n)))),
+    h('h3', {}, '九州夜祭'), h('div.gal', {}, ...[['fest_jincheng','烬城'],['fest_qingqiu','青丘'],['fest_donghai','东海'],['fest_changyang','长羊'],['fest_kunlun','昆仑'],['fest_yugu','禺谷'],['fest_chishui','赤水'],['fest_beihai','北海'],['fest_youdu','幽都'],['fest_guixu','归墟']].map(([lb,n]) => h('div.gcell', { onclick:()=>playEpi(lb) }, h('span', {}, n)))),
+    h('h3', {}, '梦境日记'), h('div.gal', {}, ...Array.from({length:15},(_,i)=>h('div.gcell',{onclick:()=>playEpi('dream_diary_'+(i+1))}, h('span', {}, '第'+(i+1)+'夜')))),
     h('h3', {}, '后日谈'), h('div.gal', {}, ...epis.map(([lb,n,ok]) => ok ? h('div.gcell', { onclick:()=>playEpi(lb) }, h('span', {}, n)) : h('div.gcell.locked', {}, h('span', {}, '？？？ · '+n)))),
     h('h3', {}, `剧情 CG ${cgs.filter(c=>meta.cgs.includes(c)).length}/${cgs.length}`), h('div.gal', {}, cgs.map(c => meta.cgs.includes(c) ? h('div.gcell', { onclick:()=>view(asset('cg/'+c)) }, h('img', {src:asset('cg/'+c)})) : h('div.gcell.locked', {}, h('span', {}, '？？？')))));
   const list = (await idbGet('gallery')) || [];

@@ -90,3 +90,9 @@ d: ice jiao(冰蛟), nightmare mo(梦貘), tubo(土伯), black serpent guard(黑
 - 50_epilogues 后日谈 + 画廊入口；51 九州长夜志；52 营火手记
 - cond 支持 ending:X；故事编译约 57k 字 / 25 文件 / 505 labels（持续朝 150k 推进）
 - STORY_BIBLE.md
+
+## 2026-10-25 创意深化（续）
+- 故事扩至 ~100k+ 字：灯典/书简/民俗加厚/支线丙/梦境日记/营火长谈/夜祭/华彩/路人夜谈
+- 新关键艺术：key_lamp_radius、key_candle_eye、key_hub_sanctuary（枢纽背景换圣所）
+- 画廊接入灯典、书简、梦日记、夜祭；通关札 CSS 光泽动画
+- build + boot2 OK；持续朝 150k 推进

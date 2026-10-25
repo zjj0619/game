@@ -1,0 +1,114 @@
+# 同伴书简 · 未寄出的与已寄出的
+*letter_baiji_01
+@interlude 书简·白霁致青丘|未寄
+@bg qingqiu
+@bgm warm
+@hide all
+@show baiji center
+>致雾里的姐妹们：我还活着。尾巴少了两截炭色，心多了一盏讨厌的灯。灯的主人叫晏归。他左眼有白天的渣。靠近会刺。我没走。
+>若你们问我什么时候回青丘——等长夜短一点，等我学会在灯圈外也能睡。现在还不行。雾外面有人等我把狐火借给他当边界。
+>此信烧了。雾会读灰。
+@hide all
+@return
+
+*letter_xianwei_01
+@interlude 书简·衔微致东海|潮汐表背面
+@bg donghai
+@bgm soft
+@hide all
+@show xianwei center
+>海：今天填了十七块。最大的那块写着「晏归若沉我沉」。他看见了。装没看见。装得像灯芯发颤。
+>海若记得我，就记得把他的名字也写进潮里。潮会涨。涨的时候请温柔一点。他怕黑，但更怕别人替他黑。
+>石头沉下去的声音，请还给我。
+@hide all
+@return
+
+*letter_qi_01
+@interlude 书简·戚致无首的风|断章
+@bg xingtian_land
+@bgm battle
+@hide all
+@show qi center
+>风：我还有头。头里有个提灯的小子，老让我看他的眼跳再砍。麻烦。有效。
+>若你碰到我爹的残响，告诉他：斧还在，夜还在，并肩的人换成会发光的了。不丢人。
+>此信不必回。风不会写字。我会听。
+@hide all
+@return
+
+*letter_ali_01
+@interlude 书简·阿篱致琴箱|夹层
+@bg camp
+@bgm warm
+@hide all
+@show ali center
+>琴箱：别怨我把弦借给灯。弦本来就是为了让人听见「还在」。灯圈是看得见的还在，弦是听得见的还在。
+>晏归走远会灭灯。我走远会哑。所以我们都该练习回来。练习比天才重要。天才救不了一整夜。
+>夹层里那块松香留给夸铃——她老把弓当零食啃的样子，吓死人。
+@hide all
+@return
+
+*letter_kualing_01
+@interlude 书简·夸铃致折返石|口水印
+@bg yugu
+@bgm warm
+@hide all
+@show kualing center
+>石头：我第九十九次折返。还是渴。晏归哥把灯挂你身上过夜，你是不是偷偷亮过？亮就好。亮说明你也想当灯。
+>祖宗的错我跑不完。但我可以跑到灯还在的地方停。停不是认输。停是喝水。喝水才能再跑。
+>此石勿动。动了晏归哥会找不到我。
+@hide all
+@return
+
+*letter_fuli_01
+@interlude 书简·浮黎致旧账|墨新
+@bg jincheng
+@bgm town
+@hide all
+@show fuli center
+>旧账：星砂涨了。人情更涨。晏归那盏灯不收钱，却收走我最多的「下次一定」。
+>我开始两边记账：睁眼与闭目，现实与梦。梦屑也能换卵，卵也能孵出能打架的麻烦。麻烦有价。价有心。
+>若你问我赚了什么——赚了一个会把通关札拍在我脸上的少年。札上的 S，比金好看。
+@hide all
+@return
+
+*letter_xuanming_01
+@interlude 书简·玄冥致晏归|梦封
+@bg dream
+@bgm mystery
+@hide all
+@show xuanming center
+>晏归：你把我的梦当成关卡切换键。无礼。有用。我允许。
+>闭目不是投降。睁眼不是胜利。叠层是提醒：你走的每一步都有影子版本。影子版本里，你也会怕，也会笑，也会把灯举高一点。
+>下次进梦，记得把同伴带上。梦讨厌孤独的光——孤独的光太像我。
+@hide all
+@return
+
+*letter_zhulong_01
+@interlude 书简·烛龙残简|鳞上
+@bg zhulong_eye
+@bgm epic
+@hide all
+>人把我的眼睛塞进孩子眶里，叫他守夜。我本来想怒。怒到一半看见他画灯芯半径，怒就浅了。
+>光是我借出的。圆是他自己走出来的。圆里有狐狸、石头、无头、琴、渴、账本、梦。够了。
+>长夜未尽。尽也不必谢我。谢一起把圆走圆的人。
+@return
+
+*letter_popo_01
+@interlude 书简·阿婆致巷口|盐袋
+@bg jincheng
+@bgm soft
+@hide all
+>巷口的孩子：盐不是光。光不是盐。但两者都能让黑东西皱一下眉。皱眉的空档，你们就跑。
+>提灯的那个，头发乱，眼睛亮。他把光借给整条巷的时候，我第一次觉得长夜也有点不好意思。
+>盐袋在门后。灯油我藏不动。你们自己记得回来。
+@return
+
+*letter_kids_01
+@interlude 书简·孩子们致灯|蜡印
+@bg jincheng
+@bgm warm
+@hide all
+>灯：我们用泥做了一盏你。泥灯不会亮。可是我们围着它讲晏归哥的故事，讲到第三遍，泥灯好像热了一点。
+>明天我们去看通关札。听说札上有大字母。大字母是不是比星星好看？星星太远。字母可以贴在墙上。
+>泥灯拜托你梦见真的油。
+@return

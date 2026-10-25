@@ -266,3 +266,13 @@
 .hub-hooks{position:absolute;left:calc(var(--sl) + 1.2rem);top:calc(var(--st) + 3.2rem);display:flex;gap:.45rem;align-items:center;z-index:2;pointer-events:none}
 .hub-hooks span{font-size:.7rem;letter-spacing:.2em;padding:.2rem .55rem;border:1px solid rgba(255,200,100,.35);border-radius:999px;color:#ffe7a0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px)}
 .hub-hooks em{font-style:normal;margin-left:.4rem;font-size:.78rem;color:#cbb892;letter-spacing:.08em}
+
+/* 通关札 / 枢纽 爆款感加强 */
+.rs-card{box-shadow:inset 0 0 20px rgba(255,180,60,.08),0 0 28px rgba(255,160,60,.22),0 0 18px rgba(0,0,0,.4);animation:rsIn .55s cubic-bezier(.2,1.2,.4,1)}
+.rs-card::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 40%,rgba(255,230,180,.14) 50%,transparent 60%);animation:rsShine 2.8s ease-in-out infinite;pointer-events:none;z-index:0}
+@keyframes rsIn{from{transform:translateY(14px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+@keyframes rsShine{0%,100%{transform:translateX(-35%)}50%{transform:translateX(35%)}}
+.rs-card-t{text-shadow:0 0 18px #ffb03a,0 2px 0 #4a2800;letter-spacing:.55em}
+.rs-next{animation:rsIn .7s .12s both;background:linear-gradient(90deg,rgba(80,40,10,.55),rgba(20,30,50,.55));border:1px solid rgba(255,200,120,.3)}
+.hub-hooks span{box-shadow:0 0 12px rgba(255,140,40,.18)}
+.hub-bg{filter:saturate(1.08) contrast(1.05)}

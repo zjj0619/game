@@ -51,3 +51,12 @@
 - `app/src/action/stages.js` — 关卡 `dream` 标记与双层波次
 - `app/src/ui/hub.js` — 通关札、S 条件 HUD、下一解锁预告
 - `app/src/action.css` / `hub.css` — 演出与卡面
+
+
+## 关键艺术（招牌瞬间）
+- `cg/key_lamp_radius` — 灯芯半径：光域与夜鬼
+- `cg/key_candle_eye` — 烛瞳：弱点与金线
+- `cg/key_dream_layers` — 闭目/睁眼叠层
+- `cg/key_resonance` — 灯火共鸣合击
+- `cg/key_clearcard` — 通关札
+- `cg/key_hub_sanctuary` — 枢纽夜市圣所

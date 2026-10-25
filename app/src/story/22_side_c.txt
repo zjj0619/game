@@ -1,0 +1,441 @@
+# 支线丙：短关叙事与招牌玩法嵌入
+
+*side_c_lantern_thief
+@interlude 支线·失窃的灯芯|短局
+@bg jincheng
+@bgm mystery
+@hide all
+@show yangui center
+>有人专偷灯芯半径边缘的油——专偷「刚好够回家」的那一点。
+晏归：这事听着像灯典习作。
+>他举起灯，把光域慢慢推开。光碰到的地方，线索显形；光碰不到的地方，敌人装睡。
+? 用烛瞳先看薄弱点 -> side_c_lantern_thief_eye
+? 先闭目探叠层路径 -> side_c_lantern_thief_dream
+? 招呼同伴准备共鸣 -> side_c_lantern_thief_reso
+
+*side_c_lantern_thief_eye
+@bg jincheng
+@bgm battle
+@hide all
+@show yangui center
+>烛瞳开。红点浮起，金线勾出捷径。晏归只砍该砍的，不追该绕的。
+>事了，他在通关札边缘写：「看见，然后放下。」
+@do hope+2
+@return
+
+*side_c_lantern_thief_dream
+@bg dream
+@bgm mystery
+@hide all
+>闭目。冷青覆上失窃的灯芯的轮廓。桥换了，敌变了，掉落变成另一种可收藏的麻烦。
+>睁眼回来时，口袋多了梦屑，心里多了一句：同一条夜，值得走两遍。
+@do hope+2
+@return
+
+*side_c_lantern_thief_reso
+@bg jincheng
+@bgm warm
+@hide all
+@show yangui left
+@show baiji right
+>灯圈里站着同伴。槽满。字幕升起，光爆开，敌人像被温柔地赶出故事。
+白霁：你就爱把习作打成烟花。
+晏归：烟花也是光。
+@do hope+3
+@return
+
+*side_c_fog_mirror
+@interlude 支线·雾中镜|短局
+@bg qingqiu
+@bgm mystery
+@hide all
+@show yangui center
+>青丘出现能照出闭目层的镜子。照到的人三天不愿睁眼。
+晏归：这事听着像灯典习作。
+>他举起灯，把光域慢慢推开。光碰到的地方，线索显形；光碰不到的地方，敌人装睡。
+? 用烛瞳先看薄弱点 -> side_c_fog_mirror_eye
+? 先闭目探叠层路径 -> side_c_fog_mirror_dream
+? 招呼同伴准备共鸣 -> side_c_fog_mirror_reso
+
+*side_c_fog_mirror_eye
+@bg qingqiu
+@bgm battle
+@hide all
+@show yangui center
+>烛瞳开。红点浮起，金线勾出捷径。晏归只砍该砍的，不追该绕的。
+>事了，他在通关札边缘写：「看见，然后放下。」
+@do hope+2
+@return
+
+*side_c_fog_mirror_dream
+@bg dream
+@bgm mystery
+@hide all
+>闭目。冷青覆上雾中镜的轮廓。桥换了，敌变了，掉落变成另一种可收藏的麻烦。
+>睁眼回来时，口袋多了梦屑，心里多了一句：同一条夜，值得走两遍。
+@do hope+2
+@return
+
+*side_c_fog_mirror_reso
+@bg qingqiu
+@bgm warm
+@hide all
+@show yangui left
+@show baiji right
+>灯圈里站着同伴。槽满。字幕升起，光爆开，敌人像被温柔地赶出故事。
+白霁：你就爱把习作打成烟花。
+晏归：烟花也是光。
+@do hope+3
+@return
+
+*side_c_stone_chorus
+@interlude 支线·石合唱|短局
+@bg donghai
+@bgm mystery
+@hide all
+@show yangui center
+>衔微的族人用石头合唱。走调的那块在召唤海怨。
+晏归：这事听着像灯典习作。
+>他举起灯，把光域慢慢推开。光碰到的地方，线索显形；光碰不到的地方，敌人装睡。
+? 用烛瞳先看薄弱点 -> side_c_stone_chorus_eye
+? 先闭目探叠层路径 -> side_c_stone_chorus_dream
+? 招呼同伴准备共鸣 -> side_c_stone_chorus_reso
+
+*side_c_stone_chorus_eye
+@bg donghai
+@bgm battle
+@hide all
+@show yangui center
+>烛瞳开。红点浮起，金线勾出捷径。晏归只砍该砍的，不追该绕的。
+>事了，他在通关札边缘写：「看见，然后放下。」
+@do hope+2
+@return
+
+*side_c_stone_chorus_dream
+@bg dream
+@bgm mystery
+@hide all
+>闭目。冷青覆上石合唱的轮廓。桥换了，敌变了，掉落变成另一种可收藏的麻烦。
+>睁眼回来时，口袋多了梦屑，心里多了一句：同一条夜，值得走两遍。
+@do hope+2
+@return
+
+*side_c_stone_chorus_reso
+@bg donghai
+@bgm warm
+@hide all
+@show yangui left
+@show baiji right
+>灯圈里站着同伴。槽满。字幕升起，光爆开，敌人像被温柔地赶出故事。
+白霁：你就爱把习作打成烟花。
+晏归：烟花也是光。
+@do hope+3
+@return
+
+*side_c_headwind
+@interlude 支线·逆风斧|短局
+@bg xingtian_land
+@bgm mystery
+@hide all
+@show yangui center
+>戚的同袍在风里迷路。找到他要靠烛瞳看见「无头的坐标」。
+晏归：这事听着像灯典习作。
+>他举起灯，把光域慢慢推开。光碰到的地方，线索显形；光碰不到的地方，敌人装睡。
+? 用烛瞳先看薄弱点 -> side_c_headwind_eye
+? 先闭目探叠层路径 -> side_c_headwind_dream
+? 招呼同伴准备共鸣 -> side_c_headwind_reso
+
+*side_c_headwind_eye
+@bg xingtian_land
+@bgm battle
+@hide all
+@show yangui center
+>烛瞳开。红点浮起，金线勾出捷径。晏归只砍该砍的，不追该绕的。
+>事了，他在通关札边缘写：「看见，然后放下。」
+@do hope+2
+@return
+
+*side_c_headwind_dream
+@bg dream
+@bgm mystery
+@hide all
+>闭目。冷青覆上逆风斧的轮廓。桥换了，敌变了，掉落变成另一种可收藏的麻烦。
+>睁眼回来时，口袋多了梦屑，心里多了一句：同一条夜，值得走两遍。
+@do hope+2
+@return
+
+*side_c_headwind_reso
+@bg xingtian_land
+@bgm warm
+@hide all
+@show yangui left
+@show baiji right
+>灯圈里站着同伴。槽满。字幕升起，光爆开，敌人像被温柔地赶出故事。
+白霁：你就爱把习作打成烟花。
+晏归：烟花也是光。
+@do hope+3
+@return
+
+*side_c_peach_lie
+@interlude 支线·桃核谎言|短局
+@bg kunlun
+@bgm mystery
+@hide all
+@show yangui center
+>西王母宴上有人用假桃核换真路引。路引通向错误的叠层。
+晏归：这事听着像灯典习作。
+>他举起灯，把光域慢慢推开。光碰到的地方，线索显形；光碰不到的地方，敌人装睡。
+? 用烛瞳先看薄弱点 -> side_c_peach_lie_eye
+? 先闭目探叠层路径 -> side_c_peach_lie_dream
+? 招呼同伴准备共鸣 -> side_c_peach_lie_reso
+
+*side_c_peach_lie_eye
+@bg kunlun
+@bgm battle
+@hide all
+@show yangui center
+>烛瞳开。红点浮起，金线勾出捷径。晏归只砍该砍的，不追该绕的。
+>事了，他在通关札边缘写：「看见，然后放下。」
+@do hope+2
+@return
+
+*side_c_peach_lie_dream
+@bg dream
+@bgm mystery
+@hide all
+>闭目。冷青覆上桃核谎言的轮廓。桥换了，敌变了，掉落变成另一种可收藏的麻烦。
+>睁眼回来时，口袋多了梦屑，心里多了一句：同一条夜，值得走两遍。
+@do hope+2
+@return
+
+*side_c_peach_lie_reso
+@bg kunlun
+@bgm warm
+@hide all
+@show yangui left
+@show baiji right
+>灯圈里站着同伴。槽满。字幕升起，光爆开，敌人像被温柔地赶出故事。
+白霁：你就爱把习作打成烟花。
+晏归：烟花也是光。
+@do hope+3
+@return
+
+*side_c_thirst_bet
+@interlude 支线·渴的赌注|短局
+@bg yugu
+@bgm mystery
+@hide all
+@show yangui center
+>夸铃跟人打赌：谁先离开灯圈谁请喝水。夜鬼也来下注。
+晏归：这事听着像灯典习作。
+>他举起灯，把光域慢慢推开。光碰到的地方，线索显形；光碰不到的地方，敌人装睡。
+? 用烛瞳先看薄弱点 -> side_c_thirst_bet_eye
+? 先闭目探叠层路径 -> side_c_thirst_bet_dream
+? 招呼同伴准备共鸣 -> side_c_thirst_bet_reso
+
+*side_c_thirst_bet_eye
+@bg yugu
+@bgm battle
+@hide all
+@show yangui center
+>烛瞳开。红点浮起，金线勾出捷径。晏归只砍该砍的，不追该绕的。
+>事了，他在通关札边缘写：「看见，然后放下。」
+@do hope+2
+@return
+
+*side_c_thirst_bet_dream
+@bg dream
+@bgm mystery
+@hide all
+>闭目。冷青覆上渴的赌注的轮廓。桥换了，敌变了，掉落变成另一种可收藏的麻烦。
+>睁眼回来时，口袋多了梦屑，心里多了一句：同一条夜，值得走两遍。
+@do hope+2
+@return
+
+*side_c_thirst_bet_reso
+@bg yugu
+@bgm warm
+@hide all
+@show yangui left
+@show baiji right
+>灯圈里站着同伴。槽满。字幕升起，光爆开，敌人像被温柔地赶出故事。
+白霁：你就爱把习作打成烟花。
+晏归：烟花也是光。
+@do hope+3
+@return
+
+*side_c_red_bridge
+@interlude 支线·赤桥点名|短局
+@bg chishui
+@bgm mystery
+@hide all
+@show yangui center
+>过桥要报同伴名字。报错一个，桥就抽走一截梦层木板。
+晏归：这事听着像灯典习作。
+>他举起灯，把光域慢慢推开。光碰到的地方，线索显形；光碰不到的地方，敌人装睡。
+? 用烛瞳先看薄弱点 -> side_c_red_bridge_eye
+? 先闭目探叠层路径 -> side_c_red_bridge_dream
+? 招呼同伴准备共鸣 -> side_c_red_bridge_reso
+
+*side_c_red_bridge_eye
+@bg chishui
+@bgm battle
+@hide all
+@show yangui center
+>烛瞳开。红点浮起，金线勾出捷径。晏归只砍该砍的，不追该绕的。
+>事了，他在通关札边缘写：「看见，然后放下。」
+@do hope+2
+@return
+
+*side_c_red_bridge_dream
+@bg dream
+@bgm mystery
+@hide all
+>闭目。冷青覆上赤桥点名的轮廓。桥换了，敌变了，掉落变成另一种可收藏的麻烦。
+>睁眼回来时，口袋多了梦屑，心里多了一句：同一条夜，值得走两遍。
+@do hope+2
+@return
+
+*side_c_red_bridge_reso
+@bg chishui
+@bgm warm
+@hide all
+@show yangui left
+@show baiji right
+>灯圈里站着同伴。槽满。字幕升起，光爆开，敌人像被温柔地赶出故事。
+白霁：你就爱把习作打成烟花。
+晏归：烟花也是光。
+@do hope+3
+@return
+
+*side_c_ice_letter
+@interlude 支线·冰下信|短局
+@bg beihai
+@bgm mystery
+@hide all
+@show yangui center
+>冰下有给「未来天亮」的信。拆信需要共鸣满槽的一瞬暖。
+晏归：这事听着像灯典习作。
+>他举起灯，把光域慢慢推开。光碰到的地方，线索显形；光碰不到的地方，敌人装睡。
+? 用烛瞳先看薄弱点 -> side_c_ice_letter_eye
+? 先闭目探叠层路径 -> side_c_ice_letter_dream
+? 招呼同伴准备共鸣 -> side_c_ice_letter_reso
+
+*side_c_ice_letter_eye
+@bg beihai
+@bgm battle
+@hide all
+@show yangui center
+>烛瞳开。红点浮起，金线勾出捷径。晏归只砍该砍的，不追该绕的。
+>事了，他在通关札边缘写：「看见，然后放下。」
+@do hope+2
+@return
+
+*side_c_ice_letter_dream
+@bg dream
+@bgm mystery
+@hide all
+>闭目。冷青覆上冰下信的轮廓。桥换了，敌变了，掉落变成另一种可收藏的麻烦。
+>睁眼回来时，口袋多了梦屑，心里多了一句：同一条夜，值得走两遍。
+@do hope+2
+@return
+
+*side_c_ice_letter_reso
+@bg beihai
+@bgm warm
+@hide all
+@show yangui left
+@show baiji right
+>灯圈里站着同伴。槽满。字幕升起，光爆开，敌人像被温柔地赶出故事。
+白霁：你就爱把习作打成烟花。
+晏归：烟花也是光。
+@do hope+3
+@return
+
+*side_c_soil_noise
+@interlude 支线·土伯听力|短局
+@bg youdu
+@bgm mystery
+@hide all
+@show yangui center
+>土伯在听谁说话最大声。最大声的人会被点名进入守灯试炼。
+晏归：这事听着像灯典习作。
+>他举起灯，把光域慢慢推开。光碰到的地方，线索显形；光碰不到的地方，敌人装睡。
+? 用烛瞳先看薄弱点 -> side_c_soil_noise_eye
+? 先闭目探叠层路径 -> side_c_soil_noise_dream
+? 招呼同伴准备共鸣 -> side_c_soil_noise_reso
+
+*side_c_soil_noise_eye
+@bg youdu
+@bgm battle
+@hide all
+@show yangui center
+>烛瞳开。红点浮起，金线勾出捷径。晏归只砍该砍的，不追该绕的。
+>事了，他在通关札边缘写：「看见，然后放下。」
+@do hope+2
+@return
+
+*side_c_soil_noise_dream
+@bg dream
+@bgm mystery
+@hide all
+>闭目。冷青覆上土伯听力的轮廓。桥换了，敌变了，掉落变成另一种可收藏的麻烦。
+>睁眼回来时，口袋多了梦屑，心里多了一句：同一条夜，值得走两遍。
+@do hope+2
+@return
+
+*side_c_soil_noise_reso
+@bg youdu
+@bgm warm
+@hide all
+@show yangui left
+@show baiji right
+>灯圈里站着同伴。槽满。字幕升起，光爆开，敌人像被温柔地赶出故事。
+白霁：你就爱把习作打成烟花。
+晏归：烟花也是光。
+@do hope+3
+@return
+
+*side_c_surplus_light
+@interlude 支线·多余的光|短局
+@bg guixu
+@bgm mystery
+@hide all
+@show yangui center
+>归墟拒绝吞下一盏不愿灭的灯。那盏灯认晏归作同行。
+晏归：这事听着像灯典习作。
+>他举起灯，把光域慢慢推开。光碰到的地方，线索显形；光碰不到的地方，敌人装睡。
+? 用烛瞳先看薄弱点 -> side_c_surplus_light_eye
+? 先闭目探叠层路径 -> side_c_surplus_light_dream
+? 招呼同伴准备共鸣 -> side_c_surplus_light_reso
+
+*side_c_surplus_light_eye
+@bg guixu
+@bgm battle
+@hide all
+@show yangui center
+>烛瞳开。红点浮起，金线勾出捷径。晏归只砍该砍的，不追该绕的。
+>事了，他在通关札边缘写：「看见，然后放下。」
+@do hope+2
+@return
+
+*side_c_surplus_light_dream
+@bg dream
+@bgm mystery
+@hide all
+>闭目。冷青覆上多余的光的轮廓。桥换了，敌变了，掉落变成另一种可收藏的麻烦。
+>睁眼回来时，口袋多了梦屑，心里多了一句：同一条夜，值得走两遍。
+@do hope+2
+@return
+
+*side_c_surplus_light_reso
+@bg guixu
+@bgm warm
+@hide all
+@show yangui left
+@show baiji right
+>灯圈里站着同伴。槽满。字幕升起，光爆开，敌人像被温柔地赶出故事。
+白霁：你就爱把习作打成烟花。
+晏归：烟花也是光。
+@do hope+3
+@return

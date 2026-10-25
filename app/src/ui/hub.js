@@ -40,7 +40,7 @@ export function hubScreen(){
   AP.ensureAct(); const lead = S.act.team[0] || 'yangui'; const b = hubBadges();
   const nextStage = (() => { for (const rid of REGION_ORDER) for (const id of REGION_STAGES[rid].slice(0, 10)) if (!S.act.cleared[id]) return AP.stageUnlocked(id) ? STAGES[id] : null; return null; })();
   const tile = (cls, name, sub, on, badge) => h('div.htile.' + cls, { onclick: () => { sfx('click'); on(); } }, h('b', {}, name), h('small', {}, sub), dot(badge));
-  const root = screen('hub', 'cg/key_resonance',
+  const root = screen('hub', 'cg/key_hub_sanctuary',
     h('div.hub-head', {}, h('div.hub-logo', {}, '烬 城'), h('div.hub-hr', {}, btn('菜单', () => openMenu(), 'sm'), bar())),
     h('div.hub-hooks', {}, h('span', {}, '灯芯'), h('span', {}, '烛瞳'), h('span', {}, '梦层'), h('span', {}, '共鸣'), nextStage ? h('em', {}, '下一关 · ' + nextStage.name) : h('em', {}, '山海已通')),
     h('div.hub-main', {},

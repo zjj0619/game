@@ -25,3 +25,6 @@
 - `cg/key_dream_layers.webp` — 标题/梦层招牌
 - `cg/key_resonance.webp` — 烬城枢纽 / 灯火共鸣
 - `cg/key_clearcard.webp` — 通关札底图
+
+
+总计：11222
