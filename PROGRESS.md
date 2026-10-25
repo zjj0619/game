@@ -96,3 +96,4 @@ d: ice jiao(冰蛟), nightmare mo(梦貘), tubo(土伯), black serpent guard(黑
 - 新关键艺术：key_lamp_radius、key_candle_eye、key_hub_sanctuary（枢纽背景换圣所）
 - 画廊接入灯典、书简、梦日记、夜祭；通关札 CSS 光泽动画
 - build + boot2 OK；持续朝 150k 推进
+- 故事编译约 14.8万字 / 38+ 文件 / 849+ labels（逼近 150k）
