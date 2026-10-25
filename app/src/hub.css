@@ -276,3 +276,13 @@
 .rs-next{animation:rsIn .7s .12s both;background:linear-gradient(90deg,rgba(80,40,10,.55),rgba(20,30,50,.55));border:1px solid rgba(255,200,120,.3)}
 .hub-hooks span{box-shadow:0 0 12px rgba(255,140,40,.18)}
 .hub-bg{filter:saturate(1.08) contrast(1.05)}
+
+.rs-card-rank{position:relative;z-index:1;text-align:center;font-size:3.2rem;font-weight:900;font-family:Georgia,serif;color:#ffd84a;text-shadow:0 0 20px #ffb52a,0 3px 0 #7a4a00;margin:.1rem 0}
+.rs-card-name{position:relative;z-index:1;text-align:center;font-size:.85rem;color:#fff6d8;letter-spacing:.12em;margin-bottom:.35rem}
+.rs-share{position:relative;z-index:2;display:block;margin:.55rem auto 0;padding:.35rem 1.1rem;border:1px solid rgba(255,200,100,.5);border-radius:999px;background:linear-gradient(180deg,#5a3a12,#2a1808);color:#ffe08a;font-size:.78rem;letter-spacing:.2em;cursor:pointer;box-shadow:0 0 14px rgba(255,160,60,.25)}
+.rs-share:active{transform:scale(.97)}
+.rs-gain b.dust{color:#a8d8ff}
+.rs-gain em.sbonus{color:#ffd84a;border-color:rgba(255,200,80,.5)}
+.screen.hub .hub-hooks{backdrop-filter:blur(6px);background:linear-gradient(180deg,rgba(20,14,8,.55),rgba(8,6,4,.72));border:1px solid rgba(255,200,100,.22);box-shadow:0 8px 28px rgba(0,0,0,.45),inset 0 0 30px rgba(255,180,60,.06)}
+
+.rs-reward{width:100%;max-height:7.5rem;object-fit:cover;border-radius:.4rem;margin-bottom:.55rem;border:1px solid rgba(255,200,100,.3);box-shadow:0 0 20px rgba(255,160,60,.2);animation:rsIn .55s cubic-bezier(.2,1.2,.4,1)}

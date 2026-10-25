@@ -76,7 +76,7 @@ export function toggleEye(ctx){
   if (st.eyeOn) { st.eyeOn = false; st.eyeCd = EYE_CD; return; }
   if (st.eyeCd > 0) return;
   if (C().mp < 5) { say('法力不足', 0.7); return; }
-  st.eyeOn = true; sfx && sfx('skill'); say('烛瞳 · 开', 0.6);
+  st.eyeOn = true; sfx && sfx('eye'); say('烛瞳 · 开', 0.6);
 }
 
 /** 命中时消费弱点 → 必暴 */
@@ -93,7 +93,7 @@ export function toggleDream(ctx){
   st.dreamCd = DREAM_CD;
   st.dreamFlips = (st.dreamFlips || 0) + 1;
   if (st.dream) st.dreamSeen = true; else st.awakeSeen = true;
-  sfx && sfx('portal'); shake && shake(8);
+  sfx && sfx('flip'); shake && shake(8);
   part && part(P.x, P.y - 30, st.dream ? '#7ec8ff' : '#ffcf6a', 36, 280, 0.9, 4);
   say(st.dream ? '闭目 · 堕入梦层' : '睁眼 · 回到长夜', 1.4);
   // 梦层：现有敌人转为梦魇形态；睁眼层恢复
@@ -140,17 +140,23 @@ export function fireReso(ctx){
   st.reso = 0; st.resoReady = false;
   const me = C().id;
   const mate = roster.find((r, i) => i !== ri && r.alive) || roster[ri];
+  const bond = Math.max(S.aff?.[me] || 0, S.aff?.[mate.id] || 0);
+  const bondMul = 1 + (bond >= 90 ? 0.35 : bond >= 60 ? 0.2 : bond >= 30 ? 0.1 : 0);
   const title = RESO_TITLE[me + '+' + mate.id] || RESO_TITLE[mate.id + '+' + me] || `${CHARS[me]?.name || ''} × ${CHARS[mate.id]?.name || ''} · 灯火共鸣`;
-  say(title, 2.2); sfx && sfx('ult'); shake && shake(12);
+  const fancy = bond >= 60 ? (bond >= 90 ? ' ★★★' : ' ★★') : '';
+  say(title + fancy, 2.2); sfx && sfx('reso'); shake && shake(12 + (bond >= 60 ? 4 : 0));
   if (ctx.root && ctx.h) {
-    const cut = ctx.h('div.ak-cutin', {}, ctx.h('em', {}, '灯火共鸣'), ctx.h('b', {}, title));
-    ctx.root.append(cut); setTimeout(() => cut.remove(), 1600);
+    const cut = ctx.h('div.ak-cutin' + (bond >= 60 ? '.fancy' : ''), {},
+      ctx.h('img.ak-cutin-bg', { src: 'assets/cg/key_skill_cutin.webp', alt: '' }),
+      ctx.h('em', {}, '灯火共鸣'), ctx.h('b', {}, title + fancy));
+    ctx.root.append(cut); setTimeout(() => cut.remove(), 1600 + (bond >= 90 ? 400 : 0));
   }
-  ring && ring(P.x, P.y - 26, 180, '#ffcf6a', 0.8);
-  part && part(P.x, P.y - 30, '#ffe7a0', 50, 360, 1.1, 5);
-  hitCircle && hitCircle(P.x, P.y - P.h / 2, 200, 3.2, { skill: true, heavy: true, kb: 280, col: '#ffcf6a', st: ['brk', 0.8] });
-  for (const r of roster) if (r.alive) { const n = Math.round(r.s.hp * 0.12); r.hp = Math.min(r.s.hp, r.hp + n); }
-  heal && heal(C().s.hp * 0.08, true);
+  const rad = 200 * bondMul;
+  ring && ring(P.x, P.y - 26, rad * 0.9, '#ffcf6a', 0.8);
+  part && part(P.x, P.y - 30, '#ffe7a0', Math.round(50 * bondMul), 360, 1.1, 5);
+  hitCircle && hitCircle(P.x, P.y - P.h / 2, rad, 3.2 * bondMul, { skill: true, heavy: true, kb: 280, col: '#ffcf6a', st: ['brk', 0.8] });
+  for (const r of roster) if (r.alive) { const n = Math.round(r.s.hp * 0.12 * bondMul); r.hp = Math.min(r.s.hp, r.hp + n); }
+  heal && heal(C().s.hp * 0.08 * bondMul, true);
   st.resoUsed = (st.resoUsed || 0) + 1;
 }
 
@@ -211,6 +217,37 @@ export function drawHooks(g, ctx, camHelpers){
     if (f.dead || !(f.def_.stealth || f.stealth)) continue;
     f._alphaMul = f.reveal || st.eyeOn ? 1 : 0.15;
   }
+
+  // 秘径 / 秘箱 / 梦门：灯照或烛瞳才显形；烛瞳画金线轮廓
+  const secrets = st.secrets || [];
+  for (const s of secrets) {
+    if (s.taken) continue;
+    const d = Math.hypot(s.x - P.x, s.y - (P.y - 26));
+    const lit = d < Rlamp || st.eyeOn;
+    s.revealed = lit;
+    if (!lit && !st.eyeOn) continue;
+    g.save();
+    if (st.eyeOn) {
+      g.strokeStyle = 'rgba(255,210,100,0.85)'; g.lineWidth = 1.5; g.setLineDash([4, 3]);
+      g.strokeRect(s.x - s.w / 2 - 2, s.y - s.h - 2, s.w + 4, s.h + 4);
+      g.setLineDash([]);
+      g.fillStyle = '#ffe08a'; g.font = 'bold 8px sans-serif'; g.textAlign = 'center';
+      g.fillText(s.kind === 'chest' ? '秘匣' : s.kind === 'gate' ? '梦门' : '秘径', s.x, s.y - s.h - 8);
+    }
+    if (lit) {
+      g.globalAlpha = st.eyeOn ? 1 : 0.75;
+      if (s.kind === 'chest') {
+        g.fillStyle = '#c9a227'; g.fillRect(s.x - 8, s.y - 14, 16, 12);
+        g.fillStyle = '#ffe08a'; g.fillRect(s.x - 8, s.y - 14, 16, 3);
+      } else if (s.kind === 'gate') {
+        g.strokeStyle = st.dream ? '#7ec8ff' : '#ffcf6a'; g.lineWidth = 2;
+        g.beginPath(); g.ellipse(s.x, s.y - 20, 12, 22, 0, 0, 6.283); g.stroke();
+      } else {
+        g.fillStyle = 'rgba(255,200,100,0.35)'; g.fillRect(s.x - s.w / 2, s.y - 4, s.w, 4);
+      }
+    }
+    g.restore();
+  }
 }
 
 export function drawDreamTint(g, cv, st){
@@ -231,4 +268,57 @@ export function sGoals(stage, st){
     { k: 'dream', label: '两层皆历', ok: !!(st.dreamSeen && st.awakeSeen) },
     { k: 'reso',  label: '共鸣 ≥ 1', ok: (st.resoUsed || 0) >= 1 },
   ];
+}
+
+
+/** 关卡开局埋藏秘匣 / 秘径 / 梦门 */
+export function seedSecrets(arenas, stage){
+  const out = [];
+  for (const a of arenas) {
+    const mid = (a.x0 + a.x1) / 2;
+    out.push({ kind: 'chest', x: mid + 80, y: 232, w: 20, h: 14, taken: false, reward: a.i });
+    out.push({ kind: 'path', x: a.x0 + 40, y: 180, w: 48, h: 6, taken: false, arena: a.i });
+    if (stage.dream || a.i % 2 === 1) out.push({ kind: 'gate', x: a.x1 - 60, y: 232, w: 24, h: 40, taken: false, arena: a.i });
+  }
+  return out;
+}
+
+/** 拾取秘匣（灯照或烛瞳显形后走近） */
+export function trySecretPickup(ctx){
+  const { st, P, say, sfx, part } = ctx;
+  if (!st.secrets) return null;
+  for (const s of st.secrets) {
+    if (s.taken || !s.revealed) continue;
+    if (Math.abs(s.x - P.x) > 22 || Math.abs(s.y - P.y) > 40) continue;
+    s.taken = true;
+    if (s.kind === 'chest') {
+      say('秘匣 · 灯下现形', 1.2); sfx && sfx('secret');
+      part && part(s.x, s.y - 10, '#ffd24a', 16, 160, 0.6, 3);
+      st.secretChests = (st.secretChests || 0) + 1;
+      return { kind: 'chest', gold: 40 + Math.round(Math.random() * 60), dust: st.dream ? 2 : 0 };
+    }
+    if (s.kind === 'gate') {
+      say(st.dream ? '梦门共鸣' : '梦门微亮 · 闭目可入', 1.4); sfx && sfx('portal');
+      if (!st.dream) { /* 提示玩家可切换 */ }
+      st.secretGates = (st.secretGates || 0) + 1;
+      return { kind: 'gate' };
+    }
+    if (s.kind === 'path') {
+      say('秘径显形', 1); sfx && sfx('bell');
+      st.secretPaths = (st.secretPaths || 0) + 1;
+      return { kind: 'path' };
+    }
+  }
+  return null;
+}
+
+/** 烛瞳使首领预警更早可见（缩短感知延迟） */
+export function eyeWarnScale(st){
+  return st.eyeOn ? 0.55 : 1; // 预警时间视觉加速：实际 warn 仍由引擎控制，此值用于绘制闪烁
+}
+
+/** 灯域内夜鬼防御削弱系数 */
+export function lampDefMul(f){
+  if (!f || !f.inLamp || !f.lampWeak) return 1;
+  return Math.max(0.55, 1 - f.lampWeak * 0.45);
 }

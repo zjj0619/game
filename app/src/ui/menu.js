@@ -193,7 +193,7 @@ export async function openGallery(){
   const ENDN = { a:'长明', b:'长夜', c:'新烛', d:'归墟同眠', e:'狐梦千年', f:'昼夜双瞳' };
   const view = src => { const v = h('div.viewer', { onclick:()=>v.remove() }, h('img', { src })); document.getElementById('app').append(v); };
   const cgs = ['cg_dengjin','cg_jingwei','cg_xingtian','cg_xiwangmu','cg_baize','cg_dijiang','cg_kuafu','cg_ba','cg_baiji','cg_xiangliu','cg_fuli','cg_duijue'];
-  const keys = ['key_dream_layers','key_resonance','key_clearcard','key_lamp_radius','key_candle_eye','key_hub_sanctuary'];
+  const keys = ['key_title_splash','key_dream_layers','key_resonance','key_skill_cutin','key_clearcard','key_reward_popup','key_lamp_radius','key_candle_eye','key_hub_sanctuary'];
   const epis = [
     ['epi_dawn_common','天亮第七日', !!meta.endings.length],
     ['epi_letter_fuli','浮黎的信', meta.endings.length>0],

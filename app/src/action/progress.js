@@ -11,7 +11,7 @@ import './gear.js';
 export function ensureAct(){
   if (!S) return null;
   S.act ??= {}; const A = S.act;
-  A.cleared ??= {}; A.skin ??= {}; A.skins ??= {}; A.best ??= {}; A.tower ??= 0; A.team ??= ['yangui']; A.slv ??= {}; A.slots ??= {}; A.spSpent ??= {}; A.spBonus ??= {};
+  A.cleared ??= {}; A.skin ??= {}; A.skins ??= {}; A.best ??= {}; A.tower ??= 0; A.team ??= ['yangui']; A.slv ??= {}; A.slots ??= {}; A.spSpent ??= {}; A.spBonus ??= {}; A.dust ??= 0;
   A.pets ??= {}; A.pet ??= null; A.souls ??= {}; A.heroes ??= []; A.hard ??= {}; A.rush ??= 0; A.tut ??= {}; A.runs ??= 0; A.seen ??= {};
   S.city ??= { lamp:1, forge:1, herb:1, beast:1, market:1, tower:1 };
   S.daily ??= { day:'', done:{}, prog:{}, claimed:{} };
@@ -62,7 +62,7 @@ export function totalStars(){ return Object.values(S.act.best).reduce((a, r) => 
 // —— 结算 ——
 const RANK = { S:4, A:3, B:2, C:1 };
 export function applyResult(stage, res){
-  const A = ensureAct(); const out = { gold:0, exp:0, items:[], ups:{}, first:false, newBest:false, unlocks:[], sp:0 };
+  const A = ensureAct(); const out = { gold:0, exp:0, dust:0, items:[], ups:{}, first:false, newBest:false, unlocks:[], sp:0 };
   A.runs++; S.stats.battles = (S.stats.battles || 0) + 1;
   const cityG = 1 + ((S.city.market || 1) - 1) * 0.05, cityE = 1 + ((S.city.lamp || 1) - 1) * 0.05;
   out.gold = Math.round(res.gold * cityG); out.exp = Math.round(res.exp * cityE);
@@ -81,7 +81,7 @@ export function applyResult(stage, res){
     dailyProg('clear', 1); if (res.rating === 'S') dailyProg('rankS', 1); if (stage.boss) dailyProg('boss', 1);
   }
   dailyProg('kills', res.kills || 0); dailyProg('ults', res.ults || 0);
-  addGold(out.gold);
+  addGold(out.gold); out.dust = res.dust || 0; if (out.dust) A.dust = (A.dust || 0) + out.dust;
   for (const id of res.team) { const ups = gainExp(id, out.exp); if (ups.length) out.ups[id] = ups; }
   for (const [id, n] of Object.entries(res.loot || {})) { if (!ITEMS[id]) continue; addItem(id, n); if (ITEMS[id].rar >= 4) ach('forge_god'); out.items.push({ id, n }); }
   for (const [b, n] of Object.entries(res.souls || {})) { A.souls[b] = (A.souls[b] || 0) + n; out.items.push({ soul:b, n }); }

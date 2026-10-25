@@ -17,8 +17,8 @@ import { openCamp } from './camp.js';
 export function titleScreen(){
   const latest = latestSave();
   const root = h('div.screen.title', {},
-    h('div.t-bg', { style:{backgroundImage:`url(${asset('cg/key_dream_layers')})`} }),
-    h('div.t-bg.t-bg2', { style:{backgroundImage:`url(${asset('ui/title')})`, opacity:'0.35'} }),
+    h('div.t-bg', { style:{backgroundImage:`url(${asset('cg/key_title_splash')})`} }),
+    h('div.t-bg.t-bg2', { style:{backgroundImage:`url(${asset('cg/key_dream_layers')})`, opacity:'0.28'} }),
     h('div.t-shade'),
     h('div.t-logo', {}, h('div.t-main', {}, '烛龙纪'), h('div.t-sub', {}, '长 夜 山 海'), h('div.t-en', {}, 'CHRONICLE OF THE TORCH DRAGON'), h('div.t-hook', {}, '灯芯 · 烛瞳 · 梦层 · 共鸣')),
     h('div.t-menu', {},

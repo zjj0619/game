@@ -88,7 +88,33 @@ function tick(){
     nextT += spb; step++;
   }
 }
+
+const THEME_FILES = {
+  title: 'assets/music/theme_title.mp3',
+  warm: 'assets/music/theme_hub.mp3',
+  battle: 'assets/music/theme_battle.mp3',
+  dream: 'assets/music/theme_dream.mp3',
+  dawn: 'assets/music/theme_win.mp3',
+  win: 'assets/music/theme_win.mp3',
+};
+let trackEl = null;
+function playTrackFile(name){
+  const src = THEME_FILES[name] || THEME_FILES.title;
+  try {
+    if (trackEl) { trackEl.pause(); trackEl = null; }
+    const a = new Audio(src); a.loop = true; a.volume = Math.min(1, (settings.music||0.6)*(settings.master||1)*0.55);
+    a.play().catch(()=>{}); trackEl = a; return true;
+  } catch(e){ return false; }
+}
+export function stopTrack(){ if (trackEl) { try{ trackEl.pause(); }catch(e){} trackEl=null; } }
+
 export function playBgm(name){
+  stopTrack();
+  if (THEME_FILES[name] && playTrackFile(name)) {
+    cur = name;
+    if (ctx && musicBus) { musicBus.gain.cancelScheduledValues(ctx.currentTime); musicBus.gain.setValueAtTime(0.0001, ctx.currentTime); }
+    return;
+  }
   if (!THEMES[name]) name='title';
   if (cur===name) return; cur=name;
   if (!ctx) return; step=0; nextT=ctx.currentTime+0.1;
@@ -96,7 +122,7 @@ export function playBgm(name){
   musicBus.gain.cancelScheduledValues(ctx.currentTime); musicBus.gain.setValueAtTime(0.0001,ctx.currentTime); musicBus.gain.linearRampToValueAtTime(settings.music*0.55,ctx.currentTime+1.5);
   if (!timer) timer=setInterval(tick,80);
 }
-export function stopBgm(){ cur=null; }
+export function stopBgm(){ cur=null; stopTrack(); }
 export function currentBgm(){ return cur; }
 const _sfxT={};
 export function sfx(name){
@@ -132,6 +158,13 @@ export function sfx(name){
     case 'coin': tone(1320,0.06,'square',0.03); tone(1760,0.1,'square',0.025); break;
     case 'boom': drum(t,'kick',1,sfxBus); tone(70,0.6,'sawtooth',0.1,30); drum(t,'snare',0.5,sfxBus); break;
     case 'hurt': tone(220,0.16,'square',0.06,90); break;
+    case 'portal': tone(220,0.5,'sine',0.1,880); tone(440,0.45,'triangle',0.06,110); drum(t,'hat',0.4,sfxBus); setTimeout(()=>tone(660,0.35,'sine',0.08,220),120); break;
+    case 'dream': tone(180,0.7,'sine',0.1,520); tone(270,0.6,'triangle',0.06,90); [0,3,7].forEach((s,i)=>setTimeout(()=>tone(330*Math.pow(2,s/12),0.4,'sine',0.05),i*100)); break;
+    case 'reso': drum(t,'kick',1,sfxBus); tone(98,1.0,'sawtooth',0.12,660); [0,5,7,12,17].forEach((s,i)=>setTimeout(()=>tone(392*Math.pow(2,s/12),0.7,'triangle',0.1),i*80)); tone(1320,0.5,'sine',0.05,440); break;
+    case 'eye': tone(880,0.25,'sine',0.08,1760); tone(1320,0.2,'triangle',0.05,660); drum(t,'hat',0.3,sfxBus); break;
+    case 'share': [0,4,7,11,14].forEach((s,i)=>setTimeout(()=>tone(523*Math.pow(2,s/12),0.35,'triangle',0.09),i*70)); break;
+    case 'secret': tone(740,0.15,'sine',0.1); setTimeout(()=>tone(988,0.25,'triangle',0.1),90); setTimeout(()=>tone(1480,0.3,'sine',0.08),180); break;
+    case 'flip': tone(300,0.2,'sawtooth',0.06,900); tone(900,0.25,'triangle',0.05,200); drum(t,'snare',0.35,sfxBus); break;
   }
 }
 let voiceEl=null;

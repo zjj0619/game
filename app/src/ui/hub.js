@@ -1,4 +1,5 @@
 // v2.0 烬城枢纽：闯关地图、关卡详情与出战、结算、伙伴、异兽、铁坊、烬城建设、试炼、每日
+import { idbGet, idbSet } from '../engine/ai.js';
 import { S, save, AUTO, stats, addItem, addGold, expNeed, ach, has } from '../engine/state.js';
 import { CHARS, EL_COLOR } from '../data/characters.js';
 import { ITEMS } from '../data/items.js';
@@ -117,7 +118,10 @@ export function controlsGuide(){ return new Promise(res => { const p = panel('�
     row('⤒', '跳跃', '可二段跳。部分角色的被动可三段跳。'), row('➤', '冲刺', '短距离冲刺，冲刺过程无敌——闪避首领红色预警的关键。'),
     row('技', '技能 ×5', '消耗法力，冷却后可再次使用。在「伙伴 · 技能」里升级并更换技能。'), row('龍', '变身', `连击与受击积攒怒气，满后变身：大幅强化并获得专属攻击（${ULT_LV} 级解锁）。`),
     row('⇄', '换人 / 灵药', '随时切换出战伙伴；灵药回复气血与法力，每关数量有限。'),
-    h('p.gd-tip', {}, '评价按用时、受击次数与连击计算：S 评价可获得额外技能点。')), h('div.row.center', {}, btn('明白了', () => p.close(), 'gold')));
+    row('瞳 E', '烛瞳', '耗蓝开启视野：弱点浮出、秘匣/秘径金线显形，首领预警提前显现。'),
+    row('梦 R', '闭目·睁眼', '切换梦境叠层：闭目掉梦屑与异兽之卵，部分平台与首领只在一侧出现。'),
+    row('灯 T', '灯火共鸣', '共鸣槽满后触发同伴合击；好感越高威力与字幕越华丽。'),
+    h('p.gd-tip', {}, '评价按用时、受击、连击、两层皆历与秘匣计算：S 评价额外技能点与丰厚赏赐。')), h('div.row.center', {}, btn('明白了', () => p.close(), 'gold')));
 }); }
 function resultScreen(stage, res, out, opts){
   const win = res.win; const lvl = Object.entries(out.ups);
@@ -132,23 +136,81 @@ function resultScreen(stage, res, out, opts){
         win ? h('div.rs-rank.r' + res.rating, {}, res.rating) : h('div.rs-rank.rF', {}, '败'),
         h('div.rs-name', {}, stage.name + (res.hard ? ' · 困难' : '')),
         h('div.rs-stats', {}, h('span', {}, '用时 ' + Math.floor(res.time / 60) + ':' + String(res.time % 60).padStart(2, '0')), h('span', {}, '最高连击 ' + res.combo), h('span', {}, '击败 ' + res.kills), h('span', {}, '受击 ' + res.hits)),
-        win ? h('div.rs-card', {},
+        win ? h('div.rs-card', { id: 'clear-card' },
           h('img.rs-card-bg', { src: asset('cg/key_clearcard'), alt: '' }),
           h('div.rs-card-t', {}, '通 关 札'),
+          h('div.rs-card-rank', {}, res.rating),
+          h('div.rs-card-name', {}, stage.name + (res.hard ? ' · 困难' : '')),
+          h('div.rs-card-row', {}, h('em', {}, '用时'), h('b', {}, Math.floor(res.time / 60) + ':' + String(res.time % 60).padStart(2, '0'))),
+          h('div.rs-card-row', {}, h('em', {}, '最高连击'), h('b', {}, String(res.combo))),
           h('div.rs-card-row', {}, h('em', {}, '梦层切换'), h('b', {}, String(res.dreamFlips || 0) + ' 次')),
           h('div.rs-card-row', {}, h('em', {}, '灯火共鸣'), h('b', {}, String(res.resoUsed || 0) + ' 次')),
           h('div.rs-card-row', {}, h('em', {}, '烛瞳破弱点'), h('b', {}, String(res.eyeMarks || 0) + ' 处')),
+          h('div.rs-card-row', {}, h('em', {}, '秘匣'), h('b', {}, String(res.secrets || 0) + ' 个')),
+          h('div.rs-card-row', {}, h('em', {}, '梦屑'), h('b', {}, String(res.dust || 0))),
           h('div.rs-card-row', {}, h('em', {}, '两层皆历'), h('b', {}, (res.dreamSeen && res.awakeSeen) ? '✓' : '—')),
-          h('div.rs-card-s', {}, '《烛龙纪·长夜山海》')) : null,
+          h('div.rs-card-s', {}, '《烛龙纪·长夜山海》'),
+          h('button.rs-share', { type: 'button', onclick: (e) => { e.stopPropagation(); shareClearCard(stage, res); } }, '✦ 收进画廊')) : null,
         !win ? h('p.rs-tip', {}, tipFor(stage, res)) : null),
       h('div.rs-r', {},
-        h('div.rs-gain', {}, h('b', {}, '✦ ' + out.gold), h('b', {}, '经验 +' + out.exp), out.sp ? h('b.sp', {}, '技能点 +1') : null, out.first ? h('em', {}, '首次通关') : null, out.newBest && win ? h('em', {}, '新纪录') : null),
+        win ? h('img.rs-reward', { src: asset('cg/key_reward_popup'), alt: '' }) : null,
+        h('div.rs-gain', {}, h('b', {}, '✦ ' + out.gold), h('b', {}, '经验 +' + out.exp), (res.dust||out.dust) ? h('b.dust', {}, '梦屑 +' + (out.dust || res.dust || 0)) : null, out.sp ? h('b.sp', {}, '技能点 +1') : null, res.rating === 'S' && win ? h('em.sbonus', {}, 'S · 丰厚赏赐') : null, out.first ? h('em', {}, '首次通关') : null, out.newBest && win ? h('em', {}, '新纪录') : null),
         lvl.length ? h('div.rs-ups', {}, ...lvl.map(([id, l]) => h('div', {}, h('img', { src: portrait(id) }), `${CHARS[id].name} 升至 Lv ${l[l.length - 1]}`))) : null,
         out.unlocks.length ? h('div.rs-unl', {}, ...out.unlocks.map(u => h('div', {}, '✧ ' + u))) : null,
         win ? h('div.rs-next', {}, nextUnlockTeaser(stage, out)) : null,
         h('div.rs-items', {}, ...(items.length ? items : [h('div.rs-none', {}, win ? '本关没有掉落' : '失败时不保留掉落，仅获得部分星砂与经验')])),
         h('div.rs-btns', {}, btn('返回', back, ''), btn(win ? '再战一次' : '重新挑战', () => launch(stage, opts), ''), next && win ? btn('下一关 ▶', () => stageDetail(next, opts), 'gold') : null))));
   show(root);
+}
+
+
+async function shareClearCard(stage, res){
+  try {
+    const el = document.getElementById('clear-card');
+    if (!el) { toast('札未就绪'); return; }
+    const w = 720, hgt = 960;
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = hgt;
+    const g = cv.getContext('2d');
+    const bg = new Image(); bg.crossOrigin = 'anonymous'; bg.src = asset('cg/key_clearcard');
+    await new Promise(r => { bg.onload = r; bg.onerror = r; setTimeout(r, 800); });
+    g.fillStyle = '#1a1208'; g.fillRect(0, 0, w, hgt);
+    try { g.globalAlpha = 0.55; g.drawImage(bg, 0, 0, w, hgt); g.globalAlpha = 1; } catch(e) {}
+    const grad = g.createLinearGradient(0, 0, 0, hgt);
+    grad.addColorStop(0, 'rgba(40,24,8,.7)'); grad.addColorStop(1, 'rgba(8,6,4,.92)');
+    g.fillStyle = grad; g.fillRect(0, 0, w, hgt);
+    g.strokeStyle = 'rgba(255,200,100,.45)'; g.lineWidth = 4; g.strokeRect(18, 18, w - 36, hgt - 36);
+    g.fillStyle = '#ffe08a'; g.font = 'bold 42px serif'; g.textAlign = 'center';
+    g.fillText('通 关 札', w / 2, 90);
+    g.fillStyle = '#ffd84a'; g.font = 'bold 160px Georgia,serif';
+    g.fillText(res.rating || 'A', w / 2, 280);
+    g.fillStyle = '#fff6d8'; g.font = '28px sans-serif';
+    g.fillText(stage.name + (res.hard ? ' · 困难' : ''), w / 2, 340);
+    const rows = [
+      ['用时', Math.floor(res.time / 60) + ':' + String(res.time % 60).padStart(2, '0')],
+      ['最高连击', String(res.combo)],
+      ['梦层切换', (res.dreamFlips || 0) + ' 次'],
+      ['灯火共鸣', (res.resoUsed || 0) + ' 次'],
+      ['烛瞳破弱点', (res.eyeMarks || 0) + ' 处'],
+      ['秘匣', (res.secrets || 0) + ' 个'],
+      ['梦屑', String(res.dust || 0)],
+      ['两层皆历', (res.dreamSeen && res.awakeSeen) ? '✓' : '—'],
+    ];
+    g.font = '24px sans-serif'; g.textAlign = 'left';
+    rows.forEach((r, i) => {
+      const y = 400 + i * 42;
+      g.fillStyle = '#cbb892'; g.fillText(r[0], 80, y);
+      g.fillStyle = '#ffe7a0'; g.textAlign = 'right'; g.fillText(r[1], w - 80, y); g.textAlign = 'left';
+    });
+    g.fillStyle = '#8a7a55'; g.font = '18px sans-serif'; g.textAlign = 'center';
+    g.fillText('《烛龙纪·长夜山海》', w / 2, hgt - 48);
+    const data = cv.toDataURL('image/jpeg', 0.88);
+    const id = 'clear_' + stage.id + '_' + Date.now();
+    const list = (await idbGet('gallery')) || [];
+    list.push({ id, title: '通关札 · ' + stage.name + ' · ' + (res.rating || ''), t: Date.now() });
+    await idbSet('gallery', list);
+    await idbSet('img:' + id, data);
+    sfx('ach'); toast('通关札已收进画廊');
+  } catch (e) { console.warn(e); toast('保存失败'); }
 }
 
 function nextUnlockTeaser(stage, out){
