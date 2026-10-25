@@ -50,4 +50,4 @@
 - `app/src/action/engine.js` — 灯芯 / 烛瞳 / 梦层 / 共鸣
 - `app/src/action/stages.js` — 关卡 `dream` 标记与双层波次
 - `app/src/ui/hub.js` — 通关札、S 条件 HUD、下一解锁预告
-- `app/src/style/action.css` / `hub.css` — 演出与卡面
+- `app/src/action.css` / `hub.css` — 演出与卡面
