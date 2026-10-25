@@ -96,3 +96,4 @@
 .ak-bf{position:relative;width:20px;height:20px;border-radius:4px;background:rgba(0,0,0,.45);border:1px solid rgba(255,220,150,.35)}
 .ak-bf img{width:100%;height:100%;object-fit:contain}
 .ak-bf em{position:absolute;right:-2px;bottom:-4px;font-size:9px;font-style:normal;color:#fff;text-shadow:0 0 2px #000,0 0 2px #000}
+.ak-poti{width:62%;height:62%;object-fit:contain;filter:drop-shadow(0 0 4px rgba(255,120,120,.5))}

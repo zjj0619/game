@@ -68,7 +68,7 @@ export function runStage(stage, opts = {}){
     hud.dash = btnA('ak-dash', '➤', '冲刺', v => v && dash());
     hud.ult = btnA('ak-ult', '龍', '变身', v => v && ult());
     hud.swap = btnA('ak-swap', '⇄', '换人', v => v && swap());
-    hud.pot = btnA('ak-pot', '✚', '灵药', v => v && potion());
+    hud.pot = btnA('ak-pot', h('img.ak-poti', { src: asset('icon/ex/hp') }), '灵药', v => v && potion());
     hud.joy = h('div.ak-joy', {}, h('div.ak-knob'));
     hud.face = h('img.ak-face'); hud.hp = h('i'); hud.mp = h('i'); hud.rg = h('i'); hud.hpT = h('span'); hud.name = h('b'); hud.buf = h('div.ak-buf');
     hud.team = h('div.ak-team'); hud.combo = h('div.ak-combo'); hud.obj = h('div.ak-obj'); hud.boss = h('div.ak-boss', {}, h('b'), h('div.ak-bb', {}, h('i'), h('em')), h('span.ak-ph'));

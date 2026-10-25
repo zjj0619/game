@@ -227,7 +227,7 @@ export function petScreen(sel){
       S.act.pet === P.id ? h('b.pt-on', {}, '助战') : null, !own && n >= AP.SOUL_NEED ? h('i.rdot') : null); }));
   const P = AP.PETS[sel]; const pd = S.act.pets[sel]; const n = S.act.souls[sel] || 0; const d = AFOES[sel];
   const feedEff = 1 + ((S.city.beast || 1) - 1) * 0.2;
-  const detail = h('div.pt-d', {}, h('div.pt-img', {}, h('img', { src: asset(P.img) })), h('div.pt-n', {}, h('b', {}, P.name), elChip(P.el), chip(AI_NAME[P.ai])),
+  const detail = h('div.pt-d', {}, h('div.pt-img' + (pd ? '' : '.egg'), {}, h('img', { src: asset(P.img) }), pd ? null : h('img.pt-egg', { src: asset('icon/ex/egg_' + ({ fire: 'bird', water: 'dragon', wood: 'fox', metal: 'beast', earth: 'beast', dark: 'spirit', light: 'spirit' }[P.el] || 'beast')) })), h('div.pt-n', {}, h('b', {}, P.name), elChip(P.el), chip(AI_NAME[P.ai])),
     h('p.pt-desc', {}, P.desc || ''),
     pd ? h('div.pt-st', {}, h('div', {}, `等级 ${pd.lv}/50`, h('div.hr-exp', {}, h('i', { style: { width: (pd.exp / AP.petExpNeed(pd.lv) * 100) + '%' } }))), h('div', {}, '星级 ' + '★'.repeat(pd.star || 0) + '☆'.repeat(5 - (pd.star || 0))),
       h('div', {}, `助战威力 ${AP.petPower(pd)}`), h('div', {}, '队伍加成 ' + Object.entries(AP.petBonus(pd)).map(([k, v]) => STATN[k] + ' +' + (v * 100).toFixed(1) + '%').join(''))) : h('div.pt-st', {}, `灵魄 ${n}/${AP.SOUL_NEED}：击败该异兽（精英、异种更容易）有几率掉落灵魄。每日「异兽秘境」掉率×4。`),
@@ -248,7 +248,7 @@ export function forgeScreen(tab = 'forge', t0){
   if (tab === 'forge') {
     const c = AP.forgeCost(t); const m = AP.TIER_MAT[t];
     body.append(h('div.fg-tiers', {}, ...AP.TIER_NAME.map((n, i) => h('div.fg-t' + (i === t ? '.on' : '') + (i > max ? '.lock' : ''), { onclick: () => { if (i > max) return toast((S.city.forge || 1) * 2 - 1 < i ? '升级「铸灯铁坊」解锁' : '推进闯关区域解锁'); show(forgeScreen(tab, i)); } }, n + '阶'))),
-      h('div.fg-cost', {}, `每次锻造：✦${c.gold} · ${ITEMS[m].name} ×${c.mat}（持有 ${S.inv[m] || 0}）` + (t >= 4 ? ` · 星髓晶 ×${c.mat2}（持有 ${S.inv.m_starmarrow || 0}）` : ''), h('small', {}, '品质随机：良品 50% · 精品 30% · 珍品 15% · 神品 5%')),
+      h('div.fg-cost', {}, h('img.fg-ham', { src: asset('icon/ex/hammer') }), `每次锻造：✦${c.gold} · ${ITEMS[m].name} ×${c.mat}（持有 ${S.inv[m] || 0}）` + (t >= 4 ? ` · 星髓晶 ×${c.mat2}（持有 ${S.inv.m_starmarrow || 0}）` : ''), h('small', {}, '品质随机：良品 50% · 精品 30% · 珍品 15% · 神品 5%')),
       h('div.fg-grid', {}, ...['weapon', 'armor', 'charm'].flatMap(slot => [0, 1, 2].map(k => { const id = `g_${slot[0]}${t}${k}2`; const it = ITEMS[id];
         return h('div.fg-it', {}, icon(it.icon, 'md'), h('b', {}, it.name.replace(/·.$/, '')), h('small', {}, SLOTN[slot] + ' · ' + itemLine({ ...it, affix: [] })), btn('锻造', () => { const r = AP.forge(t, slot, k); if (r.err) return toast(r.err); sfx('fire'); saveNow(); forgeReveal(r.id, () => show(forgeScreen(tab, t))); }, 'sm')); }))));
   } else {
