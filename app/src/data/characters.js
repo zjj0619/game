@@ -128,9 +128,12 @@ export const CHARS = {
   xiangliu:{name:'相柳',title:'九首蛇神',voice:'male-qn-badao',bio:'共工之臣，九首人面，蛇身而青。其所歍所尼，即为源泽。'},
   dijiang:{name:'帝江',title:'混沌之神',voice:'male-qn-qingse',bio:'状如黄囊，赤如丹火，六足四翼，浑敦无面目，是识歌舞。'},
   zhulong:{name:'烛龙',title:'钟山之神',voice:'male-qn-jingying',bio:'人面蛇身而赤，直目正乘。其瞑乃晦，其视乃明。'},
-  luwu:{name:'陆吾',title:'昆仑守卫',voice:'male-qn-jingying',bio:'其神状虎身而九尾，人面而虎爪。司天之九部及帝之囿时。'},
-  ba:{name:'魃',title:'旱神',voice:'female-chengshu',bio:'黄帝之女，衣青衣。所居不雨。被锁在赤水之北已三千年。'},
-  tushanjiao:{name:'涂山娇',title:'青丘女王',voice:'female-yujie',bio:'青丘九尾狐之王，白霁的姐姐。冷静、骄傲，把族人的存续看得比一切都重。'},
+  luwu:{name:'陆吾',title:'昆仑守卫',el:'metal',act:true,skills:[],voice:'male-qn-jingying',
+    base:{hp:160,mp:26,atk:17,mag:8,def:15,spd:9},grow:{hp:19,mp:2,atk:3.0,mag:1.2,def:2.4,spd:0.5},bio:'其神状虎身而九尾，人面而虎爪。司天之九部及帝之囿时。'},
+  ba:{name:'魃',title:'旱神',el:'fire',el2:'earth',act:true,skills:[],voice:'female-chengshu',
+    base:{hp:105,mp:42,atk:9,mag:18,def:9,spd:11},grow:{hp:12.5,mp:3.6,atk:1.4,mag:3.2,def:1.5,spd:0.65},bio:'黄帝之女，衣青衣。所居不雨。被锁在赤水之北已三千年。'},
+  tushanjiao:{name:'涂山娇',title:'青丘女王',el:'water',el2:'light',act:true,skills:[],voice:'female-yujie',
+    base:{hp:100,mp:44,atk:11,mag:17,def:9,spd:14},grow:{hp:12.5,mp:3.4,atk:1.9,mag:3.0,def:1.5,spd:0.8},bio:'青丘九尾狐之王，白霁的姐姐。冷静、骄傲，把族人的存续看得比一切都重。'},
 };
 export const PLAYABLE = ['yangui','baiji','xianwei','qi','ali','kualing','fuli'];
 export const COMPANIONS = ['baiji','xianwei','qi','ali','kualing'];

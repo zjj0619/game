@@ -98,7 +98,9 @@ export function playBgm(name){
 }
 export function stopBgm(){ cur=null; }
 export function currentBgm(){ return cur; }
+const _sfxT={};
 export function sfx(name){
+  { const n=performance.now(); if (_sfxT[name] && n-_sfxT[name]<45) return; _sfxT[name]=n; }
   if (!ctx) return; const t=ctx.currentTime;
   const tone=(f,d,type='sine',v=0.2,f2)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.type=type; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d); env(g,t,0.005,d,v); o.connect(g); g.connect(sfxBus); o.start(t); o.stop(t+d+0.05); };
   switch(name){
@@ -123,6 +125,13 @@ export function sfx(name){
     case 'fire': tone(120,0.5,'sawtooth',0.07,60); drum(t,'snare',0.5,sfxBus); tone(500,0.4,'triangle',0.05,1400); break;
     case 'break': drum(t,'kick',1,sfxBus); tone(1600,0.25,'square',0.06,200); tone(90,0.4,'sawtooth',0.1,40); break;
     case 'bell': if (ctx) { const g=sfxBus; bell(74,t,0.1); } break;
+    case 'swing': tone(900,0.07,'triangle',0.035,260); break;
+    case 'skill': tone(420,0.18,'sine',0.06,1200); tone(840,0.14,'triangle',0.03,1800); break;
+    case 'jump': tone(300,0.1,'sine',0.05,620); break;
+    case 'dash': tone(1800,0.12,'sawtooth',0.025,400); drum(t,'hat',0.25,sfxBus); break;
+    case 'coin': tone(1320,0.06,'square',0.03); tone(1760,0.1,'square',0.025); break;
+    case 'boom': drum(t,'kick',1,sfxBus); tone(70,0.6,'sawtooth',0.1,30); drum(t,'snare',0.5,sfxBus); break;
+    case 'hurt': tone(220,0.16,'square',0.06,90); break;
   }
 }
 let voiceEl=null;

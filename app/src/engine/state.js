@@ -28,9 +28,14 @@ export function newGame(){
     lamp:1, refine:{}, chests:{}, puzzles:{}, pos:{},
   };
   addMember('yangui', 1);
+  S = migrate(S);
   return S;
 }
-export function migrate(s){ if (!s) return s; s.lamp ??= 1; s.refine ??= {}; s.chests ??= {}; s.puzzles ??= {}; s.pos ??= {}; for (const m of Object.keys(s.party||{})) s.party[m].talents ??= []; return s; }
+export function migrate(s){ if (!s) return s; s.lamp ??= 1; s.refine ??= {}; s.chests ??= {}; s.puzzles ??= {}; s.pos ??= {}; for (const m of Object.keys(s.party||{})) { s.party[m].talents ??= []; s.party[m].equip ??= {weapon:null,armor:null,charm:null}; s.party[m].perm ??= {}; }
+  s.act ??= {}; const A = s.act; A.cleared ??= {}; A.best ??= {}; A.tower ??= 0; A.team ??= ['yangui']; A.slv ??= {}; A.slots ??= {}; A.spSpent ??= {}; A.spBonus ??= {}; A.pets ??= {}; A.pet ??= null; A.souls ??= {}; A.heroes ??= []; A.hard ??= {}; A.rush ??= 0; A.tut ??= {}; A.runs ??= 0; A.seen ??= {};
+  A.team = A.team.filter(id => s.party?.[id]); if (!A.team.length) A.team = ['yangui'];
+  s.city ??= { lamp:1, forge:1, herb:1, beast:1, market:1, tower:1 }; s.daily ??= { day:'', done:{}, prog:{}, claimed:{} }; s.stats ??= {}; s.ver = Math.max(s.ver||0, 3);
+  return s; }
 export function setState(s){ S = migrate(s); }
 
 // —— 角色 ——
@@ -64,6 +69,7 @@ export function stats(id){
     if (it.boost) for (const [e,v] of Object.entries(it.boost)) s.boost[e]=(s.boost[e]||0)+v;
     if (it.el && slot==='weapon') s.wel = it.el;
     if (it.regen) s.regen += it.regen; if (it.mpregen) s.mpregen += it.mpregen; if (it.goldBonus) s.goldBonus += it.goldBonus;
+    if (it.spd2) s.aspd = (s.aspd||0) + it.spd2;
   }
   for (const [k,v] of Object.entries(p.perm||{})) s[k]+=v;
   // v1.1：精炼、套装、星命
@@ -71,6 +77,7 @@ export function stats(id){
   for (const slot of ['weapon','armor','charm']) {
     const iid = p.equip[slot]; const it = ITEMS[iid]; if (!it) continue; const R = S.refine?.[iid];
     if (R && R.lv) { for (const k of ['hp','mp','atk','mag','def']) if (it[k]) s[k] += Math.round(it[k]*0.10*R.lv); for (const a of R.aff||[]) { const A = AFFIXES.find(x=>x.k===a); if (A) fx.push({[A.k]:A.v}); } }
+    for (const a of it.affix||[]) if (!['crit','spd','goldBonus'].includes(a.k)) fx.push({[a.k]:a.v});
     const set = setOf(iid); if (set) counted[set.id] = (counted[set.id]||0)+1;
   }
   for (const set of SETS) { const n = counted[set.id]||0; if (n>=2) fx.push(set.b2.fx); if (n>=3) fx.push(set.b3.fx); }
