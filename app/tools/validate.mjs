@@ -54,7 +54,7 @@ for (const c of cmds) {
     case 'bgm': if (!THEMES.has(c.a)) E(at,'未知BGM '+c.a); break;
     case 'fx': if (!FX.has(c.a)) E(at,'未知特效 '+c.a); break;
     case 'ending': if (!'ABCDEF'.includes(c.a)||c.a.length!==1) E(at,'结局 '+c.a); break;
-    case 'hide': case 'goto': case 'return': case 'chapter': case 'note': case 'save': case 'wait': case 'cgoff': case 'title': case 'sfx': case 'shake': case 'flash': break;
+    case 'hide': case 'goto': case 'return': case 'chapter': case 'interlude': case 'note': case 'save': case 'wait': case 'cgoff': case 'title': case 'sfx': case 'shake': case 'flash': break;
     default: E(at,'未知指令 @'+c.t);
   }
 }

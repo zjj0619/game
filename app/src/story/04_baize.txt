@@ -124,4 +124,4 @@
 白泽：去吧。我会在图鉴里替你记着——你走过的每一步，遇见的每一只兽。
 @do item:k_baizescroll flag:ch4_done exp+1200 gold+1000 item:u_tea*3
 @note 第四章完成 · 图鉴已全面开放
-@goto c5_start
+@goto i4_start
