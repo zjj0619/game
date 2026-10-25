@@ -92,3 +92,7 @@
 .ak-row small{color:#9fb8d8}
 @media (max-height:380px){.ak-pad{transform:scale(.86);transform-origin:right bottom}.ak-joy{transform:scale(.86);transform-origin:left bottom}.ak-face{width:38px;height:38px}}
 @media (min-height:520px){.ak-pad{transform:scale(1.12);transform-origin:right bottom}.ak-joy{transform:scale(1.12);transform-origin:left bottom}}
+.ak-buf{display:flex;gap:3px;margin-top:3px;min-height:0}
+.ak-bf{position:relative;width:20px;height:20px;border-radius:4px;background:rgba(0,0,0,.45);border:1px solid rgba(255,220,150,.35)}
+.ak-bf img{width:100%;height:100%;object-fit:contain}
+.ak-bf em{position:absolute;right:-2px;bottom:-4px;font-size:9px;font-style:normal;color:#fff;text-shadow:0 0 2px #000,0 0 2px #000}

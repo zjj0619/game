@@ -16,6 +16,11 @@ const GRAV = 1500, T = () => window.__ZLJ_TEST || {};
 const imgC = {};
 function img(p){ if (!imgC[p]) { const i = new Image(); i.src = asset(p); imgC[p] = i; } return imgC[p]; }
 const ok = i => i && i.complete && i.naturalWidth > 0;
+const EL_SET = { fire:1, water:1, wood:1, metal:1, earth:1, dark:1, light:1 };
+// 由颜色推断五行配色（色相分桶）
+function colEl(col){ if (!col || col[0] !== '#') return 'light'; const n = parseInt(col.slice(1, 7), 16); const r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b); if (mx - mn < 0.12) return mx > 0.6 ? 'metal' : 'dark'; let hh; if (mx === r) hh = ((g - b) / (mx - mn)) % 6; else if (mx === g) hh = (b - r) / (mx - mn) + 2; else hh = (r - g) / (mx - mn) + 4; hh = (hh * 60 + 360) % 360;
+  return hh < 25 || hh >= 335 ? 'fire' : hh < 50 ? 'earth' : hh < 70 ? 'light' : hh < 165 ? 'wood' : hh < 250 ? 'water' : 'dark'; }
 // 程序化动画帧：assets/anim/<key>/<state><i>.webp（tools/gen/anim.py 生成），未加载时回退到静态立绘
 const ANIM_N = { idle:6, run:8, atk:6, jump:2, hurt:2, cast:4 }, FANIM_N = { idle:4, walk:6, atk:4, hurt:2 };
 function animKey(p){ return p.replace(/\//g, '_'); }
@@ -31,6 +36,7 @@ export function runStage(stage, opts = {}){
   return new Promise(resolve => {
     const team = (opts.team && opts.team.length ? opts.team : [S.act?.team?.[0] || 'yangui']).filter(id => S.party[id]);
     const hard = !!opts.hard; const lvAdj = hard ? 8 : 0;
+    for (const t of ['slash','burst','ring','spark','smoke','rune','pillar','shock','bolt','swirl','heal','shards']) for (const e of Object.keys(EL_SET)) for (let i = 0; i < 12; i++) img('vfx/' + t + '_' + e + '/' + i);
     for (const id of team) preloadAnim('p_' + id + '_s' + (S.act?.skin?.[id] || 0), true);
     const cv = h('canvas.act-cv'); const g = cv.getContext('2d');
     let W = 0, H = 0, U = 1, dpr = 1, VW = 600;
@@ -64,17 +70,20 @@ export function runStage(stage, opts = {}){
     hud.swap = btnA('ak-swap', '⇄', '换人', v => v && swap());
     hud.pot = btnA('ak-pot', '✚', '灵药', v => v && potion());
     hud.joy = h('div.ak-joy', {}, h('div.ak-knob'));
-    hud.face = h('img.ak-face'); hud.hp = h('i'); hud.mp = h('i'); hud.rg = h('i'); hud.hpT = h('span'); hud.name = h('b');
+    hud.face = h('img.ak-face'); hud.hp = h('i'); hud.mp = h('i'); hud.rg = h('i'); hud.hpT = h('span'); hud.name = h('b'); hud.buf = h('div.ak-buf');
     hud.team = h('div.ak-team'); hud.combo = h('div.ak-combo'); hud.obj = h('div.ak-obj'); hud.boss = h('div.ak-boss', {}, h('b'), h('div.ak-bb', {}, h('i'), h('em')), h('span.ak-ph'));
     hud.msg = h('div.ak-msg'); hud.go = h('div.ak-go', {}, '前进 ▶'); hud.gold = h('span.ak-gold');
     const pauseB = h('button.ak-pause', { onclick: () => pause() }, 'Ⅱ');
     const root = h('div.screen.action', {}, cv,
-      h('div.ak-top', {}, h('div.ak-me', {}, hud.face, h('div.ak-bars', {}, h('div.ak-nm', {}, hud.name, hud.hpT), h('div.ak-hp', {}, hud.hp), h('div.ak-mpb', {}, hud.mp), h('div.ak-rg', {}, hud.rg))), hud.team),
+      h('div.ak-top', {}, h('div.ak-me', {}, hud.face, h('div.ak-bars', {}, h('div.ak-nm', {}, hud.name, hud.hpT), h('div.ak-hp', {}, hud.hp), h('div.ak-mpb', {}, hud.mp), h('div.ak-rg', {}, hud.rg), hud.buf)), hud.team),
         h('div.ak-mid', {}, h('div.ak-st', {}, stage.name + (hard ? ' · 困难' : '')), hud.obj), h('div.ak-tr', {}, hud.gold, pauseB),
       hud.boss, hud.combo, hud.msg, hud.go, hud.joy,
       h('div.ak-pad', {}, hud.atk, hud.jump, hud.dash, ...hud.sk, hud.ult, hud.swap, hud.pot));
     document.querySelector('#app').append(root);
     let bgImg = img('bg/' + (stage.bg || 'jincheng')); let ridge = null;
+    // 视差层（tools/gen/px.py）：远景 / 中景 / 前景，按区域与关卡序号取图
+    const pxKey = 'px/' + (stage.region || 'jincheng') + '_' + (((stage.idx ?? 0) % 11 + 11) % 11 + 1); const PX = { far: img(pxKey + '_far'), mid: img(pxKey + '_mid'), near: img(pxKey + '_near') };
+    function pxDraw(im, spd, hgt, bottom, alpha = 1){ if (!ok(im)) return false; const w = hgt * im.naturalWidth / im.naturalHeight; const ox = -((st.cam * spd * U) % w); g.globalAlpha = alpha; for (let x = ox - (ox > 0 ? w : 0); x < cv.width; x += w) g.drawImage(im, x, bottom - hgt, w, hgt); g.globalAlpha = 1; return true; }
     function resize(){ dpr = Math.min(2, devicePixelRatio || 1); W = root.clientWidth || innerWidth; H = root.clientHeight || innerHeight; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); U = cv.height / VH; VW = cv.width / U; layoutArenas(); worldEnd = arenas[arenas.length - 1].x1 + 40; buildRidge(); }
     function buildRidge(){ const c = document.createElement('canvas'); c.width = Math.round(cv.width * 1.6); c.height = cv.height; const q = c.getContext('2d');
       const grd = q.createLinearGradient(0, c.height * 0.5, 0, c.height); grd.addColorStop(0, 'rgba(20,24,40,0)'); grd.addColorStop(1, 'rgba(5,6,12,.9)'); q.fillStyle = grd; q.beginPath(); q.moveTo(0, c.height);
@@ -95,8 +104,10 @@ export function runStage(stage, opts = {}){
     function say(text, t = 1.6){ hud.msg.textContent = text; hud.msg.classList.remove('on'); void hud.msg.offsetWidth; hud.msg.classList.add('on'); }
     function num(x, y, v, kind){ if (nums.length > 60) nums.shift(); nums.push({ x, y, v, kind, t: 0 }); }
     function part(x, y, col, n = 8, sp = 160, life = 0.5, sz = 3){ for (let i = 0; i < n; i++) { if (fx.length > 380) fx.shift(); const a = Math.random() * 6.283; const s = sp * (0.3 + Math.random()); fx.push({ k: 'p', x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 40, t: 0, life: life * (0.6 + Math.random() * 0.6), col, sz }); } }
-    function ring(x, y, r, col, life = 0.35){ fx.push({ k: 'ring', x, y, r, col, t: 0, life }); }
-    function arc(x, y, face, r, col, life = 0.16, wide = 1){ fx.push({ k: 'arc', x, y, face, r, col, t: 0, life, wide, rot: rnd(-0.4, 0.4) }); }
+    // 序列帧特效（assets/vfx/<type>_<el>/0..11）：叠加混合播放
+    function vfx(type, el, x, y, size, o = {}){ if (fx.length > 380) return; fx.push({ k: 'vfx', type, el: el || 'light', x, y, size, face: o.face || 1, t: 0, life: o.life || 0.4, rot: o.rot || 0, add: type !== 'smoke' }); }
+    function ring(x, y, r, col, life = 0.35){ fx.push({ k: 'ring', x, y, r, col, t: 0, life }); if (r >= 24) vfx(r > 70 ? 'ring' : 'burst', colEl(col), x, y, r * 2.3, { life: life * 1.3 }); }
+    function arc(x, y, face, r, col, life = 0.16, wide = 1){ const rot = rnd(-0.4, 0.4); fx.push({ k: 'arc', x, y, face, r, col, t: 0, life, wide, rot }); vfx('slash', colEl(col), x, y, r * 2.5 * Math.min(1.6, wide), { face, life: Math.max(0.2, life * 1.5), rot }); }
     function shake(v){ st.shake = Math.max(st.shake, v); }
     const aliveFoes = () => foes.filter(f => !f.dead);
     function nearest(x, y, maxD = 1e9){ let b = null, bd = maxD; for (const f of foes) { if (f.dead) continue; const d = Math.hypot(f.x - x, (f.y - f.h/2) - y); if (d < bd) { bd = d; b = f; } } return b; }
@@ -121,7 +132,7 @@ export function runStage(stage, opts = {}){
       if (ps.mpOnHit) c.mp = Math.min(c.s.mp, c.mp + ps.mpOnHit);
       const ls = buffV('lifesteal') + (s.lifesteal || 0); if (ls) heal(d * ls, true);
       num(f.x + rnd(-8, 8), f.y - f.h - 6, d, crit ? 'crit' : o.skill ? 'sk' : '');
-      part(f.x, f.y - f.h / 2, o.col || '#ffd890', crit ? 12 : 6, crit ? 260 : 170, 0.35, crit ? 3.5 : 2.5);
+      part(f.x, f.y - f.h / 2, o.col || '#ffd890', crit ? 12 : 6, crit ? 260 : 170, 0.35, crit ? 3.5 : 2.5); vfx(crit ? 'shards' : 'spark', colEl(o.col || '#ffd890'), f.x + rnd(-6, 6), f.y - f.h / 2 + rnd(-8, 8), crit ? 70 : 46, { life: 0.22, rot: rnd(0, 6) });
       st.hitstop = Math.max(st.hitstop, crit || o.heavy ? 0.085 : 0.045); if (crit || o.heavy) shake(crit ? 5 : 4);
       if (o.st) { const [k2, ch] = o.st; if (Math.random() < ch) applyStatus(f, k2, s); }
       if (P.ultT > 0 && ultDef().freezeAll && Math.random() < 0.15) applyStatus(f, 'freeze', s);
@@ -159,7 +170,7 @@ export function runStage(stage, opts = {}){
     }
     function kill(f){
       if (f.dead) return; f.dead = true; f.deadT = 0; st.kills++; const kid = f.def_.base || f.def_.id; S.kills[kid] = (S.kills[kid] || 0) + 1;
-      part(f.x, f.y - f.h / 2, elTint[f.def_.el] || '#ffffff', f.def_.boss ? 40 : 16, f.def_.boss ? 360 : 240, 0.7, 3);
+      part(f.x, f.y - f.h / 2, elTint[f.def_.el] || '#ffffff', f.def_.boss ? 40 : 16, f.def_.boss ? 360 : 240, 0.7, 3); vfx('smoke', f.def_.el, f.x, f.y - f.h / 2, f.h * 2.2, { life: 0.7 }); vfx('burst', f.def_.el === 'none' ? 'dark' : f.def_.el, f.x, f.y - f.h / 2, f.h * 1.6, { life: 0.35 });
       if (f.def_.boss) { shake(14); st.hitstop = 0.25; st.slow = 0.3; setTimeout(() => st.slow = 1, 900); }
       const lv = stage.lv + lvAdj; const tier = f.def_.boss ? 3 : f.def_.tier || 0;
       const nc = f.def_.boss ? 24 : tier === 1 ? 8 : 2 + Math.floor(Math.random() * 3);
@@ -229,7 +240,9 @@ export function runStage(stage, opts = {}){
       if (busy() || P.whirl || P.beam || P.slamming) return; const c = C(); const sid = slotsOf(c.id)[i]; const k = ASKILLS[sid]; if (!k) return;
       if ((c.cds[sid] || 0) > 0) return; if (c.mp < k.mp) { say('法力不足', 0.8); return; }
       c.mp -= k.mp; P.castT = 0.36; const lv = skillLv(c.id, sid); c.cds[sid] = k.cd * skillCd(lv) * (1 - (c.s.cdr || 0)); const o = { skill: true, lv, st: k.st, col: EL_COLOR[k.el] || AC().col };
-      const pw = k.pow || 1; const F = P.face; sfx('skill'); haptic('light'); say(k.name, 0.7); st.skillUsed = (st.skillUsed || 0) + 1;
+      const pw = k.pow || 1; const F = P.face; { const E = k.el in EL_SET ? k.el : colEl(o.col); const T = { heal: 'heal', summon: 'rune', field: 'rune', buff: 'rune', blink: 'smoke', quake: 'shock', slam: 'swirl', pull: 'swirl', beam: 'bolt', rain: 'rune', nova: 'shards', whirl: 'swirl', ult: 'rune' }[k.type];
+        if (T) vfx(T, E, P.x, T === 'shock' ? GY - 6 : P.y - P.h / 2, T === 'rune' ? 130 : T === 'bolt' ? 90 : 110, { life: T === 'rune' ? 0.7 : 0.45, face: F }); vfx('rune', E, P.x, GY - 4, 90, { life: 0.5 }); }
+      sfx('skill'); haptic('light'); say(k.name, 0.7); st.skillUsed = (st.skillUsed || 0) + 1;
       switch (k.type) {
         case 'dash': { if (k.dist < 0) { P.vx = -F * 600; P.vy = -300; P.ground = false; P.iT = 0.35; shot({ x: P.x, y: P.y - 30, vx: F * 700, vy: 0, r: 8, mult: pw * 1.4, col: o.col, life: 0.8, pierce: true, sk: o }); break; }
           P.dashT = Math.abs(k.dist) / 900; P.vx = F * 900; if (k.air) P.vy = 0; P.iT = P.dashT + 0.1; const x0 = P.x;
@@ -398,7 +411,7 @@ export function runStage(stage, opts = {}){
         case 'beam': if (p.step === 0) { const hy = P.ground ? GY - 22 : P.y - P.h / 2; tel({ shape: 'rect', x: (a.x0 + a.x1) / 2, y: hy, w: a.x1 - a.x0, h: 34, warn: 1.05 / spdM, dmg: atk * 1.6, col, big: true, fx: tl => fx.push({ k: 'slab', x: tl.x, y: tl.y, w: tl.w, h: tl.h, col: '#ffffff', t: 0, life: 0.35 }) }); p.step = 1; } if (p.t > 1.5 / spdM) end(1.8); break;
         case 'spin': f.x += Math.sign(dx) * 190 * spdM * dt; f.rot = (f.rot || 0) + dt * 18; if (st.t % 0.25 < dt) { arc(f.x, cy, 1, 70, col, 0.2, 2); if (Math.hypot(P.x - f.x, (P.y - 26) - cy) < 72) hurtP(atk * 0.7, f.x); } if (p.t > 2) { f.rot = 0; end(1.4); } break;
         case 'blink': if (p.step === 0) { part(f.x, cy, '#a070ff', 16, 180, 0.4); f.x = clamp(P.x - P.face * 90, a.x0 + 30, a.x1 - 30); f.face = Math.sign(P.x - f.x) || 1; part(f.x, f.y - f.h / 2, '#a070ff', 16, 180, 0.4); p.step = 1; tel({ shape: 'rect', x: f.x + f.face * 70, y: GY - 40, w: 140, h: 80, warn: 0.5 / spdM, dmg: atk * 1.2, col }); } if (p.t > 1.1 / spdM) end(); break;
-        case 'pillar': if (p.step === 0) { const d = Math.sign(dx) || 1; const n = 6 + f.phase * 2; for (let i = 0; i < n; i++) { const x = f.x + d * (60 + i * 52); if (x < a.x0 || x > a.x1) break; tel({ shape: 'rect', x, y: GY - 36, w: 40, h: 72, warn: (0.55 + i * 0.1) / spdM, dmg: atk * 1.1, col, fx: tl => fx.push({ k: 'spike', x: tl.x, y: GY, col, t: 0, life: 0.45 }) }); } p.step = 1; } if (p.t > 1.6 / spdM) end(); break;
+        case 'pillar': if (p.step === 0) { const d = Math.sign(dx) || 1; const n = 6 + f.phase * 2; for (let i = 0; i < n; i++) { const x = f.x + d * (60 + i * 52); if (x < a.x0 || x > a.x1) break; tel({ shape: 'rect', x, y: GY - 36, w: 40, h: 72, warn: (0.55 + i * 0.1) / spdM, dmg: atk * 1.1, col, fx: tl => { fx.push({ k: 'spike', x: tl.x, y: GY, col, t: 0, life: 0.45 }); vfx('pillar', f.def_.el in EL_SET ? f.def_.el : 'dark', tl.x, GY - 60, 80, { life: 0.5 }); } }); } p.step = 1; } if (p.t > 1.6 / spdM) end(); break;
         case 'nova': if (p.step === 0) { f.armorT = 1.4; tel({ shape: 'circle', x: f.x, y: cy, r: 150 + f.phase * 20, warn: 1.15 / spdM, dmg: atk * 2, col, big: true, fx: tl => { ring(tl.x, tl.y, tl.r, col, 0.5); ring(tl.x, tl.y, tl.r * 0.6, '#ffffff', 0.35); } }); p.step = 1; } if (p.t > 1.6 / spdM) end(2); break;
         default: end();
       }
@@ -430,7 +443,8 @@ export function runStage(stage, opts = {}){
       g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#07080e'; g.fillRect(0, 0, cv.width, cv.height);
       if (ok(bgImg)) { const bw = cv.height * 1.78 * 1.15; const ox = -((st.cam * 0.25 * U) % bw); for (let x = ox; x < cv.width; x += bw) g.drawImage(bgImg, x, -cv.height * 0.05, bw, cv.height * 1.15); }
       g.fillStyle = 'rgba(6,8,16,.28)'; g.fillRect(0, 0, cv.width, cv.height);
-      if (ridge) { const ox = -((st.cam * 0.55 * U) % ridge.width); g.drawImage(ridge, ox, 0); g.drawImage(ridge, ox + ridge.width, 0); }
+      { const hh = cv.height * 0.62; const okF = pxDraw(PX.far, 0.38, hh, GY * U + hh * 0.04, 0.95); const okM = pxDraw(PX.mid, 0.6, hh * 0.85, GY * U + hh * 0.85 * 0.14);
+        if (!okF && !okM && ridge) { const ox = -((st.cam * 0.55 * U) % ridge.width); g.drawImage(ridge, ox, 0); g.drawImage(ridge, ox + ridge.width, 0); } }
       g.setTransform(U, 0, 0, U, (-st.cam + sx) * U, sy * U);
       const L = st.cam - 40, R = st.cam + VW + 40;
       // 地面
@@ -496,6 +510,7 @@ export function runStage(stage, opts = {}){
       // 特效
       for (const e of fx) { const k = e.t / e.life; if (k >= 1) continue; g.globalAlpha = 1 - k;
         if (e.k === 'p') { g.fillStyle = e.col; g.fillRect(e.x - e.sz / 2, e.y - e.sz / 2, e.sz, e.sz); }
+        else if (e.k === 'vfx') { g.globalAlpha = Math.min(1, (1 - k) * 2.5); const fi = Math.min(11, Math.floor(k * 12)); const im = img('vfx/' + e.type + '_' + e.el + '/' + fi); if (ok(im)) { g.save(); if (e.add) g.globalCompositeOperation = 'lighter'; g.translate(e.x, e.y); if (e.rot) g.rotate(e.rot); g.scale(e.face < 0 ? -1 : 1, 1); const sz = e.size; const ar = e.type === 'pillar' ? 1.5 : 1; g.drawImage(im, -sz / 2, -sz * ar / 2, sz, sz * ar); g.restore(); } }
         else if (e.k === 'ring') { g.strokeStyle = e.col; g.lineWidth = 3 * (1 - k) + 0.5; g.beginPath(); g.arc(e.x, e.y, e.r * (0.3 + 0.7 * Math.sqrt(k)), 0, 6.283); g.stroke(); }
         else if (e.k === 'arc') { g.strokeStyle = e.col; g.lineCap = 'round'; g.lineWidth = 6 * e.wide * (1 - k); g.beginPath(); const a0 = e.face > 0 ? -1.3 : Math.PI + 1.3; g.save(); g.translate(e.x, e.y); g.rotate(e.rot); g.arc(0, 0, e.r * (0.7 + 0.3 * k), e.face > 0 ? -1.2 : Math.PI - 1.2 + 0, e.face > 0 ? 1.2 : Math.PI + 1.2, false); g.stroke(); g.strokeStyle = '#fff'; g.lineWidth = 1.5 * (1 - k); g.stroke(); g.restore(); }
         else if (e.k === 'line') { g.strokeStyle = e.col; g.lineWidth = 8 * (1 - k); g.beginPath(); g.moveTo(e.x0, e.y); g.lineTo(e.x1, e.y); g.stroke(); }
@@ -504,6 +519,7 @@ export function runStage(stage, opts = {}){
         else if (e.k === 'bolt') { g.strokeStyle = e.col; g.lineWidth = 4; g.beginPath(); let y = 0, x = e.x; g.moveTo(x, y); while (y < GY) { y += 30; x += rnd(-10, 10); g.lineTo(x, y); } g.stroke(); }
         g.globalAlpha = 1; }
       g.textAlign = 'center';
+      { g.save(); g.setTransform(1, 0, 0, 1, 0, 0); pxDraw(PX.near, 1.3, cv.height * 0.16, cv.height + cv.height * 0.02, 0.7); g.restore(); }
       for (const n of nums) { const k = n.t / 0.9; g.globalAlpha = 1 - k * k; const big = n.kind === 'crit'; g.font = `${big ? 'bold 17' : n.kind?.startsWith?.('loot') ? 'bold 10' : 'bold 12'}px MaShan, sans-serif`;
         const col = n.kind?.startsWith?.('loot') ? (RARITY[+n.kind.slice(4)]?.col || '#fff') : NUMCOL[n.kind] || '#ffffff'; const y = n.y - 26 * Math.sqrt(k) - (big ? 4 * Math.sin(k * 9) : 0);
         g.lineWidth = 3; g.strokeStyle = 'rgba(0,0,0,.75)'; g.strokeText(n.v, n.x, y); g.fillStyle = col; g.fillText(n.v, n.x, y); }
@@ -530,6 +546,9 @@ export function runStage(stage, opts = {}){
       set('pot', st.potions, v => { hud.pot.querySelector('.t').textContent = '灵药 ' + v; hud.pot.classList.toggle('nomp', v <= 0); });
       set('combo', st.combo, v => { if (v >= 3) { hud.combo.innerHTML = `<b>${v}</b><span>连击</span>`; hud.combo.classList.remove('pop'); void hud.combo.offsetWidth; hud.combo.classList.add('pop', 'on'); } else hud.combo.classList.remove('on'); });
       set('gold', st.gold, v => hud.gold.textContent = '✦ ' + v);
+      { const bi = b => b.shieldHp > 0 || b.shield ? 'shield' : b.regen ? 'regen' : b.burnAura ? 'burn' : b.slowP ? 'slow' : b.spd ? 'haste' : b.lifesteal ? 'bleed' : b.freeze ? 'freeze' : 'rage';
+        const L = P.buffs.map(b => [bi(b), b.name, Math.ceil(b.t)]); if (P.ultT > 0) L.unshift(['lamp', '变身', Math.ceil(P.ultT)]);
+        set('buf', L.map(x => x.join(':')).join(), () => hud.buf.replaceChildren(...L.map(([ic, n, t]) => h('span.ak-bf', { title: n }, h('img', { src: asset('icon/st/' + ic) }), h('em', {}, t))))); }
       const objT = stage.obj === 'timed' ? `限时 ${Math.max(0, Math.ceil(st.timeLeft))}秒` : stage.obj === 'guard' ? `守灯 ${Math.max(0, Math.round(st.lamp?.hp ?? 100))}%` : `区域 ${Math.min(arenas.length, Math.max(1, st.cur + 1))}/${arenas.length}`;
       set('obj', objT, v => hud.obj.textContent = v);
       const b = st.bossBar; if (b) set('boss', Math.round(b.hp / b.max * 400), v => { hud.boss.querySelector('.ak-bb i').style.width = (v / 4) + '%'; hud.boss.querySelector('.ak-bb em').textContent = Math.max(0, Math.round(b.hp)) + ' / ' + b.max; });
