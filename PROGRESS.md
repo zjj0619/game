@@ -71,3 +71,4 @@ d: ice jiao(冰蛟), nightmare mo(梦貘), tubo(土伯), black serpent guard(黑
 - 2026-10-25 11:07 v2.0: action engine (engine.js), data modules (data/foes/stages/gear/progress), state migrate S.act/city/daily, gear affixes in stats, 3 new heroes, new sfx, 19 achievements. User steering: no APK/testing needed; focus on content+assets.
 - 2026-10-25 11:18 hub.js + hub.css 完成并接入主菜单/山海图；异种敌人 36 张；build OK，headless 启动与进关无报错
 - 2026-10-25 11:31 提交：动画帧(英雄8外观×28帧/敌人与首领16帧/区域异色敌人)、外观系统、技能/状态/装备图标、3名角色立绘
+- 2026-10-25 11:35 提交：1008 帧序列特效与播放器、99 关×3 视差层、增益状态栏
