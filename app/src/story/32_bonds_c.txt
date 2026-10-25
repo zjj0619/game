@@ -1,0 +1,120 @@
+# 后期羁绊夜话：相柳残响、玄冥、烛龙、阿婆梦醒
+*bond_xiangliu_1
+@bg beihai
+@bgm sad
+@fx snow
+@show yangui left
+>北海的风还带着毒。晏归把那颗牙放在灯旁，火苗绿了一瞬。
+>灯芯里忽然有一个声音，很轻，像从很远的冰下传来。
+相柳：（残响）……你还带着它。
+晏归：你说别恨你。我还没想好。
+相柳：（残响）九个头里，有六个只想吞掉一切。有三个……想见天。
+相柳：（残响）我把想见天的那三个，留给了你的灯。
+? “那六个呢？” -> bond_xl_1a | aff:qi+1
+? “谢谢你还愿意开口。” -> bond_xl_1b | hope+2
+*bond_xl_1a
+相柳：（残响）它们在牙的另一面睡觉。你若把灯熄灭，它们会醒。
+晏归：那我就不会熄。
+@goto bond_xl_1e
+*bond_xl_1b
+相柳：（残响）……守灯人的徒弟，果然爱说这种话。
+*bond_xl_1e
+@do flag:bond_xiangliu_1
+@return
+*bond_xiangliu_2
+@bg campfire
+@bgm warm
+@show yangui left
+@show baiji right
+>白霁盯着灯里的绿意，耳朵折下来。
+白霁：你灯里住了条蛇。
+晏归：半条。而且它现在比较乖。
+相柳：（残响）狐狸，你的火太吵。
+白霁：你的牙太臭。
+>晏归把脸埋进手里。火堆旁的人第一次听见一条死蛇和一只狐狸吵架，笑出了声。
+@do aff:baiji+3 flag:bond_xiangliu_2
+@return
+*bond_xuanming_1
+@bg youdu
+@bgm sad
+@fx mist
+@show yangui left
+@show xuanming right
+>幽都醒了一半的夜里，玄冥没有走远。他站在灯塔影子里，像一截还没化完的雪。
+玄冥：你叫醒他们，是对的。也是残忍的。
+晏归：假的天亮，更残忍。
+玄冥：我知道。所以我恨了自己三百年。
+玄冥：晏归，如果有一天你必须在「众生的梦」和「一个人的醒」之间选——
+? “我选醒。哪怕只剩一个人。” -> bond_xm_1a | hope+2
+? “我想找第三条路。” -> bond_xm_1b | hope+3 flag:third_path
+*bond_xm_1a
+玄冥：……像你师父。
+晏归：不像。师父选了自己的死。我选别人的活。
+@goto bond_xm_1e
+*bond_xm_1b
+玄冥：第三条路通常不存在。
+晏归：那我就把灯芯劈成两半，硬走出第三条。
+玄冥：……你倒像我年轻的时候。
+*bond_xm_1e
+@do aff:xuanming+5 flag:bond_xuanming_1
+@return
+*bond_xuanming_2
+@bg zhulong_eye
+@bgm tense
+@show xuanming right
+@show yangui left
+玄冥：我做过最好的事，是把第一批人带进梦里——他们本来会在第一夜冻死。
+玄冥：我做过最坏的事，也是这一件。
+晏归：那你现在想做什么？
+玄冥：想听你骂我。也想听你说「还可以改」。
+? “还可以改。” -> bond_xm_2a | hope+3 aff:xuanming+4
+? “改不改，取决于你还敢不敢睁眼。” -> bond_xm_2b | aff:xuanming+3
+*bond_xm_2a
+>玄冥的肩膀松了一点。雪停了一息。
+@goto bond_xm_2e
+*bond_xm_2b
+玄冥：……我试试。
+*bond_xm_2e
+@do flag:bond_xuanming_2
+@return
+*bond_zhulong_1
+@bg zhulong_eye
+@bgm dawn
+@fx stars
+@show zhulong center
+@show yangui left
+烛龙：孩子。你把灯放在我眼皮上的时候，我梦见了白天。
+烛龙：白天很长。有稻子，有河，有人吵架，有人结婚。
+烛龙：我闭眼太久，差点忘了这些声音。
+晏归：那您睁开之后，还会记得长夜吗？
+烛龙：会。因为你把灯留着。
+? “那盏灯永远不熄。” -> bond_zl_1a | hope+3
+? “熄不熄，由后来的人决定。我会把故事写下来。” -> bond_zl_1b | hope+2
+*bond_zl_1a
+烛龙：好。那我就把「记得」这件事，托付给你。
+@goto bond_zl_1e
+*bond_zl_1b
+烛龙：故事比灯更不容易灭。去写吧。
+*bond_zl_1e
+@do flag:bond_zhulong_1
+@return
+*bond_apo_1
+@bg dengta
+@bgm warm
+@fx embers
+@show yangui left
+>阿婆坐在烬城灯塔下，手里重新捏了一个馒头。这一次，馒头是真的热。
+阿婆：归儿，你瘦了。
+晏归：阿婆，您……还记得梦里的事吗？
+阿婆：记得。梦里你从不发抖。真的你会。
+阿婆：真的更好。真的会饿，会冷，会想家——可是想家的时候，家是真的。
+? “等天亮了，我陪您去城外看看田。” -> bond_apo_1a | hope+2
+? “把馒头的方子教给我。” -> bond_apo_1b | hope+1
+*bond_apo_1a
+阿婆：田都荒了三百年。荒就荒，我们重新种。
+@goto bond_apo_1e
+*bond_apo_1b
+阿婆：方子简单。面粉，水，一点星砂——不对，现在不用星砂了。一点盐就行。
+*bond_apo_1e
+@do flag:bond_apo_1 item:u_bun
+@return

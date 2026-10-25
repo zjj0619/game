@@ -17,8 +17,10 @@ import { openCamp } from './camp.js';
 export function titleScreen(){
   const latest = latestSave();
   const root = h('div.screen.title', {},
-    h('div.t-bg', { style:{backgroundImage:`url(${asset('ui/title')})`} }), h('div.t-shade'),
-    h('div.t-logo', {}, h('div.t-main', {}, '烛龙纪'), h('div.t-sub', {}, '长 夜 山 海'), h('div.t-en', {}, 'CHRONICLE OF THE TORCH DRAGON')),
+    h('div.t-bg', { style:{backgroundImage:`url(${asset('cg/key_dream_layers')})`} }),
+    h('div.t-bg.t-bg2', { style:{backgroundImage:`url(${asset('ui/title')})`, opacity:'0.35'} }),
+    h('div.t-shade'),
+    h('div.t-logo', {}, h('div.t-main', {}, '烛龙纪'), h('div.t-sub', {}, '长 夜 山 海'), h('div.t-en', {}, 'CHRONICLE OF THE TORCH DRAGON'), h('div.t-hook', {}, '灯芯 · 烛瞳 · 梦层 · 共鸣')),
     h('div.t-menu', {},
       latest!=null ? btn('继续旅程', ()=>game.loadSlot(latest), 'tmenu') : null,
       btn('新的旅程', async ()=>{ if (latest!=null && !(await confirmBox('开始新的旅程？已有存档不会被删除。'))) return; game.newGame(); }, 'tmenu'),

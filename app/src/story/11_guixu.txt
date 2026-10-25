@@ -109,4 +109,4 @@
 @do codex:c_xuanming
 @do flag:ch11_done exp+10000 gold+5000
 @note 第十一章完成 · 七片烛瞳齐聚
-@goto c12_start
+@goto i11_start

@@ -40,8 +40,9 @@ export function hubScreen(){
   AP.ensureAct(); const lead = S.act.team[0] || 'yangui'; const b = hubBadges();
   const nextStage = (() => { for (const rid of REGION_ORDER) for (const id of REGION_STAGES[rid].slice(0, 10)) if (!S.act.cleared[id]) return AP.stageUnlocked(id) ? STAGES[id] : null; return null; })();
   const tile = (cls, name, sub, on, badge) => h('div.htile.' + cls, { onclick: () => { sfx('click'); on(); } }, h('b', {}, name), h('small', {}, sub), dot(badge));
-  const root = screen('hub', 'bg/jincheng',
+  const root = screen('hub', 'cg/key_resonance',
     h('div.hub-head', {}, h('div.hub-logo', {}, '烬 城'), h('div.hub-hr', {}, btn('菜单', () => openMenu(), 'sm'), bar())),
+    h('div.hub-hooks', {}, h('span', {}, '灯芯'), h('span', {}, '烛瞳'), h('span', {}, '梦层'), h('span', {}, '共鸣'), nextStage ? h('em', {}, '下一关 · ' + nextStage.name) : h('em', {}, '山海已通')),
     h('div.hub-main', {},
       h('div.hub-hero', { onclick: () => show(heroesScreen(lead)) },
         h('img.hh-por', { src: portrait(lead) }),
@@ -86,7 +87,7 @@ export function stageDetail(stage, opts = {}){
     h('div.sd-wrap', {},
       h('div.sd-l', {},
         h('div.sd-card', { style: { backgroundImage: `url(${stageCard(stage)})` } }, h('b', {}, stage.name), stage.desc ? h('small', {}, stage.desc) : null),
-        h('div.sd-meta', {}, chip('推荐等级 ' + (stage.lv + (hard ? 8 : 0))), chip(OBJ_NAME[stage.obj] + (stage.time ? ` · ${stage.time}秒` : ''), 'obj'), best ? chip('最佳 ' + best, 'best') : chip('首通奖励 ✦' + (80 + stage.lv * 25), 'first')),
+        h('div.sd-meta', {}, chip('推荐等级 ' + (stage.lv + (hard ? 8 : 0))), chip(OBJ_NAME[stage.obj] + (stage.time ? ` · ${stage.time}秒` : ''), 'obj'), best ? chip('最佳 ' + best, 'best') : chip('首通奖励 ✦' + (80 + stage.lv * 25), 'first'), chip('约 2–4 分钟', 'time'), chip('S：速通·少伤·两层·共鸣', 's')),
         boss ? h('div.sd-boss', {}, h('img', { src: asset(boss.img) }), h('div', {}, h('b', {}, '首领 · ' + boss.name), h('small', {}, `${elChip(boss.el)?.textContent || ''}属性 · ${boss.pat.length} 阶段`), h('p', {}, '留意地面的红色预警，在它出招之前闪开。冲刺时短暂无敌。'))) : null,
         h('div.sd-foes', {}, h('div.sd-h', {}, '出没异兽'), h('div.sd-fl', {}, ...foeChips(stage).map(f => h('div.sd-f', { title: f.desc || '' }, h('img', { src: asset(f.img), style: f.tint ? { filter: 'drop-shadow(0 0 3px ' + f.tint + ')' } : null }), h('span', {}, f.name), h('small', {}, AI_NAME[f.ai] + (f.tier === 1 ? '·精英' : ''))))))
       ),
@@ -132,6 +133,7 @@ function resultScreen(stage, res, out, opts){
         h('div.rs-name', {}, stage.name + (res.hard ? ' · 困难' : '')),
         h('div.rs-stats', {}, h('span', {}, '用时 ' + Math.floor(res.time / 60) + ':' + String(res.time % 60).padStart(2, '0')), h('span', {}, '最高连击 ' + res.combo), h('span', {}, '击败 ' + res.kills), h('span', {}, '受击 ' + res.hits)),
         win ? h('div.rs-card', {},
+          h('img.rs-card-bg', { src: asset('cg/key_clearcard'), alt: '' }),
           h('div.rs-card-t', {}, '通 关 札'),
           h('div.rs-card-row', {}, h('em', {}, '梦层切换'), h('b', {}, String(res.dreamFlips || 0) + ' 次')),
           h('div.rs-card-row', {}, h('em', {}, '灯火共鸣'), h('b', {}, String(res.resoUsed || 0) + ' 次')),

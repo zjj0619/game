@@ -87,4 +87,25 @@ export function dailyStage(d, lv){
   for (let w=0; w<3; w++){ const g=[]; for (let k=0;k<4;k++) g.push(ALLPOOL[Math.floor(r()*ALLPOOL.length)]); waves.push(g); }
   return { id:d.id, region:'jincheng', ri:0, name:d.name, lv, arenas:[{waves:waves.slice(0,2), plat:2},{waves:waves.slice(2), plat:4}], obj:'timed', time:120, bg:d.bg, kind:'daily', reward:d.reward };
 }
+
+/** 关卡一句戏文：挂在详情页，突出招牌玩法 */
+export const STAGE_FLAVOR = {
+  jincheng_1: '灯芯初燃。夜鬼怕光——把它们逼进光域。',
+  jincheng_5: '闭目一试：梦层里的平台会换位置。',
+  qingqiu_1: '狐火与灯芯叠在一起时，共鸣槽涨得飞快。',
+  donghai_3: '烛瞳开眼，水下暗线会变成金色。',
+  beihai_4: '相柳的影子只在闭目层现身。',
+  youdu_2: '梦中之物灯外近乎隐形——照亮，或用烛瞳。',
+  guixu_1: '星海两层：睁眼捡星砂，闭目捡梦屑。',
+};
+for (const [id, d] of Object.entries(STAGE_FLAVOR)) if (STAGES[id]) STAGES[id].desc = d;
+for (const st of Object.values(STAGES)) if (!st.desc) {
+  const tip = st.obj === 'guard' ? '护灯：人走远灯会暗。'
+    : st.obj === 'timed' ? '限时：冲刺穿场，不必全歼。'
+    : st.hidden ? '秘境：闭目层可能另有首领。'
+    : st.boss ? '首领战：烛瞳可预判红圈。'
+    : 'S 条件：速通 · 少伤 · 两层皆历 · 共鸣一次。';
+  st.desc = tip;
+}
+
 export const STAGE_COUNT = Object.keys(STAGES).length;

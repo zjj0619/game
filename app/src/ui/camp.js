@@ -8,7 +8,7 @@ import { sfx, playBgm, playVoice } from '../engine/audio.js';
 import { aiReady, campfireTalk, fortune, FORTUNE_BUFFS, dream, paint, translatePrompt, tts, idbGet, idbSet } from '../engine/ai.js';
 import { game } from '../main.js';
 import { openMenu, openSaves, openSettings } from './menu.js';
-import { nextBond } from '../data/bonds.js';
+import { nextBond, nextExtraBonds } from '../data/bonds.js';
 import { runSub, vnScreen, restoreScene } from '../engine/vn.js';
 import { show } from '../main.js';
 import { lampPanel, lampReady, freePoints } from './progress.js';
@@ -23,7 +23,7 @@ export function openCamp(rid){
   const p = panel('营火 · '+REGIONS[rid].nodes.find(n=>n.type==='camp').name, { cls:'camp' });
   const render = () => {
     const ai = aiReady(); const comp = companions();
-    const bondAny = comp.some(m=>nextBond(S,m)); const pts = S.members.reduce((a,m)=>a+Math.max(0,freePoints(m)),0);
+    const bondAny = comp.some(m=>nextBond(S,m)) || nextExtraBonds(S).length>0; const pts = S.members.reduce((a,m)=>a+Math.max(0,freePoints(m)),0);
     const L = LAMP[S.lamp||1], nx = LAMP[(S.lamp||1)+1];
     const row = (glyph, title, sub, fn, cls='') => h('button.cmr'+(cls?'.'+cls:''), { onclick:()=>{ sfx('click'); fn(); } }, h('span.cmr-g', {}, glyph), h('span.cmr-t', {}, h('b', {}, title), h('small', {}, sub)));
     const seats = comp.slice(0,6).map((m,i) => { const lb = nextBond(S,m);
@@ -52,10 +52,19 @@ const aiTile = (g, n, fn) => h('button.ait', { onclick:()=>{ sfx('click'); fn();
 function openBonds(rid){
   const comp = companions();
   const p = panel('羁绊夜话', { cls:'small' });
-  const avail = comp.filter(m=>nextBond(S,m));
-  if (!avail.length) p.body.append(h('p', {}, '今夜大家都很安静。继续推进旅程，会有新的心事想对你说。'));
-  p.body.append(h('div.pickc', {}, comp.map(m => { const lb = nextBond(S,m); return h('div.pc'+(lb?'':'.dim'), { onclick:()=>{ if(!lb){ toast(CHARS[m].name+'暂时没有新的话想说。'); return; } p.close(); playBond(lb, rid); } }, h('div.a-face', {style:{backgroundImage:`url(${asset('por/'+m)})`}}), h('b', {}, CHARS[m].name), h('small', {}, lb?'有话想说 ●':'好感 '+S.aff[m])); })));
-  p.onClose = ()=>{};
+  const extras = nextExtraBonds(S);
+  const avail = comp.filter(m => nextBond(S, m));
+  if (!avail.length && !extras.length) p.body.append(h('p', {}, '今夜大家都很安静。继续推进旅程，会有新的心事想对你说。'));
+  const comps = comp.map(m => {
+    const lb = nextBond(S, m);
+    return h('div.pc' + (lb ? '' : '.dim'), { onclick: () => { if (!lb) { toast(CHARS[m].name + '暂时没有新的话想说。'); return; } p.close(); playBond(lb, rid); } },
+      h('div.a-face', { style: { backgroundImage: `url(${asset('por/' + m)})` } }), h('b', {}, CHARS[m].name), h('small', {}, lb ? '有话想说 ●' : '好感 ' + S.aff[m]));
+  });
+  const extraNodes = extras.map(b => h('div.pc', { onclick: () => { p.close(); playBond(b.label, rid); } },
+    h('div.a-face', { style: { backgroundImage: `url(${asset('por/' + b.por)})` } }), h('b', {}, b.name), h('small', {}, '残卷 ●')));
+  p.body.append(h('div.pickc', {}, ...comps));
+  if (extraNodes.length) p.body.append(h('div.camp-extra', {}, h('b', {}, '长夜残卷'), ...extraNodes));
+  p.onClose = () => {};
 }
 function playBond(label, rid){
   show(vnScreen()); S.shown = {}; S.cg = null; restoreScene();

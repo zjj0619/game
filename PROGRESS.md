@@ -79,3 +79,9 @@ d: ice jiao(冰蛟), nightmare mo(梦貘), tubo(土伯), black serpent guard(黑
 - 写成 CREATIVE_HOOKS.md：灯芯半径 / 烛瞳 / 闭目睁眼 / 灯火共鸣 / 一局两分钟
 - 实现 `app/src/action/hooks.js` 并接入 engine（非 stub）：灯域虚弱夜鬼、隐身显形、烛瞳弱点必暴、梦层平台与敌人变形、共鸣槽+换人加成+合击切镜、S 评价加成、HUD 目标条
 - stages 每场附 dreamWaves；通关札 + 下一解锁预告；HUD/CSS 精修
+
+## 2026-10-25 创意钩子后续
+- 幕间 i9–i12（42_interlude_c）+ 章节跳转接线；故事编译 ~49k 字 / 22 文件 / 473 labels
+- 羁绊残卷 32_bonds_c（相柳/玄冥/烛龙/阿婆）+ 营火「长夜残卷」入口
+- 关键艺术三张接入标题/枢纽/通关札；关卡 flavor desc + S 条件 chip
+- build + boot2 通过（action mode, 0 errs）
