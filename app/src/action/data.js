@@ -157,3 +157,15 @@ export const SKILL_MAX = 5;
 export const skillPow = lv => 1 + 0.15*((lv||1)-1);
 export const skillCd = lv => 1 - 0.04*((lv||1)-1);
 export const TYPE_NAME = {slash:'斩击',dash:'突进',proj:'飞射',nova:'爆发',rain:'天降',beam:'光束',quake:'地裂',buff:'增益',heal:'治疗',summon:'召唤',upper:'升龙',slam:'下砸',field:'领域',whirl:'旋风',blink:'瞬身',pull:'牵引',passive:'被动',ult:'变身'};
+// —— 外观（换色皮肤）：每位伙伴 8 套，资源 spr/skin/p_<id>_s<k> 与 anim/p_<id>_s<k>/ ——
+// need: 解锁条件；gold: 金铢花费；每拥有一套非初始外观，该伙伴气血/攻击/法术 +1%
+export const SKINS = [
+  { n:'本相', d:'初入山海时的模样。', need:null, gold:0 },
+  { n:'霜月', d:'冰晶覆衣，寒光自生。烬城北塔的守夜人说，月最冷的那一夜，灯也是蓝的。', need:{ cleared:10 }, gold:2000 },
+  { n:'幽昙', d:'紫昙夜开，只在梦与醒之间存在一刻。', need:{ cleared:25 }, gold:4000 },
+  { n:'青冥', d:'借林间翠色织成的衣裳，走过之处会落下细碎的叶。', need:{ cleared:40 }, gold:6000 },
+  { n:'鎏金', d:'以金乌残羽的颜色镀边，旧王族礼服的样式。', need:{ tower:20 }, gold:9000 },
+  { n:'素缟', d:'白衣如雪。为不能回来的人守一夜灯。', need:{ cleared:60 }, gold:12000 },
+  { n:'夜航', d:'深海的颜色。传说归墟以下，有一条从不点灯的航路。', need:{ tower:50 }, gold:16000 },
+  { n:'赤霄', d:'赤色战袍，只赠予连破十殿首领的人。', need:{ rush:1 }, gold:20000 },
+];

@@ -16,6 +16,12 @@ const GRAV = 1500, T = () => window.__ZLJ_TEST || {};
 const imgC = {};
 function img(p){ if (!imgC[p]) { const i = new Image(); i.src = asset(p); imgC[p] = i; } return imgC[p]; }
 const ok = i => i && i.complete && i.naturalWidth > 0;
+// 程序化动画帧：assets/anim/<key>/<state><i>.webp（tools/gen/anim.py 生成），未加载时回退到静态立绘
+const ANIM_N = { idle:6, run:8, atk:6, jump:2, hurt:2, cast:4 }, FANIM_N = { idle:4, walk:6, atk:4, hurt:2 };
+function animKey(p){ return p.replace(/\//g, '_'); }
+function frame(key, state, i, fallback){ const im = img('anim/' + key + '/' + state + i); return ok(im) ? im : null; }
+export function preloadAnim(key, hero){ const N = hero ? ANIM_N : FANIM_N; for (const s in N) for (let i = 0; i < N[s]; i++) img('anim/' + key + '/' + s + i); }
+export function regionImg(base, ri){ return ri > 0 && /^enemy\/[a-d]\d$/.test(base) ? 'enemy/r/' + ri + '_' + base.slice(6) : base; }
 const clamp = (v,a,b) => v<a?a:v>b?b:v;
 const rnd = (a,b) => a + Math.random()*(b-a);
 function hexA(hex, a){ if (!hex || hex[0] !== '#') return `rgba(255,255,255,${a})`; const n = parseInt(hex.slice(1, 7), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${Math.max(0, Math.min(1, a))})`; }
@@ -25,6 +31,7 @@ export function runStage(stage, opts = {}){
   return new Promise(resolve => {
     const team = (opts.team && opts.team.length ? opts.team : [S.act?.team?.[0] || 'yangui']).filter(id => S.party[id]);
     const hard = !!opts.hard; const lvAdj = hard ? 8 : 0;
+    for (const id of team) preloadAnim('p_' + id + '_s' + (S.act?.skin?.[id] || 0), true);
     const cv = h('canvas.act-cv'); const g = cv.getContext('2d');
     let W = 0, H = 0, U = 1, dpr = 1, VW = 600;
     const W_AR = () => Math.max(620, VW * 1.08);
@@ -178,6 +185,7 @@ export function runStage(stage, opts = {}){
       const fs = foeStats(def_, stage.lv + lvAdj, hard); const sz = def_.boss ? 1.9 : def_.size || 1;
       const f = { id, def_, x, y: y ?? GY, vx: 0, vy: 0, w: 30 * sz, h: 52 * sz, face: -1, hp: fs.hp, max: fs.hp, atk: fs.atk, def: fs.def, state: 'idle', stT: 0.5 + Math.random() * 0.6, cd: 1 + Math.random(),
         air: false, fly: def_.ai === 'flyer' || def_.ai === 'healer', baseY: GY - 110 - Math.random() * 30, ph: Math.random() * 6, guard: def_.ai === 'shield' ? 5 : 0, inv: 0.4, burn: 0, poison: 0, frozen: 0, stun: 0, slow: 0, brk: 0, weak: 0, charm: 0, phase: 0, armorT: 0, pat: null };
+      f.im = !def_.boss && !def_.tier ? regionImg(def_.img, stage.ri || 0) : def_.img; preloadAnim(animKey(f.im));
       if (f.fly) f.y = f.baseY; if (def_.boss) { st.bossBar = f; hud.boss.classList.add('on'); hud.boss.querySelector('b').textContent = def_.name; }
       foes.push(f); part(x, f.y - f.h / 2, '#222222', 14, 120, 0.6, 5); return f;
     }
@@ -220,7 +228,7 @@ export function runStage(stage, opts = {}){
     function useSkill(i){
       if (busy() || P.whirl || P.beam || P.slamming) return; const c = C(); const sid = slotsOf(c.id)[i]; const k = ASKILLS[sid]; if (!k) return;
       if ((c.cds[sid] || 0) > 0) return; if (c.mp < k.mp) { say('法力不足', 0.8); return; }
-      c.mp -= k.mp; const lv = skillLv(c.id, sid); c.cds[sid] = k.cd * skillCd(lv) * (1 - (c.s.cdr || 0)); const o = { skill: true, lv, st: k.st, col: EL_COLOR[k.el] || AC().col };
+      c.mp -= k.mp; P.castT = 0.36; const lv = skillLv(c.id, sid); c.cds[sid] = k.cd * skillCd(lv) * (1 - (c.s.cdr || 0)); const o = { skill: true, lv, st: k.st, col: EL_COLOR[k.el] || AC().col };
       const pw = k.pow || 1; const F = P.face; sfx('skill'); haptic('light'); say(k.name, 0.7); st.skillUsed = (st.skillUsed || 0) + 1;
       switch (k.type) {
         case 'dash': { if (k.dist < 0) { P.vx = -F * 600; P.vy = -300; P.ground = false; P.iT = 0.35; shot({ x: P.x, y: P.y - 30, vx: F * 700, vy: 0, r: 8, mult: pw * 1.4, col: o.col, life: 0.8, pierce: true, sk: o }); break; }
@@ -252,7 +260,7 @@ export function runStage(stage, opts = {}){
     function onPlat(x, yPrev, yNow){ for (const a of arenas) for (const p of a.plats || []) if (x > p.x && x < p.x + p.w && yPrev <= p.y + 1 && yNow >= p.y) return p.y; return null; }
     function updPlayer(dt){
       const c = C(); const ps = pas();
-      P.iT -= dt; P.dashCd -= dt; P.atkT -= dt; P.atkCd -= dt; P.comboT -= dt; P.hurtT -= dt; P.lock -= dt; P.swapCd -= dt;
+      P.iT -= dt; P.dashCd -= dt; P.atkT -= dt; P.atkCd -= dt; P.comboT -= dt; P.hurtT -= dt; P.castT = (P.castT || 0) - dt; P.lock -= dt; P.swapCd -= dt;
       for (const r of roster) { for (const k in r.cds) r.cds[k] = Math.max(0, r.cds[k] - dt); if (r.alive) r.mp = Math.min(r.s.mp, r.mp + dt * (2.2 + (r.s.mpRegen || 0) * 2) * (r === c ? 1 : 1.5)); if (r !== c && r.alive) r.hp = Math.min(r.s.hp, r.hp + r.s.hp * 0.01 * dt); }
       if (P.ultT > 0) { P.ultT -= dt; const u = ultDef(); if (u.regen) heal(c.s.hp * u.regen * dt, true); if (u.burnAura && st.t % 0.5 < dt) hitCircle(P.x, P.y - P.h / 2, 70, 0.3, { skill: true, kb: 20, st: ['burn', 0.3], col: u.aura }); if (P.ultT <= 0) say('变身结束', 0.8); }
       for (const b of P.buffs) { b.t -= dt; if (b.regen) heal(c.s.hp * b.regen * dt, true); if (b.burnAura && st.t % 0.5 < dt) hitCircle(P.x, P.y - P.h / 2, 60, 0.3, { skill: true, kb: 10, st: ['burn', 0.4] }); if (b.cleanse) { b.cleanse = 0; } }
@@ -437,13 +445,20 @@ export function runStage(stage, opts = {}){
         else { g.beginPath(); g.arc(tl.x, tl.y, tl.r, 0, 6.283); g.fill(); g.globalAlpha = 0.9; g.stroke(); g.globalAlpha = 0.4; g.beginPath(); g.arc(tl.x, tl.y, tl.r * k, 0, 6.283); g.fill(); } g.globalAlpha = 1; }
       for (const z of zones) { g.globalAlpha = 0.18 + 0.06 * Math.sin(st.t * 5); g.fillStyle = z.o.col; g.beginPath(); g.ellipse(z.x, GY - 2, z.k.r, 14, 0, 0, 6.283); g.fill(); g.globalAlpha = 1; }
       // 敌人
-      for (const f of foes) { if (f.x < L - 60 || f.x > R + 60) continue; const im = img(f.def_.img); const hh = f.h * 1.25;
+      for (const f of foes) { if (f.x < L - 60 || f.x > R + 60) continue; const base = f.im || f.def_.img; let im = img(base); let hh = f.h * 1.25;
+        { const fs = f.state, akey = animKey(base); let fr = null, n;
+          if (fs === 'hurt' || fs === 'down' || f.stun > 0) fr = frame(akey, 'hurt', f.hitT > 0 ? 0 : 1);
+          else if (fs === 'wind') fr = frame(akey, 'atk', Math.min(1, Math.floor((st.t * 6) % 2)));
+          else if (fs === 'atk' || fs === 'charge' || fs === 'dive') fr = frame(akey, 'atk', 2 + Math.floor((st.t * 8) % 2));
+          else if (Math.abs(f.vx || 0) > 8 || (f.lx !== undefined && Math.abs(f.x - f.lx) > 0.3)) fr = frame(akey, 'walk', Math.floor((st.t * 10 + f.ph) % 6));
+          else fr = frame(akey, 'idle', Math.floor((st.t * 5 + f.ph) % 4));
+          f.lx = f.x; if (fr) { im = fr; hh *= 1.08; f.anim = true; } else f.anim = false; }
         let alpha = 1; if (f.dead) { alpha = 1 - f.deadT / 0.5; if (alpha <= 0) continue; }
         g.fillStyle = 'rgba(0,0,0,.35)'; g.beginPath(); g.ellipse(f.x, GY + 1, f.w * 0.7, 4, 0, 0, 6.283); g.fill();
         if (f.def_.aura) { g.globalAlpha = 0.25 + 0.1 * Math.sin(st.t * 4); g.fillStyle = f.def_.aura; g.beginPath(); g.ellipse(f.x, f.y - f.h * 0.55, f.w * 0.9, f.h * 0.75, 0, 0, 6.283); g.fill(); g.globalAlpha = 1; }
         const bob = Math.sin(st.t * 6 + f.ph) * 1.5; const wind = f.state === 'wind' || (f.pat && f.pat.t < 0.3);
         let filter = f.hitT > 0 ? 'brightness(2.4)' : f.frozen > 0 ? 'saturate(.3) brightness(1.4) hue-rotate(160deg)' : f.def_.tint && !ok(im) ? '' : '';
-        drawSprite(im, f.x, f.y + (f.dead ? f.deadT * 30 : 0), hh, f.face > 0 ? -1 : 1, { sy: 1 + bob * 0.01 + (wind ? 0.04 : 0), sx: wind ? 0.95 : 1, rot: f.rot ? Math.sin(f.rot) * 0.3 : (f.air ? Math.sin(st.t * 12) * 0.3 : f.state === 'hurt' ? -f.face * 0.12 : 0), alpha, filter });
+        drawSprite(im, f.x, f.y + (f.dead ? f.deadT * 30 : 0), hh, f.face > 0 ? -1 : 1, { sy: f.anim ? 1 : 1 + bob * 0.01 + (wind ? 0.04 : 0), sx: f.anim ? 1 : wind ? 0.95 : 1, rot: f.rot ? Math.sin(f.rot) * 0.3 : (f.air ? Math.sin(st.t * 12) * 0.3 : f.state === 'hurt' ? -f.face * 0.12 : 0), alpha, filter });
         if (f.state === 'wind' && !f.def_.boss) { g.fillStyle = '#ff4a3a'; g.font = 'bold 16px sans-serif'; g.textAlign = 'center'; g.fillText('!', f.x, f.y - hh - 6); }
         if (!f.def_.boss && !f.dead && f.hp < f.max) { g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(f.x - 16, f.y - hh - 4, 32, 3); g.fillStyle = f.def_.tier === 1 ? '#ffb030' : '#ff5a4a'; g.fillRect(f.x - 16, f.y - hh - 4, 32 * f.hp / f.max, 3); }
         if (f.guard > 0 && f.def_.ai === 'shield') { g.fillStyle = 'rgba(200,220,255,.8)'; for (let i = 0; i < f.guard; i++) g.fillRect(f.x - 10 + i * 4.5, f.y - hh - 9, 3, 3); }
@@ -460,8 +475,16 @@ export function runStage(stage, opts = {}){
       if (P.ultT > 0) { const u = ultDef(); g.globalAlpha = 0.3 + 0.12 * Math.sin(st.t * 8); g.fillStyle = u.aura; g.beginPath(); g.ellipse(P.x, P.y - 30, 26 * (u.scale || 1), 40 * (u.scale || 1), 0, 0, 6.283); g.fill(); g.globalAlpha = 1; }
       const run = P.ground && Math.abs(P.vx) > 30; const atkK = P.atkT > 0 ? P.atkT / 0.2 : 0;
       const blink = P.iT > 0 && P.dashT <= 0 && Math.floor(st.t * 20) % 2 === 0;
-      drawSprite(img('spr/p_' + c.id), P.x, P.y + (run ? -Math.abs(Math.sin(st.t * 14)) * 2 : 0), 56 * (P.ultT > 0 && ultDef().scale ? ultDef().scale : 1), P.face, { rot: P.whirl ? Math.sin(st.t * 30) * 0.4 : P.hurtT > 0 ? -P.face * 0.2 : run ? P.face * 0.08 : atkK ? P.face * 0.12 * atkK : !P.ground ? P.face * 0.06 : 0,
-        sy: P.ground ? 1 + Math.sin(st.t * 4) * 0.012 : 1.04, sx: P.ground ? 1 : 0.96, alpha: blink ? 0.45 : 1, filter: P.hurtT > 0.2 ? 'brightness(2) saturate(0)' : P.ultT > 0 ? 'brightness(1.25) saturate(1.3)' : '' });
+      const hkey = 'p_' + c.id + '_s' + (S.act?.skin?.[c.id] || 0); let him = null;
+      if (P.hurtT > 0) him = frame(hkey, 'hurt', P.hurtT > 0.2 ? 0 : 1);
+      else if (P.castT > 0 || P.beam) him = frame(hkey, 'cast', Math.min(3, Math.floor((0.36 - Math.max(0, P.castT)) / 0.09)));
+      else if (atkK > 0) him = frame(hkey, 'atk', Math.min(5, Math.floor((1 - atkK) * 6)));
+      else if (!P.ground) him = frame(hkey, 'jump', P.vy < 0 ? 0 : 1);
+      else if (run) him = frame(hkey, 'run', Math.floor(st.t * 14) % 8);
+      else him = frame(hkey, 'idle', Math.floor(st.t * 6) % 6);
+      const hAnim = !!him; const hsc = 56 * (P.ultT > 0 && ultDef().scale ? ultDef().scale : 1);
+      drawSprite(him || img('spr/p_' + c.id), P.x, P.y + (!hAnim && run ? -Math.abs(Math.sin(st.t * 14)) * 2 : 0), hAnim ? hsc * 1.08 : hsc, P.face, { rot: P.whirl ? Math.sin(st.t * 30) * 0.4 : hAnim ? 0 : P.hurtT > 0 ? -P.face * 0.2 : run ? P.face * 0.08 : atkK ? P.face * 0.12 * atkK : !P.ground ? P.face * 0.06 : 0,
+        sy: hAnim ? 1 : P.ground ? 1 + Math.sin(st.t * 4) * 0.012 : 1.04, sx: hAnim ? 1 : P.ground ? 1 : 0.96, alpha: blink ? 0.45 : 1, filter: P.hurtT > 0.2 ? 'brightness(2) saturate(0)' : P.ultT > 0 ? 'brightness(1.25) saturate(1.3)' : '' });
       if (P.beam) { const len = P.beam.k.len || 320; const y = P.y - P.h * 0.6; const gr = g.createLinearGradient(0, y - 12, 0, y + 12); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.5, P.beam.o.col); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.globalAlpha = 0.85; g.fillRect(P.face > 0 ? P.x + 10 : P.x - 10 - len, y - 12, len, 24); g.fillStyle = '#fff'; g.fillRect(P.face > 0 ? P.x + 10 : P.x - 10 - len, y - 2, len, 4); g.globalAlpha = 1; }
       // 飞行道具
       for (const s of shots) { g.fillStyle = s.col; g.globalAlpha = 0.35; g.beginPath(); g.arc(s.x - s.vx * 0.02, s.y - s.vy * 0.02, s.r * 1.6, 0, 6.283); g.fill(); g.globalAlpha = 1; g.beginPath(); g.arc(s.x, s.y, s.r, 0, 6.283); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(s.x, s.y, s.r * 0.45, 0, 6.283); g.fill();

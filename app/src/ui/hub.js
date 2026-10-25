@@ -6,7 +6,7 @@ import { REGIONS, REGION_ORDER } from '../data/regions.js';
 import { h, btn, asset, icon, toast, panel, confirmBox } from '../engine/ui.js';
 import { playBgm, sfx } from '../engine/audio.js';
 import { setAmbient } from '../engine/fx.js';
-import { ACHARS, ASKILLS, WEAPON, ACTION_ROSTER, UNLOCK_LV, ULT_LV, SKILL_MAX, TYPE_NAME, skillPow, skillCd } from '../action/data.js';
+import { ACHARS, ASKILLS, WEAPON, ACTION_ROSTER, SKINS, UNLOCK_LV, ULT_LV, SKILL_MAX, TYPE_NAME, skillPow, skillCd } from '../action/data.js';
 import { AFOES, ABOSSES, AI_NAME, foeStats } from '../action/foes.js';
 import { STAGES, REGION_STAGES, towerStage, rushStage, DAILY, dailyStage } from '../action/stages.js';
 import { GEAR, RARITY, GAFF, fxName, rarOf } from '../action/gear.js';
@@ -151,8 +151,8 @@ export function heroesScreen(sel, tab = 'skill'){
     return h('div.hr-it' + (id === sel ? '.on' : '') + (own ? '' : '.lock'), { onclick: () => { if (!own) { toast(AP.heroUnlockHint(id)); return; } sfx('page'); show(heroesScreen(id, tab)); } },
       h('img', { src: portrait(id) }), h('div', {}, h('b', {}, CHARS[id].name), h('small', {}, own ? `Lv ${S.party[id].lv} · ${ACHARS[id].role}` : '未加入')), dot(b)); }));
   const c = CHARS[sel], A = ACHARS[sel], p = S.party[sel];
-  const tabs = h('div.hr-tabs', {}, ...[['skill', '技能'], ['stat', '属性'], ['gear', '装备']].map(([k, n]) => h('div.tab' + (k === tab ? '.on' : ''), { onclick: () => show(heroesScreen(sel, k)) }, n)));
-  const body = h('div.hr-body'); if (tab === 'skill') skillTab(body, sel); else if (tab === 'stat') statTab(body, sel); else gearTab(body, sel);
+  const tabs = h('div.hr-tabs', {}, ...[['skill', '技能'], ['stat', '属性'], ['gear', '装备'], ['skin', '外观']].map(([k, n]) => h('div.tab' + (k === tab ? '.on' : ''), { onclick: () => show(heroesScreen(sel, k)) }, n)));
+  const body = h('div.hr-body'); if (tab === 'skill') skillTab(body, sel); else if (tab === 'stat') statTab(body, sel); else if (tab === 'skin') skinTab(body, sel); else gearTab(body, sel);
   const inTeam = S.act.team.includes(sel);
   return screen('heroes', 'bg/dengta', header('伙伴'), h('div.hr-wrap', {}, list,
     h('div.hr-card', {}, h('img.hr-por', { src: portrait(sel) }), h('div.hr-name', {}, h('b', {}, c.name), h('small', {}, c.title)),
@@ -176,6 +176,18 @@ function skillTab(body, id){
           h('div.sk-d', {}, h('b', {}, sk.name, h('em', {}, ' ' + (TYPE_NAME[sk.type] || '') + (un ? ` · Lv ${lv}/${SKILL_MAX}` : ''))), h('p', {}, sk.desc), h('small', {}, un ? skillDesc(sk, lv) : `Lv ${UNLOCK_LV[i]} 解锁`)),
           un ? h('div.sk-b', {}, lv < SKILL_MAX ? btn(`升级 ✦${cost.gold}`, () => { const e = AP.skillUp(id, k); if (e) toast(e); else { sfx('level'); saveNow(); render(); } }, 'sm' + (AP.spFree(id) < 1 || S.gold < cost.gold ? ' dim' : '')) : chip('满级', 'best'), inSlot ? chip('已装配') : btn('装配', () => { pick = k; render(); }, 'sm')) : null); })));
   }; render();
+}
+function skinTab(body, id){
+  const cur = S.act.skin[id] || 0; let pick = cur;
+  const big = h('img.sk-big', { src: asset('spr/skin/p_' + id + '_s' + cur) }); const info = h('div.sk-info');
+  const draw = () => { const k = pick, own = AP.skinOwned(id, k), s = SKINS[k]; big.src = asset('spr/skin/p_' + id + '_s' + k); info.replaceChildren(
+    h('b', {}, s.n), h('p', {}, s.d), h('small', {}, own ? (k === cur ? '当前穿戴' : '已拥有') : `解锁：${AP.skinReqText(k)}${AP.skinReqOk(k) ? '（已达成）' : ''} · ${fmt(s.gold)} 金铢`),
+    own ? btn(k === cur ? '穿戴中' : '穿戴', () => { S.act.skin[id] = k; saveNow(); sfx('equip'); show(heroesScreen(id, 'skin')); }, k === cur ? 'sm disabled' : 'sm gold')
+        : btn('购买', () => { const e = AP.buySkin(id, k); if (e) { toast(e); return; } saveNow(); sfx('item'); toast('获得外观「' + s.n + '」'); show(heroesScreen(id, 'skin')); }, AP.skinReqOk(k) ? 'sm gold' : 'sm disabled')); };
+  const grid = h('div.sk-grid', {}, ...SKINS.map((s, k) => h('div.sk-it' + (k === cur ? '.on' : '') + (AP.skinOwned(id, k) ? '' : '.lock'), { onclick: ev => { pick = k; grid.querySelectorAll('.sk-it').forEach(x => x.classList.remove('sel')); ev.currentTarget.classList.add('sel'); draw(); } },
+    h('img', { src: asset('spr/skin/p_' + id + '_s' + k), loading: 'lazy' }), h('span', {}, s.n))));
+  draw(); const ns = Math.max(0, (S.act.skins[id] || [0]).length - 1);
+  body.append(h('div.sk-wrap', {}, h('div.sk-l', {}, big, info), h('div.sk-r', {}, grid, h('p.gr-tip', {}, `外观收藏加成：气血 / 攻击 / 法术 +${ns}%（每拥有一套非初始外观 +1%）。外观会同步到闯关中的形象与动作。`))));
 }
 function statTab(body, id){
   const s = AP.actStats(id); const A = ACHARS[id];

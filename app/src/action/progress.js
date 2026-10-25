@@ -2,7 +2,7 @@
 import { S, stats, addItem, addGold, gainExp, ach, unlock } from '../engine/state.js';
 import { CHARS } from '../data/characters.js';
 import { ITEMS } from '../data/items.js';
-import { ACHARS, ASKILLS, ACTION_ROSTER, UNLOCK_LV, ULT_LV, SKILL_MAX } from './data.js';
+import { ACHARS, ASKILLS, ACTION_ROSTER, UNLOCK_LV, ULT_LV, SKILL_MAX, SKINS } from './data.js';
 import { AFOES } from './foes.js';
 import { STAGES, REGION_STAGES } from './stages.js';
 import { REGION_ORDER } from '../data/regions.js';
@@ -11,7 +11,7 @@ import './gear.js';
 export function ensureAct(){
   if (!S) return null;
   S.act ??= {}; const A = S.act;
-  A.cleared ??= {}; A.best ??= {}; A.tower ??= 0; A.team ??= ['yangui']; A.slv ??= {}; A.slots ??= {}; A.spSpent ??= {}; A.spBonus ??= {};
+  A.cleared ??= {}; A.skin ??= {}; A.skins ??= {}; A.best ??= {}; A.tower ??= 0; A.team ??= ['yangui']; A.slv ??= {}; A.slots ??= {}; A.spSpent ??= {}; A.spBonus ??= {};
   A.pets ??= {}; A.pet ??= null; A.souls ??= {}; A.heroes ??= []; A.hard ??= {}; A.rush ??= 0; A.tut ??= {}; A.runs ??= 0; A.seen ??= {};
   S.city ??= { lamp:1, forge:1, herb:1, beast:1, market:1, tower:1 };
   S.daily ??= { day:'', done:{}, prog:{}, claimed:{} };
@@ -29,6 +29,7 @@ export function addHero(id){
 }
 export const actRoster = () => ACTION_ROSTER.filter(id => S.party[id]);
 export function actStats(id){ const s = stats(id); const pd = S.act?.pet && S.act.pets[S.act.pet]; if (pd) { const b = petBonus(pd); for (const k in b) s[k] = Math.round(s[k] * (1 + b[k])); }
+  const ns = Math.max(0, (S.act?.skins?.[id] || [0]).length - 1); if (ns) { for (const k of ['hp', 'atk', 'mag']) s[k] = Math.round(s[k] * (1 + ns * 0.01)); }
   s.hp = Math.round(s.hp * 1.6); s.mp = Math.max(30, s.mp); s.potion = 3 + (S.city?.herb || 1) - 1; return s; }
 export const ultOk = id => (S.party[id]?.lv || 1) >= ULT_LV;
 // —— 技能 ——
@@ -118,3 +119,9 @@ export function forge(t, slot, k){ const c = forgeCost(t); const m = TIER_MAT[t]
   addGold(-c.gold); addItem(m, -c.mat); if (t >= 4) addItem('m_starmarrow', -c.mat2); const x = Math.random(); const rk = x < 0.05 ? 4 : x < 0.2 ? 3 : x < 0.5 ? 2 : 1;
   const id = `g_${slot[0]}${t}${k}${rk}`; addItem(id, 1); S.stats.crafts = (S.stats.crafts || 0) + 1; if (rk >= 4) ach('forge_god'); return { id }; }
 export function salvage(id){ const it = ITEMS[id]; if (!it || !it.gen || !(S.inv[id] > 0)) return null; addItem(id, -1); const n = 1 + (it.rar || 0); const g = Math.round(it.price * 0.25); addGold(g); addItem(TIER_MAT[it.tier], n); return { gold:g, mat:TIER_MAT[it.tier], n }; }
+
+// —— 外观 ——
+export function skinReqText(k){ const n = SKINS[k].need; if (!n) return '初始'; if (n.cleared) return `累计通关 ${n.cleared} 个关卡`; if (n.tower) return `镇妖塔达到第 ${n.tower} 层`; if (n.rush) return '通关首领连战·十殿'; return ''; }
+export function skinReqOk(k){ const n = SKINS[k].need; if (!n) return true; if (n.cleared) return Object.keys(S.act.cleared).filter(x => !x.startsWith('tower') && x !== 'rush').length >= n.cleared; if (n.tower) return (S.act.tower || 0) >= n.tower; if (n.rush) return (S.act.rush || 0) >= n.rush; return false; }
+export const skinOwned = (id, k) => k === 0 || (S.act.skins[id] || []).includes(k);
+export function buySkin(id, k){ if (skinOwned(id, k)) return null; if (!skinReqOk(k)) return '尚未达成：' + skinReqText(k); if ((S.gold || 0) < SKINS[k].gold) return '金铢不足'; addGold(-SKINS[k].gold); const l = (S.act.skins[id] ??= [0]); if (!l.includes(0)) l.unshift(0); l.push(k); S.act.skin[id] = k; return null; }
