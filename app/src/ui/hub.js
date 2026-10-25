@@ -15,7 +15,7 @@ import { runStage } from '../action/engine.js';
 import * as AP from '../action/progress.js';
 import { game, show } from '../main.js';
 import { openMenu } from './menu.js';
-import { portrait as posePor, hubPose, resultPose, POSES } from '../engine/pose.js';
+import { portrait as posePor, hubPose, resultPose } from '../engine/pose.js';
 
 const EL_NAME = { fire:'火', water:'水', wood:'木', metal:'金', earth:'土', light:'光', dark:'暗', none:'无' };
 const OBJ_NAME = { clear:'歼灭全部敌人', timed:'限时内抵达终点', guard:'护住长明灯不灭' };
@@ -66,19 +66,22 @@ export function hubBadges(){ const m = AP.MISSIONS.filter(x => !S.daily.claimed[
 export function hubScreen(){
   AP.ensureAct(); const lead = S.act.team[0] || 'yangui'; const b = hubBadges();
   const nextStage = (() => { for (const rid of REGION_ORDER) for (const id of REGION_STAGES[rid].slice(0, 10)) if (!S.act.cleared[id]) return AP.stageUnlocked(id) ? STAGES[id] : null; return null; })();
-  const tileBg = (path) => path ? { backgroundImage: `linear-gradient(0deg,rgba(5,6,14,.78),rgba(5,6,14,.22)),url(${asset(path)})` } : {};
-  const tile = (cls, name, sub, on, badge, bg) => h('div.htile.' + cls, { onclick: () => { sfx('click'); on(); }, style: tileBg(bg) }, h('b', {}, name), sub ? h('small', {}, sub) : null, dot(badge));
+  const tile = (cls, name, sub, on, badge, bg) => h('div.htile.' + cls, { onclick: () => { sfx('click'); on(); } },
+    bg ? h('div.htile-art', { style: { backgroundImage: `url(${asset(bg)})` } }) : null,
+    h('div.htile-shade'), h('b', {}, name), sub ? h('small', {}, sub) : null, dot(badge));
   const MORE_ROWS = [
     ['山海异兽', () => show(petScreen()), b.pets > 0, 'bg/qingqiu_forest'],
-    ['铸灯铁坊', () => show(forgeScreen()), false, 'bg/yugu'],
-    ['烬城建设', () => show(cityScreen()), false, 'bg/jincheng'],
+    ['铸灯铁坊', () => show(forgeScreen()), false, 'bg/yaochi'],
+    ['烬城建设', () => show(cityScreen()), false, 'stagecard/jincheng_5'],
     ['信物秘境', () => show(secretStagesScreen()), b.secrets > 0, 'cg/key_secret_realm'],
-    ['九州探索', () => game.world(), false, 'bg/guixu'],
+    ['九州探索', () => game.world(), false, 'bg/kunlun_gate'],
     ['菜单', () => openMenu(), false, 'cg/key_candle_eye'],
   ];
   const more = () => {
     const p = panel('更多', { cls: 'hub-more filled' });
-    const row = (name, on, badge, bg) => h('button.hm-row', { onclick: () => { p.close(); sfx('click'); on(); }, style: tileBg(bg) }, h('b', {}, name), badge ? h('i.rdot') : null);
+    const row = (name, on, badge, bg) => h('button.hm-row', { onclick: () => { p.close(); sfx('click'); on(); } },
+      bg ? h('div.hm-art', { style: { backgroundImage: `url(${asset(bg)})` } }) : null,
+      h('div.hm-shade'), h('b', {}, name), badge ? h('i.rdot') : null);
     p.body.append(...MORE_ROWS.map(([n, on, badge, bg]) => row(n, on, badge, bg)));
   };
   const nextSub = nextStage ? nextStage.name : '已通';
@@ -91,10 +94,10 @@ export function hubScreen(){
         h('div.hh-info', {}, h('b', {}, CHARS[lead].name), h('span', {}, `Lv ${S.party[lead].lv}`))),
       h('div.hub-grid.slim', {},
         tile('t-adv', '闯关', nextSub, () => show(adventureScreen(nextStage?.region)), false, advBg),
-        tile('t-story', '剧情', S.chapter ? S.chapter.split('·')[0].trim() : '序章', () => game.story(), false, 'bg/zhulong_eye'),
+        tile('t-story', '剧情', S.chapter ? S.chapter.split('·')[0].trim() : '序章', () => game.story(), false, 'bg/yaochi'),
         tile('t-hero', '伙伴', null, () => show(heroesScreen()), b.sp, 'bg/yuetai'),
-        tile('t-trial', '试炼', null, () => show(trialScreen()), b.m > 0, 'bg/dengta'),
-        tile('t-more', '更多', null, more, b.pets > 0 || b.secrets > 0, 'cg/key_dream_layers'))));
+        tile('t-trial', '试炼', null, () => show(trialScreen()), b.m > 0, 'stagecard/beihai_3'),
+        tile('t-more', '更多', null, more, b.pets > 0 || b.secrets > 0, 'bg/qingqiu_forest'))));
   return root;
 }
 

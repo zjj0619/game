@@ -1,5 +1,37 @@
 # progress notes (for agent continuity)
 
+## Premium Fix 返工 · 2026-10-25 ~13:40 Asia/Shanghai
+
+用户否定 polish3（17312ad / t27u「你做的什么东西啊」）。本轮按可上架横屏手游观感返工，不辩解。
+
+### A. 主角形象统一半身精品
+- `pose.js`：`hubPose` → `idle`（`yangui_idle.webp`）；`lamp` 改名 `lamp_chibi` 并注明仅小尺寸；VN 灯相关用 `lamp_por`；title/result 半身
+- 标题 / 枢纽左侧 / VN / 结算立绘同一画风，**禁止 hub 主展示 Q 版**
+
+### B. 战斗特效收敛（质量 > 糊屏）
+- `settings.fx` 默认 **1（中档）**；`fxCap`/`fxMul`/`ring`/`shock` 上限下调
+- 粒子改圆形；`fxBurst` 仅短刀光+局部火花；砍多层同心金环、满屏方块、长白闪
+- `hooks.js` 灯光环透明度/描边大幅减弱（此前糊屏主因）；瞳/梦/共鸣克制
+- `.ak-msg` / phase 字幕缩短、不挡中心过久；combo 里程中档仅文字
+
+### C. 枢纽高级填图
+- 磁贴改 `htile-art` + `htile-shade` DOM（规避 CSS `!important` 吃掉 inline 背景）
+- 5 主入口用不透明 stagecard/bg 裁切；「更多」行加 `hm-art` 小图
+- 左侧半身立绘 cover 铺满；减弱金描边/glow
+
+### 验收
+- `npm run build` OK；boot→hub `errs:[]`；hubPor=`yangui_idle.webp`
+- 截图 `docs/premium_fix/`：01_title 02_hub 03_hub_more 04_vn 05_action 06_action_vfx 07_result
+- 自检：枢纽立绘半身精品非 Q 版；06 VFX 角色轮廓可读（脚底柔光+火花，无金环糊屏）
+- 本地 commit；**未 push**；无 APK；未耗 MiniMax
+
+### 诚实缺口
+- 战斗内角色仍是侧视小体型精灵（玩法层），与半身立绘是两套资源——符合动作手游惯例，未强行换成半身进战场
+- 结算页右侧立绘偏靠边裁切，主体完整度不如枢纽；更多面板第 6 行（菜单）可能被裁
+- fx 高档（2）仍可再压；个别旧 gold UI 未本轮全清
+
+---
+
 ## Genshin-like Title + De-AI Polish · 2026-10-25 ~13:20 Asia/Shanghai
 
 覆盖上一轮「多按钮漆金」方向。按用户三点：标题像原神点屏进入、枢纽少而精、去 AI 味。

@@ -77,10 +77,7 @@ export function toggleEye(ctx){
   if (st.eyeCd > 0) return;
   if (C().mp < 5) { say('法力不足', 0.7); return; }
   st.eyeOn = true; sfx && sfx('eye'); say('烛瞳 · 开', 0.6);
-  ring && ring(P.x, P.y - 36, 48, '#ff5a6a', 0.45);
-  part && part(P.x, P.y - 40, '#ff8a9a', 22, 200, 0.6, 2.5);
-  sparks && sparks(P.x, P.y - 40, '#ffd0d0', 12, 1);
-  flashHit && flashHit();
+  part && part(P.x, P.y - 36, '#ff8a9a', 6, 100, 0.28, 2);
 }
 
 /** 命中时消费弱点 → 必暴 */
@@ -98,10 +95,8 @@ export function toggleDream(ctx){
   st.dreamFlips = (st.dreamFlips || 0) + 1;
   if (st.dream) st.dreamSeen = true; else st.awakeSeen = true;
   sfx && sfx('flip'); shake && shake(8);
-  part && part(P.x, P.y - 30, st.dream ? '#7ec8ff' : '#ffcf6a', 48, 320, 1.0, 4);
-  ring && ctx.ring(P.x, P.y - 30, 90, st.dream ? '#7ec8ff' : '#ffcf6a', 0.6);
-  ctx.shock && ctx.shock(P.x, P.y - 20, 70, st.dream ? '#7ec8ff' : '#ffcf6a', 0.45);
-  ctx.vfx && ctx.vfx('smoke', st.dream ? 'ice' : 'light', P.x, P.y - 30, 140, { life: 0.7 });
+  part && part(P.x, P.y - 30, st.dream ? '#7ec8ff' : '#ffcf6a', 12, 160, 0.4, 2.4);
+  ctx.shock && ctx.shock(P.x, P.y - 20, 40, st.dream ? '#7ec8ff' : '#ffcf6a', 0.22);
   ctx.flashHit && ctx.flashHit();
   say(st.dream ? '闭目 · 堕入梦层' : '睁眼 · 回到长夜', 1.4);
   // 梦层：现有敌人转为梦魇形态；睁眼层恢复
@@ -152,22 +147,17 @@ export function fireReso(ctx){
   const bondMul = 1 + (bond >= 90 ? 0.35 : bond >= 60 ? 0.2 : bond >= 30 ? 0.1 : 0);
   const title = RESO_TITLE[me + '+' + mate.id] || RESO_TITLE[mate.id + '+' + me] || `${CHARS[me]?.name || ''} × ${CHARS[mate.id]?.name || ''} · 灯火共鸣`;
   const fancy = bond >= 60 ? (bond >= 90 ? ' ★★★' : ' ★★') : '';
-  say(title + fancy, 2.2); sfx && sfx('reso'); shake && shake(12 + (bond >= 60 ? 4 : 0));
+  say(title + fancy, 1.0); sfx && sfx('reso'); shake && shake(6);
   if (ctx.root && ctx.h) {
     const cut = ctx.h('div.ak-cutin' + (bond >= 60 ? '.fancy' : ''), {},
       ctx.h('img.ak-cutin-bg', { src: 'assets/cg/key_skill_cutin.webp', alt: '' }),
       ctx.h('em', {}, '灯火共鸣'), ctx.h('b', {}, title + fancy));
-    ctx.root.append(cut); setTimeout(() => cut.remove(), 1600 + (bond >= 90 ? 400 : 0));
+    ctx.root.append(cut); setTimeout(() => cut.remove(), 700);
   }
   const rad = 200 * bondMul;
-  ring && ring(P.x, P.y - 26, rad * 0.9, '#ffcf6a', 0.9);
-  ring && ring(P.x, P.y - 26, rad * 0.55, '#ffffff', 0.5);
-  part && part(P.x, P.y - 30, '#ffe7a0', Math.round(64 * bondMul), 400, 1.2, 5);
-  ctx.shock && ctx.shock(P.x, (GY || 232) - 4, rad * 0.7, '#ffcf6a', 0.55);
-  ctx.crack && ctx.crack(P.x, GY || 232, rad * 0.6, 1.2);
-  ctx.sparks && ctx.sparks(P.x, P.y - 30, '#ffffff', Math.round(20 * bondMul), 1);
-  ctx.vfx && ctx.vfx('burst', 'light', P.x, P.y - 30, rad * 1.1, { life: 0.6 });
-  ctx.flashHit && ctx.flashHit('crit');
+  ctx.shock && ctx.shock(P.x, P.y - 26, Math.min(rad * 0.4, 50), '#ffcf6a', 0.28);
+  part && part(P.x, P.y - 30, '#ffe7a0', 12, 180, 0.4, 2.4);
+  ctx.sparks && ctx.sparks(P.x, P.y - 30, '#ffffff', 8, 1);
   hitCircle && hitCircle(P.x, P.y - P.h / 2, rad, 3.2 * bondMul, { skill: true, heavy: true, kb: 280, col: '#ffcf6a', st: ['brk', 0.8] });
   for (const r of roster) if (r.alive) { const n = Math.round(r.s.hp * 0.12 * bondMul); r.hp = Math.min(r.s.hp, r.hp + n); }
   heal && heal(C().s.hp * 0.08 * bondMul, true);
@@ -199,22 +189,20 @@ export function drawHooks(g, ctx, camHelpers){
   const { P, st, foes, U, VW, GY, VH } = ctx;
   const { sx, sy, L, R } = camHelpers;
   const Rlamp = st._lampR || LAMP_BASE;
-  // 灯芯光域
+  // 灯芯光域（克制：淡光晕，不画大描边环）
   g.save();
-  const grd = g.createRadialGradient(P.x, P.y - 20, 8, P.x, P.y - 20, Rlamp);
-  grd.addColorStop(0, st.dream ? 'rgba(120,200,255,0.22)' : 'rgba(255,200,100,0.28)');
-  grd.addColorStop(0.55, st.dream ? 'rgba(80,140,220,0.08)' : 'rgba(255,170,60,0.08)');
+  const grd = g.createRadialGradient(P.x, P.y - 20, 4, P.x, P.y - 20, Rlamp);
+  grd.addColorStop(0, st.dream ? 'rgba(120,200,255,0.10)' : 'rgba(255,200,100,0.12)');
+  grd.addColorStop(0.45, st.dream ? 'rgba(80,140,220,0.03)' : 'rgba(255,170,60,0.03)');
   grd.addColorStop(1, 'rgba(0,0,0,0)');
   g.fillStyle = grd; g.beginPath(); g.arc(P.x, P.y - 20, Rlamp, 0, 6.283); g.fill();
-  // 灯芯边缘一圈细线
-  g.strokeStyle = st.dream ? 'rgba(160,220,255,0.35)' : 'rgba(255,210,120,0.4)';
-  g.lineWidth = 1.2; g.beginPath(); g.arc(P.x, P.y - 20, Rlamp * (0.92 + 0.04 * Math.sin(st.t * 3)), 0, 6.283); g.stroke();
-  // 灯芯内焰粒子感（轻量）
+  g.globalAlpha = 0.18 + 0.06 * Math.sin(st.t * 3);
+  g.strokeStyle = st.dream ? 'rgba(160,220,255,0.55)' : 'rgba(255,210,120,0.55)';
+  g.lineWidth = 0.8; g.beginPath(); g.arc(P.x, P.y - 20, Rlamp * 0.98, 0, 6.283); g.stroke();
   if (!st.dream) {
-    g.globalAlpha = 0.35 + 0.15 * Math.sin(st.t * 6);
+    g.globalAlpha = 0.4 + 0.12 * Math.sin(st.t * 6);
     g.fillStyle = '#ffcf6a';
-    g.beginPath(); g.arc(P.x, P.y - 28 - Math.sin(st.t * 5) * 2, 5 + Math.sin(st.t * 7), 0, 6.283); g.fill();
-    g.globalAlpha = 1;
+    g.beginPath(); g.arc(P.x, P.y - 28 - Math.sin(st.t * 5) * 2, 3.5, 0, 6.283); g.fill();
   }
   g.restore();
 
@@ -227,11 +215,7 @@ export function drawHooks(g, ctx, camHelpers){
         const a = Math.min(1, f.weakMark); const y = f.y - f.h - 10;
         g.globalAlpha = 0.5 + 0.5 * a; g.fillStyle = '#ff3a3a';
         g.beginPath(); g.arc(f.x, y, 3.5 + a * 2, 0, 6.283); g.fill();
-        g.strokeStyle = '#ffd0d0'; g.lineWidth = 1.4; g.beginPath(); g.arc(f.x, y, 7 + a * 3, 0, 6.283); g.stroke();
-        g.globalAlpha = 0.25 + 0.2 * Math.sin(st.t * 8); g.strokeStyle = '#ff6a6a'; g.lineWidth = 2;
-        g.beginPath(); g.arc(f.x, y, 12 + a * 4 + Math.sin(st.t * 6), 0, 6.283); g.stroke();
-        if (f.weakMark >= 1) { g.globalAlpha = 1; g.fillStyle = '#ffe08a'; g.font = 'bold 9px sans-serif'; g.textAlign = 'center'; g.fillText('弱点', f.x, y - 10);
-          g.strokeStyle = '#ffd24a'; g.lineWidth = 1.5; g.beginPath(); g.arc(f.x, f.y - f.h * 0.55, f.w * 0.7, 0, 6.283); g.stroke(); }
+        if (f.weakMark >= 1) { g.globalAlpha = 1; g.fillStyle = '#ffe08a'; g.font = 'bold 9px sans-serif'; g.textAlign = 'center'; g.fillText('弱点', f.x, y - 10); }
       }
     }
     g.restore();

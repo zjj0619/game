@@ -1,9 +1,8 @@
-/** 晏归等多姿态立绘：按场景切换，无姿则回落 por/{id} */
+/** 晏归多姿态：全站统一半身精品立绘风格（与 por/yangui.webp 同画风）。禁止枢纽用 Q 版/chibi。 */
 import { asset } from './ui.js';
 
 export const POSES = {
   idle: 'por/pose/yangui_idle',
-  lamp: 'por/pose/yangui_lamp',
   lamp_por: 'por/pose/yangui_lamp_por',
   battle: 'por/pose/yangui_battle',
   think: 'por/pose/yangui_think',
@@ -11,6 +10,8 @@ export const POSES = {
   hurt: 'por/pose/yangui_hurt',
   cast: 'por/pose/yangui_cast',
   title: 'por/pose/yangui_title',
+  /** Q 版持灯：仅战斗小头等小尺寸场景，禁止 hub/title/VN/result 主展示 */
+  lamp_chibi: 'por/pose/yangui_lamp',
 };
 
 const HERO = 'yangui';
@@ -21,13 +22,13 @@ export function portrait(id, pose) {
   return asset('por/' + id);
 }
 
-/** 枢纽：持灯 Q 版更有「在场」感；无灯姿时 idle */
+/** 枢纽主展示：半身精品 idle（与 yangui.webp 同画风）。绝不用 chibi。 */
 export function hubPose(id) {
-  if (id === HERO) return portrait(id, 'lamp');
+  if (id === HERO) return portrait(id, 'idle');
   return portrait(id);
 }
 
-/** VN：按情绪标签；默认 think 近景说话更有戏 */
+/** VN：同画风表情变体；灯相关用 lamp_por 半身，不用 chibi */
 export function vnPose(id, mood) {
   if (id !== HERO) return portrait(id);
   const m = (mood || '').toLowerCase();

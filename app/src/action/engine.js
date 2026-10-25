@@ -115,23 +115,23 @@ export function runStage(stage, opts = {}){
     function say(text, t = 1.6){ hud.msg.textContent = text; hud.msg.classList.remove('on'); void hud.msg.offsetWidth; hud.msg.classList.add('on'); }
     function hk(){ return { C, P, st, foes, roster, ri, arenas, say, sfx, shake, ring, part, heal, hitCircle, num, GY, VH, U, VW, eyeOn: st.eyeOn, root, h, shock, crack, sparks, vfx, flashHit }; }
     function num(x, y, v, kind){ if (nums.length > 60) nums.shift(); nums.push({ x, y, v, kind, t: 0 }); }
-    function fxLv(){ const v = settings?.fx; return v == null ? 2 : +v; }
-    function fxCap(){ return [0, 140, 420][fxLv()] || 420; }
-    function fxMul(n){ const lv = fxLv(); if (lv <= 0) return 0; if (lv === 1) return Math.max(1, Math.round(n * 0.45)); return n; }
+    function fxLv(){ const v = settings?.fx; return v == null ? 1 : +v; }
+    function fxCap(){ return [0, 90, 220][fxLv()] || 220; }
+    function fxMul(n){ const lv = fxLv(); if (lv <= 0) return 0; if (lv === 1) return Math.max(1, Math.round(n * 0.32)); return Math.max(1, Math.round(n * 0.7)); }
     function part(x, y, col, n = 8, sp = 160, life = 0.5, sz = 3){ n = fxMul(n); for (let i = 0; i < n; i++) { if (fx.length > fxCap()) fx.shift(); const a = Math.random() * 6.283; const s = sp * (0.3 + Math.random()); fx.push({ k: 'p', x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 40, t: 0, life: life * (0.6 + Math.random() * 0.6), col, sz }); } }
     // 序列帧特效（assets/vfx/<type>_<el>/0..11）：叠加混合播放
     function vfx(type, el, x, y, size, o = {}){ if (fxLv() <= 0) return; if (fx.length > fxCap()) return; fx.push({ k: 'vfx', type, el: el || 'light', x, y, size, face: o.face || 1, t: 0, life: o.life || 0.4, rot: o.rot || 0, add: type !== 'smoke' }); }
-    function ring(x, y, r, col, life = 0.35){ if (fxLv() <= 0) return; fx.push({ k: 'ring', x, y, r, col, t: 0, life }); if (r >= 24 && fxLv() >= 1) vfx(r > 70 ? 'ring' : 'burst', colEl(col), x, y, r * 2.3, { life: life * 1.3 }); }
+    function ring(x, y, r, col, life = 0.28){ if (fxLv() <= 0) return; fx.push({ k: 'ring', x, y, r: Math.min(r, 90), col, t: 0, life: Math.min(life, 0.4) }); if (r >= 40 && fxLv() >= 2) vfx('burst', colEl(col), x, y, Math.min(r * 1.6, 110), { life: life * 0.9 }); }
     function arc(x, y, face, r, col, life = 0.16, wide = 1){ if (fxLv() <= 0) return; const rot = rnd(-0.4, 0.4); fx.push({ k: 'arc', x, y, face, r, col, t: 0, life, wide, rot });
       if (fxLv() >= 2) { fx.push({ k: 'arc', x: x + face * 6, y: y + rnd(-4, 4), face, r: r * 0.72, col: '#ffffff', t: 0, life: life * 0.85, wide: wide * 0.55, rot: rot + rnd(-0.2, 0.2) }); }
       vfx('slash', colEl(col), x, y, r * 2.5 * Math.min(1.6, wide), { face, life: Math.max(0.2, life * 1.5), rot }); }
-    function shock(x, y, r, col, life = 0.32){ if (fxLv() <= 0) return; fx.push({ k: 'shock', x, y, r, col, t: 0, life }); if (fxLv() >= 2) ring(x, y, r * 0.85, col, life); }
+    function shock(x, y, r, col, life = 0.22){ if (fxLv() <= 0) return; fx.push({ k: 'shock', x, y, r: Math.min(r, 70), col, t: 0, life: Math.min(life, 0.32) }); }
     function crack(x, y, w = 80, life = 0.9){ if (fxLv() < 2) return; fx.push({ k: 'crack', x, y: y || GY, w, t: 0, life }); }
     function speedLines(face, n = 6){ if (fxLv() < 2) return; n = fxMul(n); for (let i = 0; i < n; i++) fx.push({ k: 'speed', x: P.x - face * rnd(10, 70), y: P.y - rnd(8, P.h), face, len: rnd(28, 70), t: 0, life: 0.18 + rnd(0, 0.12), col: 'rgba(255,240,200,.55)' }); }
     function sparks(x, y, col, n = 10, face = 1){ n = fxMul(n); for (let i = 0; i < n; i++) { if (fx.length > fxCap()) fx.shift(); const a = face > 0 ? rnd(-1.1, 1.1) : rnd(Math.PI - 1.1, Math.PI + 1.1); const s = rnd(140, 420); fx.push({ k: 'p', x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - rnd(40, 160), t: 0, life: 0.25 + rnd(0, 0.25), col: i % 3 === 0 ? '#ffffff' : col, sz: rnd(1.5, 3.8) }); } }
     function flashHit(heavy){ const fl = root.querySelector('.ak-flash'); if (!fl) return; fl.classList.remove('on', 'crit', 'kill'); void fl.offsetWidth; if (heavy === 'crit') fl.classList.add('on', 'crit'); else if (heavy === 'kill') fl.classList.add('on', 'kill'); else fl.classList.add('on'); }
     function comboMileFx(v){ if (fxLv() <= 0) return; const el = root.querySelector('.ak-mile'); if (el) { el.textContent = v + ' HIT'; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); }
-      ring(P.x, P.y - P.h / 2, 90 + Math.min(80, v * 2), '#ffe08a', 0.5); part(P.x, P.y - 30, '#ffe08a', 18 + Math.min(30, v), 280, 0.6, 3); shock(P.x, GY - 4, 70 + v, '#ffcf6a', 0.4); }
+      if (fxLv() >= 2) sparks(P.x + P.face * 20, P.y - P.h / 2, '#ffe08a', 6, P.face); }
     function shake(v){ st.shake = Math.max(st.shake, v); }
     const aliveFoes = () => foes.filter(f => !f.dead);
     function nearest(x, y, maxD = 1e9){ let b = null, bd = maxD; for (const f of foes) { if (f.dead) continue; const d = Math.hypot(f.x - x, (f.y - f.h/2) - y); if (d < bd) { bd = d; b = f; } } return b; }
@@ -157,7 +157,7 @@ export function runStage(stage, opts = {}){
       const ls = buffV('lifesteal') + (s.lifesteal || 0); if (ls) heal(d * ls, true);
       { let nk = crit ? 'crit' : o.skill ? 'sk' : (o.el === 'fire' || o.col === '#ff9a4a' || o.col === '#ff7a3a') ? 'fire' : (o.el === 'ice') ? 'ice' : (o.brk || o.lamp) ? 'brk' : 'atk';
       num(f.x + rnd(-8, 8), f.y - f.h - 6, d, nk); }
-      part(f.x, f.y - f.h / 2, o.col || '#ffd890', crit ? 22 : 10, crit ? 340 : 200, 0.4, crit ? 4 : 2.8); sparks(f.x + (o.dir || 1) * 8, f.y - f.h / 2, o.col || '#ffd890', crit ? 16 : 8, o.dir || Math.sign(f.x - P.x) || 1); vfx(crit ? 'shards' : 'spark', colEl(o.col || '#ffd890'), f.x + rnd(-6, 6), f.y - f.h / 2 + rnd(-8, 8), crit ? 90 : 52, { life: 0.28, rot: rnd(0, 6) }); if (crit) { shock(f.x, f.y - f.h / 2, 55, '#ffd24a', 0.35); ring(f.x, f.y - f.h / 2, 48, '#ffffff', 0.22); flashHit('crit'); } else if (o.heavy) { shock(f.x, f.y - f.h * 0.4, 32, o.col || '#ffd890', 0.22); }
+      part(f.x, f.y - f.h / 2, o.col || '#ffd890', crit ? 10 : 5, crit ? 220 : 140, 0.28, crit ? 2.6 : 2); sparks(f.x + (o.dir || 1) * 8, f.y - f.h / 2, o.col || '#ffd890', crit ? 8 : 4, o.dir || Math.sign(f.x - P.x) || 1); if (fxLv() >= 2) vfx(crit ? 'shards' : 'spark', colEl(o.col || '#ffd890'), f.x, f.y - f.h / 2, crit ? 64 : 40, { life: 0.22, rot: rnd(0, 6) }); if (crit) { shock(f.x, f.y - f.h / 2, 36, '#ffd24a', 0.2); if (fxLv() >= 2) flashHit('crit'); } else if (o.heavy) { shock(f.x, f.y - f.h * 0.4, 24, o.col || '#ffd890', 0.16); }
       st.hitstop = Math.max(st.hitstop, crit ? 0.1 : o.heavy ? 0.09 : 0.055); if (crit || o.heavy) shake(crit ? 6 : 4.5); else if (st.combo >= 10 && st.combo % 5 === 0) shake(2);
       if (o.st) { const [k2, ch] = o.st; if (Math.random() < ch) applyStatus(f, k2, s); }
       if (P.ultT > 0 && ultDef().freezeAll && Math.random() < 0.15) applyStatus(f, 'freeze', s);
@@ -196,12 +196,11 @@ export function runStage(stage, opts = {}){
     function kill(f){
       if (f.dead) return; f.dead = true; f.deadT = 0; st.kills++; const kid = f.def_.base || f.def_.id; S.kills[kid] = (S.kills[kid] || 0) + 1;
       { const elc = elTint[f.def_.el] || '#ffffff'; const big = !!f.def_.boss;
-        part(f.x, f.y - f.h / 2, elc, big ? 56 : 28, big ? 420 : 300, 0.85, big ? 4 : 3);
-        sparks(f.x, f.y - f.h / 2, elc, big ? 28 : 14, 1); sparks(f.x, f.y - f.h / 2, '#ffffff', big ? 18 : 8, -1);
-        vfx('smoke', f.def_.el, f.x, f.y - f.h / 2, f.h * 2.4, { life: 0.85 }); vfx('burst', f.def_.el === 'none' ? 'dark' : f.def_.el, f.x, f.y - f.h / 2, f.h * 1.9, { life: 0.42 });
-        vfx('shards', f.def_.el === 'none' ? 'dark' : f.def_.el, f.x, f.y - f.h / 2, f.h * 1.5, { life: 0.5 });
-        shock(f.x, f.y - f.h / 2, big ? 120 : 55, elc, 0.45); crack(f.x, GY, big ? 140 : 70, big ? 1.4 : 0.8);
-        flashHit('kill');
+        part(f.x, f.y - f.h / 2, elc, big ? 18 : 10, big ? 260 : 180, 0.45, big ? 2.8 : 2.2);
+        sparks(f.x, f.y - f.h / 2, elc, big ? 10 : 6, 1);
+        if (fxLv() >= 2) { vfx('burst', f.def_.el === 'none' ? 'dark' : f.def_.el, f.x, f.y - f.h / 2, f.h * 1.2, { life: 0.28 }); }
+        shock(f.x, f.y - f.h / 2, big ? 55 : 32, elc, 0.22); if (big && fxLv() >= 2) crack(f.x, GY, 90, 0.8);
+        if (big) flashHit('kill');
         // 击杀碎裂：残影上飘消散
         if (fxLv() >= 2) for (let gi = 0; gi < (big ? 4 : 2); gi++) fx.push({ k: 'ghostF', x: f.x + rnd(-10, 10), y: f.y - gi * 8, face: f.face, f, t: 0, life: 0.35 + gi * 0.08 });
       }
@@ -305,14 +304,14 @@ export function runStage(stage, opts = {}){
       if ((c.cds[sid] || 0) > 0) return; if (c.mp < k.mp) { say('法力不足', 0.8); return; }
       c.mp -= k.mp; P.castT = 0.36; const lv = skillLv(c.id, sid); c.cds[sid] = k.cd * skillCd(lv) * (1 - (c.s.cdr || 0)); const o = { skill: true, lv, st: k.st, col: EL_COLOR[k.el] || AC().col };
       const pw = k.pow || 1; const F = P.face; { const E = k.el in EL_SET ? k.el : colEl(o.col); const T = { heal: 'heal', summon: 'rune', field: 'rune', buff: 'rune', blink: 'smoke', quake: 'shock', slam: 'swirl', pull: 'swirl', beam: 'bolt', rain: 'rune', nova: 'shards', whirl: 'swirl', ult: 'rune', dash: 'slash', proj: 'bolt' }[k.type];
-        if (T) vfx(T, E, P.x, T === 'shock' ? GY - 6 : P.y - P.h / 2, T === 'rune' ? 150 : T === 'bolt' ? 110 : 130, { life: T === 'rune' ? 0.8 : 0.5, face: F });
-        vfx('rune', E, P.x, GY - 4, 110, { life: 0.55 }); ring(P.x, P.y - P.h / 2, 36, o.col, 0.35); part(P.x, P.y - 28, o.col, 14, 180, 0.5, 3);
-        // 元素色专属：火环 / 雷弧 / 灯金 / 梦青 / 瞳红
-        if (E === 'fire' || k.el === 'fire') { ring(P.x, GY - 4, 55, '#ff7a3a', 0.4); part(P.x, GY - 8, '#ff9a4a', 18, 160, 0.7, 3); }
-        else if (E === 'thunder' || E === 'lightning' || k.el === 'thunder') { fx.push({ k: 'bolt', x: P.x + rnd(-20, 20), y: 0, col: '#c9e8ff', t: 0, life: 0.25 }); sparks(P.x, P.y - 40, '#9fe8ff', 14, F); }
-        else if (E === 'light' || k.el === 'light' || k.el === 'lamp') { ring(P.x, P.y - 30, 70, '#ffcf6a', 0.55); part(P.x, P.y - 30, '#ffe7a0', 20, 120, 0.8, 2.5); }
-        else if (E === 'ice' || k.el === 'ice' || k.el === 'dream') { ring(P.x, P.y - 26, 60, '#7ec8ff', 0.5); part(P.x, P.y - 30, '#b8e4ff', 16, 100, 0.7, 2); }
-        else if (E === 'dark' || k.el === 'dark' || k.el === 'eye') { ring(P.x, P.y - 26, 50, '#ff5a6a', 0.45); part(P.x, P.y - 40, '#ff8a9a', 12, 140, 0.55, 2); }
+        if (T && fxLv() >= 2) vfx(T, E, P.x, T === 'shock' ? GY - 6 : P.y - P.h / 2, T === 'rune' ? 100 : 90, { life: 0.35, face: F });
+        part(P.x, P.y - 28, o.col, 8, 140, 0.35, 2.2);
+        // 元素色专属（克制：单色火花/短冲击，不叠金环）
+        if (E === 'fire' || k.el === 'fire') { sparks(P.x, GY - 10, '#ff9a4a', 8, F); }
+        else if (E === 'thunder' || E === 'lightning' || k.el === 'thunder') { sparks(P.x, P.y - 40, '#9fe8ff', 8, F); }
+        else if (E === 'light' || k.el === 'light' || k.el === 'lamp') { sparks(P.x, P.y - 30, '#ffe7a0', 8, F); }
+        else if (E === 'ice' || k.el === 'ice' || k.el === 'dream') { sparks(P.x, P.y - 30, '#b8e4ff', 7, F); }
+        else if (E === 'dark' || k.el === 'dark' || k.el === 'eye') { sparks(P.x, P.y - 36, '#ff8a9a', 7, F); }
       }
       sfx('skill'); haptic('light'); say(k.name, 0.7); st.skillUsed = (st.skillUsed || 0) + 1;
       switch (k.type) {
@@ -320,7 +319,7 @@ export function runStage(stage, opts = {}){
           P.dashT = Math.abs(k.dist) / 900; P.vx = F * 900; if (k.air) P.vy = 0; P.iT = P.dashT + 0.1; const x0 = P.x; speedLines(F, 10);
           setTimeout(() => { if (st.over) return; const x1 = P.x; hitBox((x0 + x1) / 2, P.y - P.h / 2, Math.abs(x1 - x0) + 40, P.h + 20, pw, { ...o, kb: 160, heavy: true, dir: F }); fx.push({ k: 'line', x0, x1, y: P.y - P.h / 2, col: o.col, t: 0, life: 0.3 }); }, P.dashT * 1000); break; }
         case 'proj': { const n = k.n || 1; for (let j = 0; j < n; j++) { const a = n > 1 ? (j / (n - 1) - 0.5) * (k.spread || 0.3) : 0; shot({ x: P.x + F * 16, y: P.y - P.h * 0.6, vx: Math.cos(a) * F * k.spd, vy: Math.sin(a) * k.spd, r: k.big ? 13 : 7, mult: pw, col: o.col, life: 1.4, pierce: k.pierce, home: k.home, boom: k.boom, sk: o }); } break; }
-        case 'nova': { hitCircle(P.x, P.y - P.h / 2, k.r, pw, { ...o, kb: 220, heavy: true }); ring(P.x, P.y - P.h / 2, k.r, o.col, 0.5); ring(P.x, P.y - P.h / 2, k.r * 0.6, '#ffffff', 0.35); shock(P.x, P.y - P.h / 2, k.r * 0.9, o.col, 0.4); part(P.x, P.y - 30, o.col, 28, 320, 0.6, 3.5); crack(P.x, GY, k.r * 0.8, 1.0); shake(7); flashHit(); break; }
+        case 'nova': { hitCircle(P.x, P.y - P.h / 2, k.r, pw, { ...o, kb: 220, heavy: true }); shock(P.x, P.y - P.h / 2, Math.min(k.r * 0.7, 70), o.col, 0.28); part(P.x, P.y - 30, o.col, 14, 220, 0.4, 2.6); shake(5); break; }
         case 'rain': { const px = P.x; for (let j = 0; j < k.n; j++) setTimeout(() => { if (st.over) return; const x = px + F * (30 + Math.random() * k.area); shot({ x, y: -20, vx: rnd(-30, 30), vy: 620, r: 8, mult: pw, col: o.col, life: 1.2, boom: k.boom || 0, rain: true, sk: o }); }, j * 70); break; }
         case 'beam': { P.beam = { t: 0, dur: k.dur, tick: 0, k, o, pw }; P.lock = k.dur; break; }
         case 'quake': { const dirs = k.dir === 2 ? [1, -1] : [F]; const px = P.x; for (const d of dirs) for (let j = 0; j < k.n; j++) setTimeout(() => { if (st.over) return; const x = px + d * (40 + j * 52); hitBox(x, GY - 26, 50, 60, pw, { ...o, kb: 120 * (k.kb || 1), launch: 260, dir: d }); fx.push({ k: 'spike', x, y: GY, col: o.col, t: 0, life: 0.45 }); shock(x, GY - 4, 36, o.col, 0.28); crack(x, GY, 48, 0.7); shake(3); }, j * 110); break; }
@@ -336,7 +335,7 @@ export function runStage(stage, opts = {}){
       }
     }
     function ult(){ const c = C(); if (busy() || c.rage < 100 || P.ultT > 0) return; if (!ultOk(c.id)) { say(`${ULT_LV} 级解锁变身`); return; } c.rage = 0; const u = ultDef(); P.ultT = u.dur; P.iT = 1.2; shake(10); st.hitstop = 0.3; haptic('heavy'); sfx('ult');
-      ring(P.x, P.y - P.h / 2, 160, u.aura, 0.7); part(P.x, P.y - 30, u.aura, 40, 300, 1); hitCircle(P.x, P.y - P.h / 2, 150, 2.5, { skill: true, heavy: true, kb: 260, col: u.aura }); say(u.name + '！', 1.8); S.stats.ults = (S.stats.ults || 0) + 1; st.ults = (st.ults || 0) + 1; }
+      shock(P.x, P.y - P.h / 2, 70, u.aura, 0.35); part(P.x, P.y - 30, u.aura, 16, 200, 0.5, 2.6); hitCircle(P.x, P.y - P.h / 2, 150, 2.5, { skill: true, heavy: true, kb: 260, col: u.aura }); say(u.name + '！', 1.8); S.stats.ults = (S.stats.ults || 0) + 1; st.ults = (st.ults || 0) + 1; }
     function swap(){ if (roster.length < 2 || P.swapCd > 0 || st.over) return; let n = ri; for (let k = 1; k < roster.length; k++) { const j = (ri + k) % roster.length; if (roster[j].alive) { n = j; break; } } if (n === ri) return;
       ri = n; P.swapCd = 2.5; P.ultT = 0; P.buffs = []; P.iT = 0.6; HK.onSwapReso(hk()); part(P.x, P.y - 30, AC().col, 20, 200, 0.5); ring(P.x, P.y - 30, 50, AC().col, 0.4);
       hitCircle(P.x, P.y - P.h / 2, 80, 1.2, { kb: 200 }); say('换人 · ' + CHARS[C().id].name, 0.9); refreshHud(true); sfx('skill'); }
@@ -464,11 +463,11 @@ export function runStage(stage, opts = {}){
     function bossPhase(f){ const n = f.def_.pat.length; const r = f.hp / f.max; return n >= 3 ? (r < 0.33 ? 2 : r < 0.66 ? 1 : 0) : (r < 0.5 ? 1 : 0); }
     function updBoss(f, dt){
       const ph = bossPhase(f); const a = arenas[st.cur];
-      if (ph > f.phase) { f.phase = ph; f.inv = 1.4; f.pat = null; tele.length = 0; f.armorT = 1.4; const phTxt = ['', '第二阶段 · 怒', '最终阶段 · 狂'][ph] || '狂暴'; say(phTxt, 1.6); const pe = root.querySelector('.ak-phase'); if (pe) { pe.textContent = phTxt; pe.classList.remove('on'); void pe.offsetWidth; pe.classList.add('on'); } shake(14); haptic('heavy');
+      if (ph > f.phase) { f.phase = ph; f.inv = 1.4; f.pat = null; tele.length = 0; f.armorT = 1.4; const phTxt = ['', '第二阶段 · 怒', '最终阶段 · 狂'][ph] || '狂暴'; say(phTxt, 1.6); const pe = root.querySelector('.ak-phase'); if (pe) { pe.textContent = phTxt; pe.classList.remove('on'); void pe.offsetWidth; pe.classList.add('on'); } shake(8); haptic('heavy');
         const elc = elTint[f.def_.el] || '#ff6a4a';
         ring(f.x, f.y - f.h / 2, 220, elc, 0.95); ring(f.x, f.y - f.h / 2, 140, '#ffffff', 0.5); shock(f.x, GY - 4, 160, elc, 0.6);
-        part(f.x, f.y - f.h / 2, elc, 48, 400, 1.0, 4); sparks(f.x, f.y - f.h / 2, '#ffffff', 24, 1); crack(f.x, GY, 180, 1.6);
-        vfx('burst', f.def_.el || 'dark', f.x, f.y - f.h / 2, f.h * 2.4, { life: 0.7 }); flashHit('kill');
+        part(f.x, f.y - f.h / 2, elc, 14, 220, 0.45, 2.4); sparks(f.x, f.y - f.h / 2, '#ffffff', 8, 1);
+        if (fxLv() >= 2) vfx('burst', f.def_.el || 'dark', f.x, f.y - f.h / 2, f.h * 1.3, { life: 0.35 });
         if (Math.hypot(P.x - f.x, P.y - f.y) < 130) { P.vx = Math.sign(P.x - f.x || 1) * 420; P.vy = -300; P.ground = false; }
         for (const m of f.def_.minions.slice(0, 1 + ph)) spawn(m, clamp(f.x + rnd(-160, 160), a.x0 + 30, a.x1 - 30)); hud.boss.querySelector('.ak-ph').textContent = '阶段 ' + (ph + 1); return; }
       const dx = P.x - f.x; const spdM = (1 + f.phase * 0.18) * (hard ? 1.15 : 1);
@@ -605,15 +604,15 @@ export function runStage(stage, opts = {}){
         else { const it = ITEMS[p.v]; const col = p.k === 'soul' ? '#d9a0ff' : RARITY[it?.rar ?? 1]?.col || '#fff'; g.fillStyle = col; g.globalAlpha = 0.3; g.fillRect(p.x - 1.5, p.y - 40, 3, 40); g.globalAlpha = 1; g.save(); g.translate(p.x, p.y); g.rotate(st.t * 2); g.fillRect(-4, -4, 8, 8); g.restore(); } }
       // 特效
       for (const e of fx) { const k = e.t / e.life; if (k >= 1) continue; g.globalAlpha = 1 - k;
-        if (e.k === 'p') { g.fillStyle = e.col; g.fillRect(e.x - e.sz / 2, e.y - e.sz / 2, e.sz, e.sz); }
+        if (e.k === 'p') { g.fillStyle = e.col; g.beginPath(); g.arc(e.x, e.y, Math.max(0.8, e.sz * 0.55), 0, 6.283); g.fill(); }
         else if (e.k === 'vfx') { g.globalAlpha = Math.min(1, (1 - k) * 2.5); const fi = Math.min(11, Math.floor(k * 12)); const im = img('vfx/' + e.type + '_' + e.el + '/' + fi); if (ok(im)) { g.save(); if (e.add) g.globalCompositeOperation = 'lighter'; g.translate(e.x, e.y); if (e.rot) g.rotate(e.rot); g.scale(e.face < 0 ? -1 : 1, 1); const sz = e.size; const ar = e.type === 'pillar' ? 1.5 : 1; g.drawImage(im, -sz / 2, -sz * ar / 2, sz, sz * ar); g.restore(); } }
-        else if (e.k === 'ring') { g.strokeStyle = e.col; g.lineWidth = 3 * (1 - k) + 0.5; g.beginPath(); g.arc(e.x, e.y, e.r * (0.3 + 0.7 * Math.sqrt(k)), 0, 6.283); g.stroke(); }
-        else if (e.k === 'arc') { g.strokeStyle = e.col; g.lineCap = 'round'; g.lineWidth = 6 * e.wide * (1 - k); g.beginPath(); const a0 = e.face > 0 ? -1.3 : Math.PI + 1.3; g.save(); g.translate(e.x, e.y); g.rotate(e.rot); g.arc(0, 0, e.r * (0.7 + 0.3 * k), e.face > 0 ? -1.2 : Math.PI - 1.2 + 0, e.face > 0 ? 1.2 : Math.PI + 1.2, false); g.stroke(); g.strokeStyle = '#fff'; g.lineWidth = 1.5 * (1 - k); g.stroke(); g.restore(); }
+        else if (e.k === 'ring') { g.strokeStyle = e.col; g.lineWidth = 1.6 * (1 - k) + 0.4; g.beginPath(); g.arc(e.x, e.y, e.r * (0.35 + 0.65 * Math.sqrt(k)), 0, 6.283); g.stroke(); }
+        else if (e.k === 'arc') { g.strokeStyle = e.col; g.lineCap = 'round'; g.lineWidth = 3.2 * e.wide * (1 - k); g.beginPath(); const a0 = e.face > 0 ? -1.3 : Math.PI + 1.3; g.save(); g.translate(e.x, e.y); g.rotate(e.rot); g.arc(0, 0, e.r * (0.7 + 0.3 * k), e.face > 0 ? -1.2 : Math.PI - 1.2 + 0, e.face > 0 ? 1.2 : Math.PI + 1.2, false); g.stroke(); g.strokeStyle = '#fff'; g.lineWidth = 1.5 * (1 - k); g.stroke(); g.restore(); }
         else if (e.k === 'line') { g.strokeStyle = e.col; g.lineWidth = 8 * (1 - k); g.beginPath(); g.moveTo(e.x0, e.y); g.lineTo(e.x1, e.y); g.stroke(); }
         else if (e.k === 'spike') { g.fillStyle = e.col; const hh = 46 * Math.sin(Math.min(1, k * 3) * Math.PI / 2); g.beginPath(); g.moveTo(e.x - 14, GY); g.lineTo(e.x - 4, GY - hh); g.lineTo(e.x + 2, GY - hh * 0.6); g.lineTo(e.x + 8, GY - hh * 0.9); g.lineTo(e.x + 14, GY); g.fill(); }
         else if (e.k === 'slab') { g.fillStyle = e.col; g.fillRect(e.x - e.w / 2, e.y - e.h / 2, e.w, e.h); }
         else if (e.k === 'bolt') { g.strokeStyle = e.col; g.lineWidth = 4; g.beginPath(); let y = 0, x = e.x; g.moveTo(x, y); while (y < GY) { y += 30; x += rnd(-10, 10); g.lineTo(x, y); } g.stroke(); }
-        else if (e.k === 'shock') { g.save(); g.globalCompositeOperation = 'lighter'; g.strokeStyle = e.col; g.lineWidth = 5 * (1 - k) + 1; g.beginPath(); g.arc(e.x, e.y, e.r * (0.25 + 0.85 * Math.sqrt(k)), 0, 6.283); g.stroke(); g.globalAlpha = (1 - k) * 0.35; g.fillStyle = e.col; g.beginPath(); g.arc(e.x, e.y, e.r * (0.2 + 0.6 * k), 0, 6.283); g.fill(); g.restore(); }
+        else if (e.k === 'shock') { g.save(); g.globalCompositeOperation = 'lighter'; g.strokeStyle = e.col; g.lineWidth = 2.2 * (1 - k) + 0.5; g.beginPath(); g.arc(e.x, e.y, e.r * (0.35 + 0.65 * Math.sqrt(k)), 0, 6.283); g.stroke(); g.globalAlpha = (1 - k) * 0.18; g.fillStyle = e.col; g.beginPath(); g.arc(e.x, e.y, e.r * (0.25 + 0.45 * k), 0, 6.283); g.fill(); g.restore(); }
         else if (e.k === 'crack') { g.save(); g.strokeStyle = `rgba(40,28,18,${0.85 * (1 - k)})`; g.lineWidth = 2.2; g.beginPath(); const w = e.w * (0.6 + 0.4 * Math.min(1, k * 3)); g.moveTo(e.x - w / 2, e.y); g.lineTo(e.x - w * 0.2, e.y - 3); g.lineTo(e.x, e.y + 1); g.lineTo(e.x + w * 0.25, e.y - 2); g.lineTo(e.x + w / 2, e.y); g.stroke(); g.strokeStyle = `rgba(255,180,80,${0.35 * (1 - k)})`; g.lineWidth = 1; g.stroke(); g.restore(); }
         else if (e.k === 'speed') { g.strokeStyle = e.col; g.lineWidth = 1.6 * (1 - k); g.globalAlpha = 0.55 * (1 - k); g.beginPath(); g.moveTo(e.x, e.y); g.lineTo(e.x - e.face * e.len, e.y); g.stroke(); }
         g.globalAlpha = 1; }
@@ -701,19 +700,13 @@ export function runStage(stage, opts = {}){
     function step(dt){
       st.t += dt; st.comboT -= dt; if (st.comboT <= 0) st.combo = 0; st.shake = Math.max(0, st.shake - dt * 30);
       if (T().fxBurst && st._fxBurstDone !== T().fxBurst) { st._fxBurstDone = T().fxBurst; const col = AC().col || '#ffd890';
-        for (let i = 0; i < 3; i++) arc(P.x + P.face * (20 + i * 18), P.y - P.h / 2, P.face, 70 + i * 20, col, 0.35, 1.4);
-        shock(P.x + 40, P.y - 40, 90, '#ffd24a', 0.5); shock(P.x - 20, GY - 4, 120, '#ff7a3a', 0.55);
-        ring(P.x, P.y - 30, 100, '#ffe08a', 0.6); ring(P.x + 60, GY - 10, 70, '#9fe8ff', 0.45);
-        part(P.x + 50, P.y - 40, '#ffd890', 40, 360, 0.7, 3.5); part(P.x, GY - 8, '#ff7a3a', 28, 280, 0.6, 3);
-        sparks(P.x + 40, P.y - 36, '#ffffff', 24, P.face); sparks(P.x + 40, P.y - 36, '#ff9a4a', 18, -P.face);
-        crack(P.x + 30, GY, 140, 1.4); crack(P.x - 40, GY, 80, 1.0);
-        speedLines(P.face, 14); vfx('slash', 'fire', P.x + 30, P.y - 40, 120, { face: P.face, life: 0.45 });
-        vfx('burst', 'thunder', P.x + 50, P.y - 50, 100, { life: 0.5 }); vfx('shards', 'light', P.x, P.y - 30, 90, { life: 0.4 });
-        fx.push({ k: 'bolt', x: P.x + 80, y: 0, col: '#c9e8ff', t: 0, life: 0.35 });
-        fx.push({ k: 'spike', x: P.x + 100, y: GY, col: '#ff7a3a', t: 0, life: 0.5 });
-        flashHit('crit'); comboMileFx(28); shake(10);
-        const pe = root.querySelector('.ak-phase'); if (pe) { pe.textContent = '第二阶段 · 怒'; pe.classList.remove('on'); void pe.offsetWidth; pe.classList.add('on'); }
-        st.combo = 28; st.comboT = 3;
+        /* 可读爆发：短刀光 + 命中侧火花，角色轮廓清晰 */
+        arc(P.x + P.face * 16, P.y - P.h / 2, P.face, 58, col, 0.16, 1.1);
+        sparks(P.x + P.face * 44, P.y - P.h / 2, col, 10, P.face);
+        sparks(P.x + P.face * 38, P.y - P.h / 2 - 6, '#ffffff', 5, P.face);
+        part(P.x + P.face * 40, P.y - P.h / 2, col, 7, 160, 0.28, 2);
+        comboMileFx(12); shake(3);
+        st.combo = 12; st.comboT = 2.2;
       }
       bot(dt); updPlayer(dt);
       for (const f of foes) updFoe(f, dt);
@@ -731,7 +724,7 @@ export function runStage(stage, opts = {}){
       if (!st.over || true) { const n = ts > 1 ? Math.ceil(ts) : 1; for (let i = 0; i < n; i++) { step(dt * ts / n); if (ended) return; } }
       updFx(dt); draw(); refreshHud();
     }
-    window.__act = { st, P, foes, roster, arenas, stage, get fps(){ return fpsAvg; }, win: () => { for (const f of foes) { f.hp = 0; kill(f); } for (const a of arenas) { a.started = true; a.done = true; a.wave = a.waves.length; } st.over = true; finish(true); }, fail: () => fail('测试失败') };
+    window.__act = { st, P, foes, roster, arenas, stage, fx, get fps(){ return fpsAvg; }, win: () => { for (const f of foes) { f.hp = 0; kill(f); } for (const a of arenas) { a.started = true; a.done = true; a.wave = a.waves.length; } st.over = true; finish(true); }, fail: () => fail('测试失败') };
     playBgm(stage.boss ? 'battle' : 'battle'); refreshHud(true);
     say(stage.name, 1.6); if (stage.obj === 'timed') say(`限时 ${stage.time} 秒内通关！`, 2);
     if (STAGE_FLAVOR[stage.id]) setTimeout(() => { if (!st.over) say(STAGE_FLAVOR[stage.id], 2.8); }, 1700);

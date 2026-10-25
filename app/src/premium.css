@@ -171,21 +171,20 @@
 .ak-pad>button{box-shadow:0 2px 6px rgba(0,0,0,.45)!important;border-width:1.5px!important}
 .ak-sk.ready-pulse:not(.nomp):not(.empty){animation:skReady 1.8s ease-in-out infinite}
 @keyframes skReady{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 2px rgba(255,210,120,.3)}}
-.ak-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:15;mix-blend-mode:screen}
-.ak-flash.on{animation:akFlash .12s ease-out}
-.ak-flash.on.crit{animation:akFlashCrit .18s ease-out;background:radial-gradient(circle,#fff 0%,#ffe08a 40%,transparent 70%)}
-.ak-flash.on.kill{animation:akFlashKill .28s ease-out;background:radial-gradient(circle,#fff 0%,#ff9a6a 35%,#ff4a3a55 60%,transparent 80%)}
-@keyframes akFlash{0%{opacity:.45}100%{opacity:0}}
-@keyframes akFlashCrit{0%{opacity:.7}40%{opacity:.35}100%{opacity:0}}
-@keyframes akFlashKill{0%{opacity:.85}30%{opacity:.5}100%{opacity:0}}
-.ak-phase{position:absolute;left:0;right:0;top:28%;text-align:center;font-family:var(--title);font-size:clamp(26px,5vw,40px);letter-spacing:.28em;color:#ffc8b8;text-shadow:0 0 24px #ff4a3a,0 2px 12px rgba(80,0,0,.9),0 0 60px #ff6a20;opacity:0;pointer-events:none;z-index:16}
-.ak-phase.on{animation:akPhase 1.7s ease-out forwards}
-.ak-phase.on::before,.ak-phase.on::after{content:"";position:absolute;left:10%;right:10%;height:2px;background:linear-gradient(90deg,transparent,#ff8a5a,transparent);opacity:.7}
-.ak-phase.on::before{top:-18px}.ak-phase.on::after{bottom:-18px}
-@keyframes akPhase{0%{opacity:0;transform:scale(1.35);letter-spacing:.5em;filter:blur(4px)}12%{opacity:1;transform:scale(1);letter-spacing:.28em;filter:blur(0)}70%{opacity:1}100%{opacity:0;transform:translateY(-12px)}}
-.ak-mile{position:absolute;left:0;right:0;top:22%;text-align:center;font-family:var(--title);font-size:clamp(20px,3.8vw,32px);letter-spacing:.35em;color:#ffe08a;text-shadow:0 0 18px #ff9a3a,0 2px 4px #000;opacity:0;pointer-events:none;z-index:14}
-.ak-mile.on{animation:akMile .9s ease-out forwards}
-@keyframes akMile{0%{opacity:0;transform:scale(1.6);letter-spacing:.6em}15%{opacity:1;transform:scale(1)}70%{opacity:.85}100%{opacity:0;transform:translateY(-10px)}}
+.ak-flash{position:absolute;inset:0;background:radial-gradient(circle at 50% 55%,rgba(255,245,220,.35),transparent 55%);opacity:0;pointer-events:none;z-index:15;mix-blend-mode:screen}
+.ak-flash.on{animation:akFlash .1s ease-out}
+.ak-flash.on.crit{animation:akFlashCrit .14s ease-out;background:radial-gradient(circle at 50% 50%,rgba(255,230,160,.4),transparent 50%)}
+.ak-flash.on.kill{animation:akFlashKill .18s ease-out;background:radial-gradient(circle at 50% 55%,rgba(255,180,120,.35),transparent 55%)}
+@keyframes akFlash{0%{opacity:.28}100%{opacity:0}}
+@keyframes akFlashCrit{0%{opacity:.4}50%{opacity:.18}100%{opacity:0}}
+@keyframes akFlashKill{0%{opacity:.45}40%{opacity:.2}100%{opacity:0}}
+.ak-phase{position:absolute;left:0;right:0;top:18%;text-align:center;font-family:var(--title);font-size:clamp(18px,3.2vw,28px);letter-spacing:.22em;color:#ffd0c0;text-shadow:0 1px 8px rgba(40,0,0,.85);opacity:0;pointer-events:none;z-index:16}
+.ak-phase.on{animation:akPhase .6s ease-out forwards}
+.ak-phase.on::before,.ak-phase.on::after{display:none}
+@keyframes akPhase{0%{opacity:0;transform:translateY(6px)}15%{opacity:.95;transform:none}70%{opacity:.85}100%{opacity:0;transform:translateY(-8px)}}
+.ak-mile{position:absolute;left:0;right:0;top:16%;text-align:center;font-family:var(--title);font-size:clamp(16px,2.8vw,24px);letter-spacing:.28em;color:#ffe8b0;text-shadow:0 1px 6px #000;opacity:0;pointer-events:none;z-index:14}
+.ak-mile.on{animation:akMile .55s ease-out forwards}
+@keyframes akMile{0%{opacity:0;transform:scale(1.15)}18%{opacity:.9;transform:scale(1)}70%{opacity:.7}100%{opacity:0;transform:translateY(-8px)}}
 
 /* —— VN 克制 —— */
 .vn-box{
@@ -338,3 +337,81 @@
     url(/assets/bg/yuetai.webp) center/cover!important;
 }
 .hr-por{filter:drop-shadow(0 6px 16px rgba(0,0,0,.5))}
+
+
+/* —— premium_fix：实图磁贴 + 半身立绘铺满 + 去玻璃空 —— */
+.screen.hub.clean .htile{
+  background: #12141c !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  box-shadow: none !important;
+  overflow: hidden;
+  min-height: 76px;
+  padding: .7rem .85rem !important;
+  justify-content: flex-end;
+}
+.screen.hub.clean .htile::before,
+.screen.hub.clean .htile::after{ display:none !important; content:none !important; }
+.screen.hub.clean .htile-art{
+  position:absolute; inset:0; z-index:0;
+  background-size:cover; background-position:center;
+  filter: saturate(1.08) brightness(1.05);
+  transform: scale(1.02);
+}
+.screen.hub.clean .htile-shade{
+  position:absolute; inset:0; z-index:0; pointer-events:none;
+  background: linear-gradient(0deg,
+    rgba(6,7,14,.82) 0%,
+    rgba(6,7,14,.28) 42%,
+    rgba(6,7,14,.18) 100%);
+}
+.screen.hub.clean .htile b,
+.screen.hub.clean .htile small{
+  position:relative; z-index:1;
+  text-shadow: 0 1px 6px rgba(0,0,0,.9), 0 0 2px #000;
+}
+.screen.hub.clean .htile.t-adv{ min-height: 96px; border-color: rgba(226,191,110,.32) !important; }
+.screen.hub.clean .htile.t-more{ min-height: 64px; }
+
+.screen.hub.clean .hub-hero{
+  width: 42% !important;
+  background: linear-gradient(180deg, rgba(22,18,32,.2), rgba(8,8,14,.55)) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+.screen.hub.clean .hh-por{
+  position:absolute; inset:0; width:100%; height:100%;
+  object-fit: cover !important;
+  object-position: 50% 12% !important;
+  transform: scale(1.12) !important;
+  transform-origin: 50% 20% !important;
+  mask-image: none !important; -webkit-mask-image: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+.screen.hub.clean .hh-info{
+  position:absolute; left:0; right:0; bottom:0; z-index:2;
+  padding: .55rem .7rem;
+  background: linear-gradient(180deg, transparent, rgba(5,6,14,.88));
+}
+
+.hub-more.filled .hm-row{
+  position: relative; overflow: hidden;
+  min-height: 58px; padding: .55rem 1rem !important;
+  background: #14161e !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  border-radius: 6px;
+  box-shadow: none !important;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.hub-more.filled .hm-art{
+  position:absolute; inset:0; z-index:0;
+  background-size: cover; background-position: center;
+  filter: saturate(1.05) brightness(1.02);
+}
+.hub-more.filled .hm-shade{
+  position:absolute; inset:0; z-index:0; pointer-events:none;
+  background: linear-gradient(90deg, rgba(6,7,14,.78) 0%, rgba(6,7,14,.35) 55%, rgba(6,7,14,.55) 100%);
+}
+.hub-more.filled .hm-row b,
+.hub-more.filled .hm-row .rdot{ position:relative; z-index:1; text-shadow:0 1px 6px #000; }

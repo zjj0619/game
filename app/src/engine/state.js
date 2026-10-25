@@ -7,7 +7,7 @@ export const SAVE_SLOTS = 6;
 const KEY = 'zlj_save_'; const META = 'zlj_meta'; const SET = 'zlj_settings';
 
 export const settings = Object.assign({
-  master:0.8, music:0.6, sfx:0.8, voice:0.9, textSpeed:40, autoDelay:1600, fx:2,
+  master:0.8, music:0.6, sfx:0.8, voice:0.9, textSpeed:40, autoDelay:1600, fx:1,
   aiEnabled:true, haptics:true, aiVoice:false, apiKey:'', aiBase:'https://api.minimax.cn', battleSpeed:1, autoBattle:false,
 }, JSON.parse(localStorage.getItem(SET) || '{}'));
 export function saveSettings(){ localStorage.setItem(SET, JSON.stringify(settings)); }

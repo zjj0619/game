@@ -40,9 +40,9 @@
 .ak-combo span{font-size:13px;color:#f4e6c4;letter-spacing:4px}
 .ak-combo.pop b{animation:akPop .18s}
 @keyframes akPop{0%{transform:scale(1.45)}100%{transform:scale(1)}}
-.ak-msg{position:absolute;left:0;right:0;top:36%;text-align:center;font-family:var(--title);font-size:30px;letter-spacing:8px;color:#fff1c8;text-shadow:0 0 16px #ff9a3a,0 2px 3px #000;opacity:0;pointer-events:none;z-index:4}
-.ak-msg.on{animation:akMsg 1.7s forwards}
-@keyframes akMsg{0%{opacity:0;transform:scale(1.6);letter-spacing:22px}15%{opacity:1;transform:scale(1);letter-spacing:8px}80%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
+.ak-msg{position:absolute;left:0;right:0;top:14%;text-align:center;font-family:var(--title);font-size:clamp(14px,2.6vw,20px);letter-spacing:.18em;color:#fff1c8;text-shadow:0 1px 6px #000;opacity:0;pointer-events:none;z-index:4}
+.ak-msg.on{animation:akMsg .7s forwards}
+@keyframes akMsg{0%{opacity:0;transform:translateY(4px)}12%{opacity:.92;transform:none}70%{opacity:.75}100%{opacity:0;transform:translateY(-6px)}}
 .ak-go{position:absolute;right:calc(var(--sr) + 8px);top:44%;font-family:var(--title);font-size:22px;color:#ffe08a;text-shadow:0 0 10px #ff9a3a,0 1px 2px #000;opacity:0;pointer-events:none;z-index:3}
 .ak-go.on{opacity:1;animation:akGo .8s infinite}
 @keyframes akGo{50%{transform:translateX(10px);opacity:.6}}
