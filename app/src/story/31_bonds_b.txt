@@ -1,0 +1,209 @@
+# 羁绊 · 阿篱 / 夸铃 / 浮黎
+*bond_ali_1
+@bg campfire
+@bgm dream
+@show ali right
+@show yangui left
+>阿篱抱着一张没有弦的琴，手指在空中拨弄。
+晏归：琴弦呢？
+阿篱：在混沌宫里断了。我拨的是记忆里的弦。
+阿篱：你听得到吗？
+? “听得到。” -> bond_ali_1a | aff:ali+3
+? “听不到，但我想听。” -> bond_ali_1b | aff:ali+4
+*bond_ali_1a
+阿篱：骗人。可是，谢谢你。
+@goto bond_ali_1e
+*bond_ali_1b
+阿篱：……那等找到新的弦，我第一个弹给你听。
+*bond_ali_1e
+@do aff:ali+6 flag:bond_ali_1
+@return
+*bond_ali_2
+@bg campfire
+@bgm sad
+@show ali right
+@show yangui left
+阿篱：我又忘了一件事。
+阿篱：今天早上，我想不起赤豹的名字了。它跟了我五百年。
+>赤豹在她脚边趴着，把头搁在她膝盖上。
+阿篱：它一点都不生气。它是不是也忘了？
+? “它不需要名字，它记得你。” -> bond_ali_2a | aff:ali+4
+? “我帮你记。” -> bond_ali_2b | aff:ali+4 flag:ali_notebook
+*bond_ali_2a
+阿篱：……嗯。被记得，比记得重要。
+@goto bond_ali_2e
+*bond_ali_2b
+>晏归从行囊里拿出一个小本子，写下：赤豹，名“丹”。文狸，名“绒”。阿篱，喜欢兰花。
+阿篱：最后一句，是写给谁看的？
+晏归：写给忘了的时候的你。
+*bond_ali_2e
+@do aff:ali+6 flag:bond_ali_2
+@return
+*bond_ali_3
+@bg campfire
+@bgm warm
+@fx petals
+@show ali right
+@show yangui left
+阿篱：晏归。我想起来那首曲子的下一句了。
+阿篱：可是我不敢弹。弹完了，如果他还是不来……
+阿篱：那我等的三百年，算什么呢？
+? “算你自己的三百年。” -> bond_ali_3a | aff:ali+5 hope+1
+? “不弹也没关系。” -> bond_ali_3b | aff:ali+3
+*bond_ali_3a
+阿篱：……我自己的。
+>她低下头，很久以后，轻轻地笑了。
+阿篱：我好像从来没有那样想过。
+@goto bond_ali_3e
+*bond_ali_3b
+阿篱：嗯。等我想弹的时候再弹。
+*bond_ali_3e
+@do aff:ali+6 flag:bond_ali_3
+@return
+*bond_ali_4
+@bg campfire
+@bgm dawn
+@fx stars
+@show ali right
+@show yangui left
+>阿篱弹完了那首曲子。用的是晏归在路上找来的一根蚕丝。
+>曲子很短。最后一个音落下的时候，火苗跳了一下。
+>没有人来。
+阿篱：……没有人来呢。
+阿篱：可是没关系。曲子弹完了，我就不用再等了。
+阿篱：晏归，以后我不等别人了。我跟着你走。
+? “欢迎回来，阿篱。” -> bond_ali_4a | aff:ali+5 hope+2
+? 递给她那个小本子 -> bond_ali_4b | aff:ali+6
+*bond_ali_4a
+阿篱：回来……嗯。是回来了。
+@goto bond_ali_4e
+*bond_ali_4b
+>本子的最后一页，写着：“阿篱，曲子弹完了。”
+阿篱：你连这个都提前写好了？
+晏归：我猜的。
+*bond_ali_4e
+@do aff:ali+6 flag:bond_ali_4
+@return
+*bond_kualing_1
+@bg campfire
+@bgm changyang
+@show kualing right
+@show yangui left
+夸铃：咕咚咕咚——哈！还是凉水好喝！
+晏归：你这是第七壶了。
+夸铃：夸父族都这样！我祖宗喝干了黄河渭水，还不够呢！
+夸铃：你知道他最后渴死在哪儿吗？就在离大泽只差三里的地方。三里！
+? “他差一点就到了。” -> bond_kualing_1a | aff:kualing+3
+? 把自己的水壶递给他 -> bond_kualing_1b | aff:kualing+4
+*bond_kualing_1a
+夸铃：是啊。差一点。所以我不能差一点。
+@goto bond_kualing_1e
+*bond_kualing_1b
+夸铃：……你不渴？
+晏归：我可以等。
+夸铃：嘿，你这人怪好的。
+*bond_kualing_1e
+@do aff:kualing+6 flag:bond_kualing_1
+@return
+*bond_kualing_2
+@bg campfire
+@bgm warm
+@show kualing right
+@show yangui left
+夸铃：晏归，我跟你说个秘密。你不许笑。
+夸铃：我……没见过太阳活着的样子。
+夸铃：我出生的时候，它已经死在禺谷了。我守了它十六年，守的是一具尸体。
+夸铃：族里的人都说太阳是金色的，暖的。可我摸它的时候，它只是……温的。
+? “等它升起来，你第一个看。” -> bond_kualing_2a | aff:kualing+5 hope+1
+? “温的也很好。” -> bond_kualing_2b | aff:kualing+3
+*bond_kualing_2a
+夸铃：一言为定！谁跟我抢我射谁！
+@goto bond_kualing_2e
+*bond_kualing_2b
+夸铃：……嗯。温的，也是活过的证据。
+*bond_kualing_2e
+@do aff:kualing+6 flag:bond_kualing_2
+@return
+*bond_kualing_3
+@bg campfire
+@bgm tense
+@show kualing right
+@show yangui left
+夸铃：你说，我这箭能射到烛龙吗？
+晏归：为什么要射烛龙？
+夸铃：不是射它！是……万一。万一最后要选，是太阳还是你。
+夸铃：我是夸父族的，我应该选太阳。可是我……
+? “选你想选的。” -> bond_kualing_3a | aff:kualing+4
+? “不会走到那一步的。” -> bond_kualing_3b | aff:kualing+3 hope+1
+*bond_kualing_3a
+夸铃：我想选的……我想两个都要！
+晏归：那就两个都要。
+夸铃：哈哈！对！我们夸父族就是贪心！
+@goto bond_kualing_3e
+*bond_kualing_3b
+夸铃：你说的啊！别骗我！
+*bond_kualing_3e
+@do aff:kualing+6 flag:bond_kualing_3
+@return
+*bond_kualing_4
+@bg campfire
+@bgm dawn
+@fx embers
+@show kualing right
+@show yangui left
+>夸铃把弓摘下来，放在晏归手里。
+夸铃：这是邓林的桃木做的。祖宗的杖化成了桃林，族里用那片林子做了第一张弓。
+夸铃：你拿着。我手上还有箭，用不着它。
+晏归：没有弓，你怎么射箭？
+夸铃：我会做新的！……你拿着就是了，啰嗦。
+? 收下 -> bond_kualing_4a | aff:kualing+5
+? “借我，打完了还你。” -> bond_kualing_4b | aff:kualing+5 hope+1
+*bond_kualing_4a
+夸铃：嘿嘿。这下我们算兄弟了。
+@goto bond_kualing_4e
+*bond_kualing_4b
+夸铃：行！那你一定要活着还我！
+*bond_kualing_4e
+@do aff:kualing+6 flag:bond_kualing_4 codex:l_kuafu
+@return
+*bond_fuli_1
+@bg campfire
+@bgm sad
+@show fuli right
+@show yangui left
+>浮黎坐在离火最远的地方。他的面具已经摘了，脸上有一道很长的疤。
+浮黎：你不该让我坐在这儿。
+晏归：师父以前也是这么坐的。离火最远，守着所有人。
+浮黎：……你还叫我师父。
+? “你一直是。” -> bond_fuli_1a | aff:fuli+5
+? “我还在生气。但你是。” -> bond_fuli_1b | aff:fuli+4 hope+1
+*bond_fuli_1a
+>浮黎没有说话。很久以后，他往火边挪近了一点。
+@goto bond_fuli_1e
+*bond_fuli_1b
+浮黎：生气是对的。……谢谢你还肯生气。
+*bond_fuli_1e
+@do aff:fuli+8 flag:bond_fuli_1
+@return
+*bond_fuli_2
+@bg campfire
+@bgm warm
+@fx stars
+@show fuli right
+@show yangui left
+浮黎：你小时候，第一次点灯，把自己眉毛烧了。
+晏归：……师父！
+浮黎：你哭了一整夜，说再也不点灯了。第二天早上，你又去点了。
+浮黎：我那时候就知道，你会比我走得远。
+浮黎：晏归，我走错的路，你别再走。可如果你一定要走——
+浮黎：这一次，我走在你前面。
+? “我们一起走。” -> bond_fuli_2a | aff:fuli+6 hope+2
+? “这次换我走在前面。” -> bond_fuli_2b | aff:fuli+5
+*bond_fuli_2a
+浮黎：……好。一起。
+@goto bond_fuli_2e
+*bond_fuli_2b
+浮黎：哈。长大了啊。
+*bond_fuli_2e
+@do aff:fuli+8 flag:bond_fuli_2 codex:l_fuli
+@return

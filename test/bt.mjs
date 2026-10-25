@@ -1,0 +1,15 @@
+import { chromium } from 'playwright-core';
+const OUT='/workspace/game/screenshots_v2/'; const W=+(process.env.W||915), H=+(process.env.H||412);
+const b = await chromium.launch({ executablePath:'/usr/bin/google-chrome' });
+const p = await b.newPage({ viewport:{width:W,height:H}, deviceScaleFactor:2, isMobile:true, hasTouch:true });
+const errs=[]; p.on('pageerror', e=>errs.push(e.message)); p.on('console', m=>{ if (m.type()==='error') errs.push('console:'+m.text()); });
+await p.addInitScript(()=>{ if (!sessionStorage.getItem('i')) { localStorage.clear(); localStorage.setItem('zlj_settings', JSON.stringify({textSpeed:100})); sessionStorage.setItem('i','1'); } });
+await p.goto('http://localhost:4173/'); await p.waitForTimeout(2000);
+await p.click('text=新的旅程'); await p.waitForTimeout(800);
+await p.evaluate(()=>{ const z=window.__zlj; const S=z.S; for (const m of ['baiji','xianwei','qi']) z.add(m); for (const m of S.members) S.party[m].lv=12; S.formation=['yangui','baiji','xianwei','qi'];
+  for (const r of ['jincheng','qingqiu','donghai','changyang']) S.flags['reg_'+r]=true; S.region='changyang'; S.flags.tut_battle2=true; S.flags.tut_boss2=true; });
+await p.evaluate(()=>{ document.querySelectorAll('.screen').forEach(e=>e.remove()); window.__game.battle(process_enc='cy_a', {}); }).catch(e=>errs.push(e.message));
+await p.waitForTimeout(2500); await p.screenshot({path:OUT+`bt_${W}.png`});
+await p.click('.cb.skill').catch(e=>errs.push('noskill')); await p.waitForTimeout(500); await p.screenshot({path:OUT+`bt_skill_${W}.png`});
+console.log('ERR', errs.join('\n'));
+await b.close();

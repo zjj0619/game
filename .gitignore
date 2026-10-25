@@ -1,0 +1,27 @@
+# secrets / signing — never commit
+keystore/
+*.jks
+*.keystore
+keystore.properties
+.env
+*.env
+.secrets/
+local.properties
+# deps & build outputs
+node_modules/
+app/dist/
+dist/
+*.apk
+*.aab
+app/android/app/build/
+app/android/build/
+app/android/.gradle/
+app/android/app/src/main/assets/public/
+.gradle/
+# large raw/working files
+art_raw/
+screenshots/
+screenshots_v1crit/
+screenshots_v2/*_1000.png
+*.log
+.DS_Store

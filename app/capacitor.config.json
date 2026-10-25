@@ -1,0 +1,7 @@
+{
+  "appId": "com.jiaqi.zhulongji",
+  "appName": "烛龙纪",
+  "webDir": "dist",
+  "android": { "allowMixedContent": false, "backgroundColor": "#05060f" },
+  "plugins": { "CapacitorHttp": { "enabled": true } }
+}

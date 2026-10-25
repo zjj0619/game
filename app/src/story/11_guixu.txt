@@ -1,0 +1,112 @@
+# 第十一章 · 归墟
+*c11_start
+@chapter 11|归墟|其下无底，名曰归墟
+@bg guixu
+@bgm guixu
+@fx stars
+@do region:guixu codex:l_guixu
+>他们往下坠。
+>坠了很久很久。久到晏归数完了三百年里所有熄灭的灯，久到衔微唱完了精卫族所有的歌。
+>然后，他们停住了。不是落地，是浮在了半空中。
+>四周是水，又不是水。是星光，又不是星光。三百年来所有坠落的星辰，都沉在这里，像一片发着微光的海。
+@show yangui left
+@show kualing right
+夸铃：……好多星星。
+夸铃：原来它们都在这儿。
+@show xianwei center
+衔微：八纮九野之水，天汉之流，莫不注之，而无增无减焉。
+衔微：我娘说的。我小时候以为那是一句骗小孩的话。
+@if party:fuli -> c11_fuli
+@goto c11_go
+*c11_fuli
+@hide xianwei
+@show fuli center
+浮黎：每一颗沉在这里的星，都曾是一个守灯人的长。
+浮黎：再过不久，我也会在这里。
+@if flag:elixir_fuli -> c11_fuli2
+@goto c11_go
+*c11_fuli2
+浮黎：……本来是这样的。现在不会了。托你的福。
+*c11_go
+@hide all
+@bgm tense
+@battle gx_a
+@bgm guixu
+@note 归墟深处，有一样巨大的东西在呼吸
+@explore guixu c11_deep 潜入归墟深处
+*c11_deep
+@bg haidi
+@bgm guixu
+@fx blue
+>越往深处，星光越暗。
+>然后，他们看见了它。
+>一条龙，盘在归墟的最深处。它的身体比任何山都长，盘成一个看不见尽头的圆。它的鳞是暗红色的，有些地方的鳞已经掉了，露出底下灰白的、像冷却的岩浆一样的皮肤。
+>它的眼睛闭着。
+@show zhulong center
+@do codex:c_zhulong codex:l_zhulong
+>晏归的左眼开始疼。不是烫，是疼。像一颗想回家的心在胸腔里撞。
+@show yangui left
+晏归：……烛龙。
+>龙没有睁眼。可是归墟里所有的星光都朝它流了过去，又从它身上流了回来——它在呼吸。
+@hide zhulong
+@bgm boss
+@shake
+>归墟的水翻腾起来。一个巨大的、由无数坠星的残骸拼成的东西，从龙的影子里站了起来。
+>它没有形状。它是所有被遗忘的、坠落的、熄灭的东西，堆在一起，不肯睡去。
+@do codex:e_B_guixu
+@battle gx_boss -> c11_lose
+@goto c11_win
+*c11_lose
+>那东西把他们往下压，往更深的地方压。晏归觉得自己也在变成一颗沉下去的星——
+>一条暗红色的龙尾，在黑暗里轻轻地卷住了他。
+@goto c11_win
+*c11_win
+@bgm dream
+@fx stars
+>残骸散开了，重新沉入了星海。
+>在它原来站着的地方，浮起了一只瓶子。瓶子里装着一点什么——看起来是水，又像是什么都没有。
+@do item:k_abyss
+@show zhulong center
+>烛龙的胸口上，有一处鳞片翻开了。那里面，嵌着第七片烛瞳。
+>晏归伸出手。左眼里的火和那片烛瞳之间，连起了一根细细的光线。
+烛龙：……孩子。
+>那声音不是从耳朵里听到的，是从左眼里。
+烛龙：你走了很远的路。
+@show yangui left
+晏归：你一直听得见？
+烛龙：我听得见每一盏灯。点亮的，熄灭的。
+烛龙：我闭着眼睛，可是我没有睡着。三百年，我一盏一盏地数。
+? “那你为什么不睁眼？” -> c11_a
+? “你后悔吗？” -> c11_b
+? “我来带你回去。” -> c11_c | hope+3
+*c11_a
+烛龙：因为我睁开眼的时候，看到的都是我的光杀死的东西。
+烛龙：禾苗，河流，夸父，魃。
+烛龙：我不敢再看了。
+@goto c11_shard
+*c11_b
+烛龙：后悔。
+烛龙：闭眼的时候后悔，睁眼的时候也后悔。所以，我什么都没做。这大概是最该后悔的。
+@goto c11_shard
+*c11_c
+烛龙：回去？
+烛龙：孩子，你就是我想回去的那一部分。
+*c11_shard
+>晏归把手放在第七片烛瞳上。
+@flash #ff9a40
+@do item:k_eyeshard
+>七片烛瞳，第一次聚在了一起。它们在晏归手里燃烧，又不烫。
+>它们想要回到那双闭着的眼睛里去。也想要留在晏归身上。
+@hide all
+@bg zhulong_eye
+@bgm tense
+@fx embers
+>就在这时，归墟所有的星光都暗了下去。
+>一个声音从上方传了下来。冷，平静，像冬天第一场雪落下的声音。
+@show xuanming center
+玄冥：烛之子。
+玄冥：你终于到了。
+@do codex:c_xuanming
+@do flag:ch11_done exp+10000 gold+5000
+@note 第十一章完成 · 七片烛瞳齐聚
+@goto c12_start

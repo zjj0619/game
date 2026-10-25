@@ -1,0 +1,153 @@
+// 敌人：img = enemy/a0 或 boss/xxx 或 por/xxx；arch 决定属性系数；moves 为招式
+export const ARCH = {
+  brute:{hp:1.15,atk:1.15,mag:0.6,def:1.0,spd:0.9},
+  caster:{hp:0.85,atk:0.6,mag:1.25,def:0.8,spd:1.0},
+  swift:{hp:0.85,atk:1.0,mag:0.8,def:0.8,spd:1.35},
+  tank:{hp:1.45,atk:0.9,mag:0.6,def:1.4,spd:0.7},
+  support:{hp:0.95,atk:0.7,mag:1.0,def:0.95,spd:1.0},
+  boss:{hp:1.0,atk:1.1,mag:1.1,def:1.15,spd:1.0},
+};
+// 敌人招式
+export const MOVES = {
+  hit:{name:'攻击',kind:'phys',pow:1.0,tgt:'one',intent:'攻击'},
+  bite:{name:'撕咬',kind:'phys',pow:1.2,tgt:'one',intent:'攻击'},
+  claw:{name:'连爪',kind:'phys',pow:0.65,hits:2,tgt:'one',intent:'连击'},
+  heavy:{name:'蓄力重击',kind:'phys',pow:2.3,tgt:'one',charge:true,intent:'蓄力'},
+  sweep:{name:'横扫',kind:'phys',pow:0.8,tgt:'all',intent:'群攻'},
+  bolt:{name:'术法',kind:'mag',pow:1.3,tgt:'one',intent:'施法'},
+  storm:{name:'风暴',kind:'mag',pow:0.9,tgt:'all',intent:'群体术法'},
+  poison:{name:'毒息',kind:'mag',pow:0.7,tgt:'all',st:['poison',0.5,3],intent:'毒'},
+  burn:{name:'喷火',kind:'mag',pow:1.0,tgt:'one',st:['burn',0.6,3],intent:'灼烧'},
+  freeze:{name:'寒息',kind:'mag',pow:0.8,tgt:'one',st:['freeze',0.35,1],intent:'冰封'},
+  charm:{name:'蛊惑',kind:'debuff',tgt:'one',st:['charm',0.6,2],intent:'魅惑'},
+  howl:{name:'嚎叫',kind:'debuff',tgt:'all',st:['weak',0.6,2],intent:'削弱'},
+  stun:{name:'震击',kind:'phys',pow:1.0,tgt:'one',st:['stun',0.35,1],intent:'眩晕'},
+  guard:{name:'固守',kind:'buff',tgt:'self',st:['defup',1,2],intent:'防御'},
+  rage:{name:'狂怒',kind:'buff',tgt:'self',st:['atkup',1,3],intent:'强化'},
+  mend:{name:'治愈',kind:'heal',pow:1.2,tgt:'ally',intent:'治疗'},
+  drain:{name:'吸取',kind:'mag',pow:1.2,tgt:'one',drain:0.5,intent:'吸血'},
+  doom:{name:'灭世',kind:'mag',pow:1.7,tgt:'all',charge:true,intent:'大招蓄力'},
+};
+const E=(id,name,img,el,arch,moves,desc,drops=[])=>[id,{name,img,el,arch,moves,desc,drops}];
+export const ENEMIES = Object.fromEntries([
+  // a 表
+  E('yegui','夜鬼','enemy/a0','dark','brute',['hit','claw'],'长夜里游荡的人形影子，渴望一切温暖之物。',[['m_bone',0.5],['m_fang',0.3]]),
+  E('dengyan','灯魇','enemy/a1','dark','caster',['bolt','drain'],'寄生在熄灭之灯里的怨念，提着空灯笼引人迷路。',[['m_starmarrow',0.25],['m_ink',0.2]]),
+  E('humei','狐魅','enemy/a2','wood','swift',['claw','charm'],'青丘幻境中游荡的狐影，以人的迷惘为食。',[['m_fur',0.6]]),
+  E('gudiao','蛊雕','enemy/a3','metal','swift',['bite','claw','howl'],'其状如雕而有角，其音如婴儿之音，是食人。',[['m_feather',0.6],['m_fang',0.3]]),
+  E('chiru','赤鱬','enemy/a4','water','caster',['bolt','charm'],'其状如鱼而人面，其音如鸳鸯，食之不疥。',[['m_scale',0.4],['m_salt',0.4]]),
+  E('jellyfish','毒水母','enemy/a5','water','support',['poison','mend'],'被毒潮浸染的水母，伞盖里亮着绿火。',[['m_salt',0.5],['m_herb',0.3]]),
+  E('jiaoren','鲛人卫','enemy/a6','water','brute',['hit','heavy','guard'],'南海之外有鲛人，水居如鱼，不废织绩，其眼泣则能出珠。',[['m_silk',0.3],['m_salt',0.4]]),
+  E('haiyuan','海怨','enemy/a7','water','caster',['freeze','drain','storm'],'溺死者的执念在海底凝成的女子。',[['m_salt',0.5],['m_starmarrow',0.15]]),
+  E('yuanqin','怨禽','enemy/a8','metal','swift',['claw','storm'],'衔着风暴的黑鸟，羽毛上有金色裂纹。',[['m_feather',0.6]]),
+  // b 表
+  E('wushou','无首兵','enemy/b0','earth','brute',['hit','heavy'],'常羊山古战场上不肯倒下的士兵。',[['m_bronze',0.5],['m_bone',0.3]]),
+  E('gugukui','骨鼓傀','enemy/b1','earth','tank',['stun','guard','howl'],'以夔皮为鼓、人骨为架的战争傀儡。',[['m_bone',0.6],['m_fur',0.3]]),
+  E('kui','夔','enemy/b2','metal','tank',['stun','storm','guard'],'状如牛，苍身而无角，一足，出入水则必风雨，其声如雷。',[['m_fur',0.5],['m_bone',0.4]]),
+  E('toulou','土蝼','enemy/b3','earth','brute',['bite','heavy','rage'],'其状如羊而四角，是食人。',[['m_fang',0.5],['m_fur',0.4]]),
+  E('qinyuan','钦原','enemy/b4','wood','swift',['claw','poison'],'其状如蜂，大如鸳鸯，蠚鸟兽则死，蠚木则枯。',[['m_herb',0.5],['m_feather',0.3]]),
+  E('yingzhao','英招','enemy/b5','metal','swift',['claw','storm','rage'],'马身而人面，虎文而鸟翼，徇于四海。',[['m_feather',0.5],['m_jade',0.2]]),
+  E('suanni','玉狻猊','enemy/b6','earth','tank',['bite','guard','heavy'],'昆仑玉石所化的守门狻猊。',[['m_jade',0.5]]),
+  E('yuchan','玉蟾','enemy/b7','water','support',['mend','freeze','bolt'],'月宫逃下来的玉蟾，吐息带着霜。',[['m_jade',0.4],['m_herb',0.3]]),
+  E('zheng','狰','enemy/b8','fire','brute',['bite','claw','rage'],'其状如赤豹，五尾一角，其音如击石。',[['m_fang',0.6],['m_fur',0.4]]),
+  // c 表
+  E('hundunyy','混沌残影','enemy/c0','none','caster',['storm','charm','drain'],'混沌之野里漂浮的未成形之物。',[['m_ink',0.4],['m_starmarrow',0.2]]),
+  E('huan','讙','enemy/c1','wood','swift',['claw','howl'],'其状如狸，一目而三尾，名曰讙，其音如夺百声。',[['m_fur',0.6]]),
+  E('bifang','毕方','enemy/c2','fire','caster',['burn','storm'],'其状如鹤，一足，赤文青质而白喙，见则其邑有讹火。',[['m_feather',0.5],['m_ember',0.4]]),
+  E('haiwu','骸乌','enemy/c3','fire','swift',['claw','burn'],'太阳死后，三足乌只剩骨头还在飞。',[['m_ember',0.5],['m_bone',0.4]]),
+  E('jiaoshi','焦尸','enemy/c4','fire','brute',['hit','heavy','burn'],'渴死在逐日路上的人。',[['m_ember',0.4],['m_bone',0.5]]),
+  E('shamang','沙蟒','enemy/c5','earth','tank',['bite','poison','guard'],'禺谷沙海中的巨蟒。',[['m_scale',0.6],['m_goldsand',0.3]]),
+  E('hannu','旱奴','enemy/c6','fire','support',['burn','mend','howl'],'魃的仆从，所到之处寸草不生。',[['m_goldsand',0.4],['m_cinnabar',0.3]]),
+  E('huoshu','火鼠','enemy/c7','fire','swift',['bite','burn'],'生于火中的鼠，毛可织不烬之布。',[['m_fur',0.5],['m_ember',0.4]]),
+  E('fei','蜚','enemy/c8','earth','caster',['poison','drain','howl'],'其状如牛而白首，一目而蛇尾，行水则竭，行草则死，见则天下大疫。',[['m_herb',0.4],['m_cinnabar',0.3]]),
+  // d 表
+  E('bingjiao','冰蛟','enemy/d0','water','brute',['bite','freeze','heavy'],'北海冰层下的蛟。',[['m_frost',0.5],['m_scale',0.4]]),
+  E('mengmo','梦貘','enemy/d1','dark','support',['charm','mend','drain'],'吃梦的兽。在幽都，它们被养得很胖。',[['m_silk',0.4],['m_ink',0.3]]),
+  E('tubo','土伯','enemy/d2','earth','tank',['heavy','stun','rage'],'幽都之门的守卫，九约，其角觺觺。',[['m_bronze',0.4],['m_bone',0.4]]),
+  E('heishe','黑蛇卫','enemy/d3','water','brute',['bite','poison','guard'],'相柳麾下的黑蛇卫士。',[['m_scale',0.6]]),
+  E('kun','鲲','enemy/d4','water','tank',['sweep','freeze','guard'],'北冥有鱼，其名为鲲。这只还很小。',[['m_frost',0.4],['m_salt',0.4]]),
+  E('mengdie','梦蝶','enemy/d5','light','support',['charm','mend','storm'],'不知是蝶梦人，还是人梦蝶。',[['m_silk',0.5],['m_starmarrow',0.2]]),
+  E('xinghai','星骸','enemy/d6','light','tank',['heavy','guard','storm'],'坠入归墟的星辰残骸，仍保留着人形的记忆。',[['m_starmarrow',0.5],['m_jade',0.2]]),
+  E('yuantong','渊瞳','enemy/d7','dark','caster',['bolt','charm','drain'],'归墟深处睁开的眼睛。',[['m_starmarrow',0.4],['m_ink',0.3]]),
+  E('yecha','夜叉','enemy/d8','dark','swift',['claw','heavy','rage'],'幽都巡夜的恶鬼。',[['m_fang',0.5],['m_bone',0.4]]),
+  // —— 首领 ——
+  E('B_yeguiwang','夜鬼王','boss/yeguiwang','dark','boss',['claw','sweep','howl','heavy'],'烬城外长夜凝成的王。它曾经是一位守灯人。',[['m_starmarrow',1]]),
+  E('B_humeng','狐梦之主','boss/humeng','wood','boss',['charm','storm','drain','mend'],'青丘幻境的核心，一只由千年狐梦凝成的巨狐。',[['m_fur',1]]),
+  E('B_duchao','毒潮蛟','boss/duchaojiao','water','boss',['bite','poison','sweep','doom'],'被相柳之毒污染的东海之蛟。',[['m_scale',1]]),
+  E('B_zhanhun','常羊战魂','boss/zhanhun','earth','boss',['heavy','sweep','rage','stun'],'刑天与黄帝之战中死去的十万战魂的集合。',[['m_bronze',1]]),
+  E('B_luwu','陆吾','por/luwu','earth','boss',['claw','heavy','howl','guard'],'昆仑天门的守卫，九尾虎身。他的试炼从不放水。',[['m_jade',1]]),
+  E('B_shuyan','书魇','boss/shuyan','dark','boss',['bolt','charm','storm','drain'],'白泽书斋中被遗忘的一页，渴望被读。',[['m_ink',1]]),
+  E('B_hundun','混沌','boss/hundun','none','boss',['storm','charm','sweep','doom'],'帝江的影子。无面，无窍，无所不吞。',[['m_starmarrow',1]]),
+  E('B_jinwu','金乌骸','boss/jinwu','fire','boss',['burn','storm','heavy','doom'],'被后羿射落的第十个太阳，它的骸骨不肯熄灭。',[['m_ember',1]]),
+  E('B_ba','魃','por/ba','fire','boss',['burn','storm','drain','doom'],'被锁于赤水的旱神。她并不想伤害任何人，但她所到之处，大地都会裂开。',[['m_goldsand',1]]),
+  E('B_yinglong','应龙','boss/yinglong','water','boss',['storm','heavy','freeze','doom'],'杀蚩尤与夸父的应龙，奉黄帝之命看守赤水的封印。',[['m_scale',1]]),
+  E('B_xiangliu','相柳','por/xiangliu','water','boss',['poison','sweep','bite','doom'],'九首蛇神，所过之处尽为毒泽。',[['k_fang',1]]),
+  E('B_fuli','浮黎','por/fuli','dark','boss',['bolt','drain','howl','heavy'],'你的师父。他的刀从来都比你快。',[]),
+  E('B_guixu','归墟之主','boss/guixu','dark','boss',['storm','freeze','drain','doom'],'归墟底部那团吞噬一切星光的东西。也许它曾是一颗星。',[['m_starmarrow',1]]),
+  E('B_xuanming','玄冥','por/xuanming','dark','boss',['storm','freeze','charm','doom','drain'],'北方夜神。他说：让我们都睡吧。',[]),
+  E('B_zhulongshadow','烛龙之影','por/zhulong','light','boss',['storm','burn','heavy','doom'],'烛龙在梦中的影子，它在试探你是否配得上它的眼睛。',[]),
+]);
+
+// 遭遇：[敌人id,等级]…；boss 标记首领战（不可逃）
+const G=(...a)=>a;
+export const ENCOUNTERS = {
+  // 序 烬城
+  p_1:{foes:G(['yegui',1],['yegui',1])},
+  p_2:{foes:G(['yegui',2],['dengyan',2])},
+  p_boss:{foes:G(['B_yeguiwang',3]),boss:true,bgm:'boss'},
+  jc_a:{foes:G(['yegui',2],['dengyan',2],['yegui',2])},
+  // 1 青丘
+  qq_a:{foes:G(['humei',4],['humei',4])},
+  qq_b:{foes:G(['humei',5],['huan',5],['humei',5])},
+  qq_c:{foes:G(['huan',6],['dengyan',6])},
+  qq_boss:{foes:G(['B_humeng',7]),boss:true,bgm:'boss'},
+  // 2 东海
+  dh_a:{foes:G(['chiru',7],['jellyfish',7])},
+  dh_b:{foes:G(['jiaoren',8],['chiru',8],['jellyfish',8])},
+  dh_c:{foes:G(['gudiao',9],['yuanqin',9])},
+  dh_d:{foes:G(['haiyuan',9],['jiaoren',9])},
+  dh_boss:{foes:G(['B_duchao',10],['jellyfish',9]),boss:true,bgm:'boss'},
+  // 3 常羊
+  cy_a:{foes:G(['wushou',10],['wushou',10],['gugukui',10])},
+  cy_b:{foes:G(['toulou',11],['wushou',11])},
+  cy_c:{foes:G(['kui',12],['gugukui',11])},
+  cy_boss:{foes:G(['B_zhanhun',13],['wushou',12]),boss:true,bgm:'boss'},
+  // 4-5 昆仑
+  kl_a:{foes:G(['yingzhao',13],['qinyuan',13])},
+  kl_b:{foes:G(['suanni',14],['yuchan',14])},
+  kl_c:{foes:G(['qinyuan',15],['yingzhao',15],['yuchan',15])},
+  kl_d:{foes:G(['zheng',16],['suanni',16])},
+  kl_shuyan:{foes:G(['B_shuyan',15],['dengyan',14]),boss:true,bgm:'boss'},
+  kl_luwu:{foes:G(['B_luwu',17]),boss:true,bgm:'boss'},
+  // 6 混沌
+  hd_a:{foes:G(['hundunyy',17],['huan',17],['hundunyy',17])},
+  hd_b:{foes:G(['mengdie',18],['hundunyy',18])},
+  hd_boss:{foes:G(['B_hundun',20]),boss:true,bgm:'boss'},
+  // 7-8 禺谷 赤水
+  yg_a:{foes:G(['haiwu',20],['jiaoshi',20],['haiwu',20])},
+  yg_b:{foes:G(['shamang',21],['huoshu',21])},
+  yg_c:{foes:G(['bifang',22],['hannu',22],['huoshu',22])},
+  yg_d:{foes:G(['fei',23],['hannu',23])},
+  yg_jinwu:{foes:G(['B_jinwu',22],['haiwu',21]),boss:true,bgm:'boss'},
+  cs_ba:{foes:G(['B_ba',25],['hannu',23]),boss:true,bgm:'boss'},
+  cs_yinglong:{foes:G(['B_yinglong',25]),boss:true,bgm:'boss'},
+  // 9-10 北海 幽都
+  bh_a:{foes:G(['heishe',25],['bingjiao',25])},
+  bh_b:{foes:G(['heishe',26],['heishe',26],['kun',26])},
+  bh_c:{foes:G(['tubo',28],['yecha',28])},
+  bh_d:{foes:G(['mengmo',29],['yecha',29],['mengdie',29])},
+  bh_xiangliu:{foes:G(['B_xiangliu',28],['heishe',26],['heishe',26]),boss:true,bgm:'boss'},
+  yd_fuli:{foes:G(['B_fuli',31]),boss:true,bgm:'boss'},
+  // 11-12 归墟
+  gx_a:{foes:G(['xinghai',32],['yuantong',32])},
+  gx_b:{foes:G(['yuantong',33],['mengdie',33],['yecha',33])},
+  gx_c:{foes:G(['xinghai',35],['bingjiao',34],['yuantong',34])},
+  gx_boss:{foes:G(['B_guixu',35],['yuantong',33]),boss:true,bgm:'boss'},
+  gx_zhulong:{foes:G(['B_zhulongshadow',36]),boss:true,bgm:'boss'},
+  gx_xuanming:{foes:G(['B_xuanming',38]),boss:true,bgm:'final'},
+  // 梦境与支线
+  dream_s:{foes:G(['mengdie',0],['mengmo',0])},
+  sq_elite1:{foes:G(['zheng',12],['zheng',12]),boss:true},
+  sq_elite2:{foes:G(['tubo',24],['yecha',24],['tubo',24]),boss:true},
+  sq_elite3:{foes:G(['xinghai',34],['xinghai',34],['kun',34]),boss:true},
+};

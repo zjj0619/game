@@ -1,0 +1,257 @@
+# 羁绊 · 营火闲谈（非 AI，固定剧本）
+*bond_baiji_1
+@bg campfire
+@bgm warm
+@fx embers
+@show baiji right
+@show yangui left
+白霁：呆子，你看什么呢？
+晏归：你的尾巴。刚才烤到火了。
+白霁：（尾巴一下子缩了回去）……没有！狐狸的尾巴怎么会被火烧到！
+白霁：我可是偷过烛龙之火的狐狸。
+晏归：你偷火，是为了什么？
+白霁：……青丘太冷了。长夜开始以后，桃花再也没开过。我想让它们再开一次。
+白霁：结果火太烫，我抱着它跑了三步，就摔了。火灭了，我被罚在梦里关了一百年。
+? “摔得疼吗？” -> bond_baiji_1a | aff:baiji+3
+? “桃花会再开的。” -> bond_baiji_1b | aff:baiji+2 hope+1
+*bond_baiji_1a
+白霁：疼。（小声）……你是第一个问这个的。
+@goto bond_baiji_1e
+*bond_baiji_1b
+白霁：说大话。……不过，我记住了。
+*bond_baiji_1e
+@do aff:baiji+6 flag:bond_baiji_1
+@return
+*bond_baiji_2
+@bg campfire
+@bgm warm
+@show baiji right
+@show yangui left
+>白霁把一根烤好的鱼递了过来。鱼烤得焦黑，一面还是生的。
+白霁：吃。
+晏归：……这是什么？
+白霁：鱼！你看不出来吗！我第一次烤！
+>晏归咬了一口。焦的那面很苦，生的那面很腥。
+? 全部吃完 -> bond_baiji_2a | aff:baiji+4
+? “下次我教你。” -> bond_baiji_2b | aff:baiji+2
+*bond_baiji_2a
+>他把整条鱼都吃完了，连骨头都没剩。白霁看着他，耳朵尖慢慢地红了。
+白霁：……傻子。难吃就说难吃。
+@goto bond_baiji_2e
+*bond_baiji_2b
+白霁：哼。谁要你教。
+白霁：……那，明天？
+*bond_baiji_2e
+@do aff:baiji+6 flag:bond_baiji_2
+@return
+*bond_baiji_3
+@bg campfire
+@bgm dream
+@fx petals
+@show baiji right
+@show yangui left
+白霁：晏归。如果有一天，你要变成别的什么东西——变成龙，变成星，变成灯——
+白霁：你会告诉我吗？
+晏归：……会。
+白霁：骗人。你们守灯人都一样，什么都自己扛。
+白霁：浮黎扛了十九年。你也想扛吗？
+? “我会告诉你。我保证。” -> bond_baiji_3a | aff:baiji+4 flag:bj_promise
+? “我不想让你担心。” -> bond_baiji_3b | aff:baiji+1
+*bond_baiji_3a
+>白霁伸出小指。晏归愣了一下，也伸出了小指。
+白霁：狐狸的约定，违约的人要被咬一口。
+@goto bond_baiji_3e
+*bond_baiji_3b
+白霁：我已经在担心了。笨蛋。
+*bond_baiji_3e
+@do aff:baiji+6 flag:bond_baiji_3
+@return
+*bond_baiji_4
+@bg campfire
+@bgm warm
+@fx stars
+@show baiji right
+@show yangui left
+>白霁靠在晏归的肩膀上。九条尾巴盖在两个人身上，暖得像一床被子。
+白霁：我想起来了，偷火那天的事。
+白霁：我摔倒的时候，火没有完全灭。有一点点火星，落进了不周山下的一个坑里。
+白霁：……落在了一个刚出生的婴儿的眼睛里。
+>晏归转过头。白霁没有看他，看着火。
+白霁：你的眼睛，可能是我害的。
+? “那我得谢谢你。” -> bond_baiji_4a | aff:baiji+5 hope+2
+? 握住她的手 -> bond_baiji_4b | aff:baiji+5
+*bond_baiji_4a
+晏归：没有这只眼睛，我就不会走出烬城，不会遇见你。
+白霁：……你这个人，真的很狡猾。
+@goto bond_baiji_4e
+*bond_baiji_4b
+>她的手很凉。握了一会儿，就暖了。
+*bond_baiji_4e
+@do aff:baiji+6 flag:bond_baiji_4 codex:l_qingqiu
+@return
+*bond_xianwei_1
+@bg campfire
+@bgm donghai
+@show xianwei right
+@show yangui left
+>衔微在火边一块一块地数小石子。
+晏归：你在做什么？
+衔微：数我填过的石头。这是我从东海带出来的，每一块都有名字。
+衔微：这块叫“娘”。这块叫“炎帝”。这块……还没有名字。
+? “叫它‘晏归’吧。” -> bond_xianwei_1a | aff:xianwei+3
+? “等你想好了再起。” -> bond_xianwei_1b | aff:xianwei+2
+*bond_xianwei_1a
+衔微：……好。那它就不能扔进海里了。
+@goto bond_xianwei_1e
+*bond_xianwei_1b
+衔微：嗯。我会想很久的。
+*bond_xianwei_1e
+@do aff:xianwei+6 flag:bond_xianwei_1
+@return
+*bond_xianwei_2
+@bg campfire
+@bgm sad
+@show xianwei right
+@show yangui left
+衔微：我前世是炎帝的小女儿。游于东海，溺而不返。
+衔微：我变成鸟以后，衔了一万年的石头。我想把海填平，这样就再也不会有人淹死了。
+衔微：可是海没有平。一点都没有。
+衔微：……我是不是很傻？
+? “不傻。你救过很多人。” -> bond_xianwei_2a | aff:xianwei+4
+? “你可以停下来休息一下。” -> bond_xianwei_2b | aff:xianwei+3
+*bond_xianwei_2a
+衔微：……我不知道。我从来没有回头看过。
+衔微：下次，我回头看看。
+@goto bond_xianwei_2e
+*bond_xianwei_2b
+衔微：休息……
+>她把石子放下，靠在火边，很快就睡着了。那是她一万年来第一次睡得这么沉。
+*bond_xianwei_2e
+@do aff:xianwei+6 flag:bond_xianwei_2
+@return
+*bond_xianwei_3
+@bg campfire
+@bgm warm
+@show xianwei right
+@show yangui left
+>衔微在火边唱歌。声音很小，很轻。
+衔微：这是我娘唱的。她说，海是会唱歌的，只是人听不懂。
+晏归：你娘……是什么样的人？
+衔微：我不记得她的脸了。只记得她的手很暖，身上有稻米的味道。
+衔微：炎帝的女儿，身上有稻米的味道。你说好不好笑？
+? “很好。像烬城的阿婆。” -> bond_xianwei_3a | aff:xianwei+3
+? “再唱一遍吧。” -> bond_xianwei_3b | aff:xianwei+4
+*bond_xianwei_3a
+衔微：阿婆的馒头，确实很香。
+@goto bond_xianwei_3e
+*bond_xianwei_3b
+>她又唱了一遍。唱完，她小声说：谢谢你想听。
+*bond_xianwei_3e
+@do aff:xianwei+6 flag:bond_xianwei_3
+@return
+*bond_xianwei_4
+@bg campfire
+@bgm warm
+@fx stars
+@show xianwei right
+@show yangui left
+衔微：我想好那块石头的名字了。
+衔微：叫“归”。
+衔微：不是你的名字。是“回去”的意思。
+衔微：等这一切结束了，我想回东海去。不是去填海——是去看海。
+? “我陪你去。” -> bond_xianwei_4a | aff:xianwei+5 hope+2
+? “那时候，海上应该有太阳。” -> bond_xianwei_4b | aff:xianwei+4 hope+1
+*bond_xianwei_4a
+衔微：……说定了。
+@goto bond_xianwei_4e
+*bond_xianwei_4b
+衔微：太阳照在海上，是什么颜色的？
+晏归：金色的。
+衔微：那我一定要看看。
+*bond_xianwei_4e
+@do aff:xianwei+6 flag:bond_xianwei_4 codex:l_jingwei
+@return
+*bond_qi_1
+@bg campfire
+@bgm changyang
+@show qi right
+@show yangui left
+戚：某在守夜。坐。
+晏归：你不用睡吗？
+戚：某没有头，不用睡。也不用吃，不用喝。
+戚：只是有时候，会想起一些事。
+晏归：什么事？
+戚：麦子。某生前是种麦子的。打仗以前。
+? “你想回去种麦子吗？” -> bond_qi_1a | aff:qi+3
+? “给我讲讲麦子吧。” -> bond_qi_1b | aff:qi+4
+*bond_qi_1a
+戚：……没有太阳，麦子不长。
+戚：所以，某要跟着你。
+@goto bond_qi_1e
+*bond_qi_1b
+>戚讲了一整夜的麦子。怎样播种，怎样浇水，麦穗黄了的时候风吹过来是什么声音。
+>他讲得很慢，很仔细，像在讲一场打赢了的仗。
+*bond_qi_1e
+@do aff:qi+6 flag:bond_qi_1
+@return
+*bond_qi_2
+@bg campfire
+@bgm sad
+@show qi right
+@show yangui left
+戚：常羊山上那颗头颅，某到现在还会想起它。
+晏归：后悔了吗？
+戚：不。若是做回刑天，某就是战神，是要继续和天帝打下去的人。
+戚：现在，某只是戚。一个拿盾的。
+? “那就做戚吧。” -> bond_qi_2a | aff:qi+5
+? “你想做谁，都可以。” -> bond_qi_2b | aff:qi+3
+*bond_qi_2a
+戚：……嗯。
+>他胸前的两只眼睛眯了起来。晏归后来才知道，那是戚在笑。
+@goto bond_qi_2e
+*bond_qi_2b
+戚：某会想想。
+*bond_qi_2e
+@do aff:qi+6 flag:bond_qi_2
+@return
+*bond_qi_3
+@bg campfire
+@bgm warm
+@show qi right
+@show yangui left
+>戚在用盾牌的边缘，在地上一下一下地刻着什么。
+晏归：你在刻什么？
+戚：名字。某的兵的名字。
+戚：常羊山下十万人，某记得一千三百二十七个。剩下的，某忘了。
+戚：忘了的那些，某很对不起他们。
+? 帮他一起刻 -> bond_qi_3a | aff:qi+5
+? “他们知道你记得。” -> bond_qi_3b | aff:qi+3 hope+1
+*bond_qi_3a
+>晏归在旁边坐下，戚念一个，他刻一个。刻到天快亮——长夜里没有天亮，是他们约定的时辰。
+@goto bond_qi_3e
+*bond_qi_3b
+戚：……但愿。
+*bond_qi_3e
+@do aff:qi+6 flag:bond_qi_3 codex:l_xingtian
+@return
+*bond_qi_4
+@bg campfire
+@bgm warm
+@fx stars
+@show qi right
+@show yangui left
+戚：晏归。某想跟你说一件事。
+戚：某打了一辈子仗。从没有为一个人打过。都是为了一面旗，一个名号，一个“不服”。
+戚：这一次，某是为了你。
+戚：某觉得，这样也很好。
+? “谢谢你，戚。” -> bond_qi_4a | aff:qi+4
+? “等天亮了，我们一起种麦子。” -> bond_qi_4b | aff:qi+5 hope+2
+*bond_qi_4a
+戚：不用谢。某愿意。
+@goto bond_qi_4e
+*bond_qi_4b
+戚：……好。某来犁地，你来播种。
+戚：说定了。
+*bond_qi_4e
+@do aff:qi+6 flag:bond_qi_4
+@return

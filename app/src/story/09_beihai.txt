@@ -1,0 +1,179 @@
+# 第九章 · 北海断后
+*c9_start
+@chapter 9|北海断后|共工之臣曰相柳氏，九首
+@bg beihai
+@bgm beihai
+@fx snow
+@do region:beihai codex:l_xiangliu
+>北海冻住了。
+>不是结了一层冰，是整片海，从海面到海底，冻成了一块。冰里封着鱼，封着船，封着三百年前没来得及逃走的人，他们还保持着回头张望的姿势。
+>冰面上，有一条红色的路。路是被烫出来的，一路向北。
+@show yangui left
+@show kualing right
+夸铃：是魃！她真的来了！
+@if flag:ba_freed -> c9_ba
+>可是魃已经死了。那条红色的路，是别的什么东西留下的。
+>冰面下，有一道巨大的影子游过。
+@goto c9_go
+*c9_ba
+>红路的尽头，魃坐在冰上。她身边的冰化开了一小圈，露出黑色的海水。
+@show ba center
+魃：你们来了。
+魃：我在这里化了三天，只化开这么大一点。北海太冷了。
+魃：不过，我替你们看清楚了——相柳就在下面。它有九个头，九个头都醒着。
+@do hope+3
+@hide ba
+*c9_go
+@show xianwei center
+衔微：我闻到了毒的味道。
+衔微：相柳所过之处，土地都会变成沼泽，又苦又臭，五谷不生。可是现在，它把整片海冻住了。
+@bgm battle
+@battle bh_a
+@bgm beihai
+>他们沿着冰面一路向北。越往北，冰下的影子越多——一条，两条，九条。
+@explore beihai c9_gate 前往北海之门
+*c9_gate
+@bg haidi
+@bgm boss
+@fx blue
+@shake
+>北海之门是冰里的一道裂缝，深得看不见底。裂缝里吹出来的风，是幽都的风，带着死人的味道。
+>裂缝前面，冰面炸开了。
+@cg cg_xiangliu
+>九个蛇头从海里升了起来，每一个都有房子那么大。九双眼睛，每一双都是不同的颜色。
+@show xiangliu center
+相柳：守灯人的孩子。
+相柳：九个头告诉我九件不同的事。有一个头说，杀了你。有一个头说，放你过去。有一个头说，你和你的父亲一样蠢。
+相柳：我听最大的那个头的。
+@do codex:c_xiangliu
+@cgoff
+@battle bh_xiangliu -> c9_lose
+@goto c9_win
+*c9_lose
+>相柳的毒雾漫过了冰面。晏归吸进了一口，喉咙像被火烧穿了——
+>白霁的狐火、衔微的羽毛、戚的盾，一齐挡在了他身前。
+@goto c9_win
+*c9_win
+@bgm tense
+@shake
+@show xiangliu center
+相柳：（八个头垂了下去。最后一个头，在笑）
+相柳：……打得好。可是你们来不及了。
+>冰层在裂开。北海之门的裂缝越张越大，裂缝里涌出了无数黑影——幽都的夜鬼，成百上千。
+相柳：玄冥大人的兵，来接你们了。
+>相柳沉入了海底。它最后留下了一样东西：一颗巨大的、弯弯的毒牙。
+@do item:k_fang codex:l_youdu
+@hide all
+@show yangui left
+>夜鬼在往外涌。门在合上。只要再过一会儿，北海之门就会被它们彻底堵死。
+>必须有人留下来，挡住它们。让其他人先过去。
+@flash #9fd0ff
+@note 必须有人断后
+? [party:baiji] 白霁：“我留下。” -> c9_r_baiji
+? [party:xianwei] 衔微：“我留下。” -> c9_r_xianwei
+? [party:qi] 戚：“我留下。” -> c9_r_qi
+? [party:ali] 阿篱：“我留下。” -> c9_r_ali
+? [party:kualing] 夸铃：“我留下。” -> c9_r_kualing
+? 晏归：“我留下。你们先走。” -> c9_r_self
+*c9_r_baiji
+@show baiji right
+白霁：狐狸跑得最快。我挡一会儿，就追上来。
+白霁：你回头的话，我就生气。
+@do var:rear+1
+@if aff:baiji>=60 -> c9_s_baiji
+@do lose:baiji hope-8
+>白霁没有追上来。那天之后，北海的冰面上，总有一簇青色的狐火，在夜里慢慢地飘。
+@goto c9_after
+*c9_s_baiji
+>门合上之前的最后一刻，一只白狐从黑影里冲了出来，扑进了晏归怀里。她浑身是伤，尾巴少了一截。
+白霁：……说了会追上来的。你刚才回头了。我看见了。
+@do aff:baiji+8 flag:rear_survived
+@goto c9_after
+*c9_r_xianwei
+@show xianwei right
+衔微：我填过海。填一道门，不算什么。
+@if aff:xianwei>=60 -> c9_s_xianwei
+@do lose:xianwei hope-8
+>衔微一块一块地衔起碎冰，把门填上了。夜鬼被挡在了另一边——她也是。
+@goto c9_after
+*c9_s_xianwei
+>一只遍体鳞伤的小鸟从门缝里挤了出来，落在晏归的肩膀上，喘得像要断气。
+衔微：……填完了。这回，填完了。
+@do aff:xianwei+8 flag:rear_survived
+@goto c9_after
+*c9_r_qi
+@show qi right
+戚：守门，是我生前就做惯的事。
+戚：去吧。这次，我的头在你那里，我的盾在这里。
+@if aff:qi>=60 -> c9_s_qi
+@do lose:qi hope-8
+>门的那一边，传来了干戚相击的声音，响了很久很久。然后，停了。
+@goto c9_after
+*c9_s_qi
+>门合上之后，一只手从冰里伸了出来，抓住了门沿。戚把自己从夜鬼堆里拔了出来，盾牌上插满了骨刺。
+戚：……没死成。看来，还没到时候。
+@do aff:qi+8 flag:rear_survived
+@goto c9_after
+*c9_r_ali
+@show ali right
+阿篱：我弹一首曲子吧。夜鬼也喜欢听歌。
+阿篱：这一首，我记得怎么弹完。
+@if aff:ali>=60 -> c9_s_ali
+@do lose:ali hope-8
+>门那边的琴声，一直响着。直到很久以后，他们走到了幽都深处，晏归好像还能听见。
+@goto c9_after
+*c9_s_ali
+>琴声停下的时候，赤豹驮着阿篱冲了出来。琴弦断了六根，只剩一根。
+阿篱：一根弦也能弹。只是……曲子短了一点。
+@do aff:ali+8 flag:rear_survived
+@goto c9_after
+*c9_r_kualing
+@show kualing right
+夸铃：我箭多！我射给它们看！
+夸铃：我祖宗追太阳追到渴死，我守个门算什么！
+@if aff:kualing>=60 -> c9_s_kualing
+@do lose:kualing hope-8
+>门的那一边，箭声一直在响。夸铃一边射一边大声地唱着夸父族的歌，唱得很难听，很响。
+>后来，歌声停了。
+@goto c9_after
+*c9_s_kualing
+>门快合上了，一个人影从缝里滚了出来。夸铃的弓断了，箭袋空了，他咧开嘴笑着，满嘴是血。
+夸铃：射完了！一支没剩！
+@do aff:kualing+8 flag:rear_survived
+@goto c9_after
+*c9_r_self
+晏归：你们带着烛瞳先走。它们要的是我的眼睛，我在这里，它们就不会追。
+>没有人同意。可是晏归已经把烛瞳碎片塞进了白霁手里，转身走进了黑影里。
+@hide all
+@bg youdu
+@fx none
+>……很冷。
+>夜鬼的爪子，夜鬼的牙，夜鬼的眼睛。
+>然后，一盏灯亮了。
+@show fuli center
+浮黎：……傻孩子。
+>那是一个他认得的声音。他想睁开眼睛，可是太累了。
+>醒来的时候，他已经在门的另一边。同伴们围着他。没有人知道他是怎么过来的。
+@do hope-12 flag:fuli_saved_yg flag:self_rear
+@goto c9_after
+*c9_after
+@bg youdu
+@bgm sad
+@fx none
+@hide all
+@show yangui left
+>北海之门在身后合上了。
+>他们站在幽都的边缘。这里没有天，头顶是一片无边无际的黑，黑得连长夜都显得明亮。
+@if flag:rear_survived -> c9_ok
+@if flag:self_rear -> c9_ok
+>少了一个人。没有人说话。
+>晏归握紧了罗盘。罗盘的指针，第一次在发抖。
+@goto c9_end
+*c9_ok
+>所有人都还在。可是所有人都知道，下一次，不一定还能这么幸运。
+*c9_end
+@do item:k_eyeshard ach:ch9 flag:ch9_done exp+6000 gold+3500 item:u_peach
+@note 第九章完成 · 已获得五片烛瞳
+>相柳的毒牙里，藏着一片烛瞳。第五片。
+>罗盘指向了幽都的中心。那里有一座灯塔——和烬城的灯塔一模一样。
+@goto c10_start
