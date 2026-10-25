@@ -149,4 +149,4 @@
 >罗盘上又显出一行字：“白泽知我所为。去问它。”
 @do join:qi ach:ch3 flag:ch3_done exp+900 gold+800 item:u_goldpill*1
 @note 第三章完成 · 获得烛龙鳞·壹
-@goto c4_start
+@goto i3_start

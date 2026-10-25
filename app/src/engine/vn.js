@@ -131,8 +131,8 @@ function choose(c){
   });
 }
 async function chapterCard(c){
-  S.chapter = c.title; S.chapterN = +c.n || 0;
-  D.card.replaceChildren(h('div.card-n', {}, c.n==='0'?'序章':c.n==='13'?'终章':`第${['','一','二','三','四','五','六','七','八','九','十','十一','十二'][+c.n]||c.n}章`), h('div.card-t', {}, c.title), h('div.card-s', {}, c.sub||''));
+  if (!c.inter) { S.chapter = c.title; S.chapterN = +c.n || 0; }
+  D.card.replaceChildren(h('div.card-n', {}, c.inter?'幕间':c.n==='0'?'序章':c.n==='13'?'终章':`第${['','一','二','三','四','五','六','七','八','九','十','十一','十二'][+c.n]||c.n}章`), h('div.card-t', {}, c.title), h('div.card-s', {}, c.sub||''));
   D.card.classList.add('on'); sfx('bell');
   try { save(AUTO); } catch(e){}
   await Promise.race([sleep(window.__ZLJ_TEST?10:3200), new Promise(r=>{ D.card.onclick=(e)=>{ e.stopPropagation(); r(); }; })]);
@@ -182,6 +182,7 @@ async function exec(){
       case 'save': try { save(AUTO); } catch(e){} break;
       case 'wait': if (c.a) await sleep(window.__ZLJ_TEST?5:+c.a); else { D.next.classList.add('on'); await waitTap(); } break;
       case 'chapter': await chapterCard(c); break;
+      case 'interlude': await chapterCard({ ...c, inter: true }); break;
       case 'battle': {
         if (ctx.main) S.pc = ctx.pc;
         D.root.classList.add('inbattle');

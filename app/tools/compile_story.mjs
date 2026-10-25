@@ -32,6 +32,7 @@ for (const f of files) {
       switch (name) {
         case 'if': { const [cond,to]=rest.split('->').map(s=>s.trim()); c.cond=cond; c.to=to; break; }
         case 'do': c.eff = parseEffects(rest); break;
+        case 'interlude': { const [title,sub]=rest.split('|').map(s=>s.trim()); c.title=title; c.sub=sub||''; chars+=(title||'').length+(sub||'').length; break; }
         case 'chapter': { const [n,title,sub]=rest.split('|').map(s=>s.trim()); c.n=n; c.title=title; c.sub=sub||''; chars+= (title||'').length+(sub||'').length; break; }
         case 'battle': { const [enc,lose]=rest.split('->').map(s=>s.trim()); c.enc=enc; c.lose=lose||null; break; }
         case 'explore': { const [region,to,...nm]=rest.split(/\s+/); c.region=region; c.to=to; c.name=nm.join(' ')||'继续主线'; break; }
