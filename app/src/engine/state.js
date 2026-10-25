@@ -138,6 +138,7 @@ function atom(a){
   else if (a.startsWith('party:')) r = S.members.includes(a.slice(6));
   else if (a.startsWith('lostc:')) r = S.lost.includes(a.slice(6));
   else if (a.startsWith('quest:')) r = S.quests[a.slice(6)]==='done';
+  else if (a.startsWith('ending:')) r = meta.endings.includes(a.slice(8).toUpperCase());
   else if (a==='true') r = true;
   else { console.warn('未知条件', a); r=false; }
   return neg ? !r : r;

@@ -85,3 +85,8 @@ d: ice jiao(冰蛟), nightmare mo(梦貘), tubo(土伯), black serpent guard(黑
 - 羁绊残卷 32_bonds_c（相柳/玄冥/烛龙/阿婆）+ 营火「长夜残卷」入口
 - 关键艺术三张接入标题/枢纽/通关札；关卡 flavor desc + S 条件 chip
 - build + boot2 通过（action mode, 0 errs）
+
+## 继续内容（同日）
+- 50_epilogues 后日谈 + 画廊入口；51 九州长夜志；52 营火手记
+- cond 支持 ending:X；故事编译约 57k 字 / 25 文件 / 505 labels（持续朝 150k 推进）
+- STORY_BIBLE.md

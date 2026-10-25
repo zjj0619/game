@@ -9,7 +9,8 @@ import { ACHIEVEMENTS } from '../data/achievements.js';
 import { h, btn, asset, icon, toast, panel, confirmBox, promptBox, fmtTime } from '../engine/ui.js';
 import { applyVolumes, sfx } from '../engine/audio.js';
 import { aiReady, quota, chat, idbGet, idbSet } from '../engine/ai.js';
-import { inSub } from '../engine/vn.js';
+import { inSub, runSub, vnScreen, restoreScene } from '../engine/vn.js';
+import { show } from '../main.js';
 import { game } from '../main.js';
 import { questState, questProgress } from './screens.js';
 import { talentView, setView, refinePanel, refineLv, freePoints } from './progress.js';
@@ -192,7 +193,20 @@ export async function openGallery(){
   const ENDN = { a:'长明', b:'长夜', c:'新烛', d:'归墟同眠', e:'狐梦千年', f:'昼夜双瞳' };
   const view = src => { const v = h('div.viewer', { onclick:()=>v.remove() }, h('img', { src })); document.getElementById('app').append(v); };
   const cgs = ['cg_dengjin','cg_jingwei','cg_xingtian','cg_xiwangmu','cg_baize','cg_dijiang','cg_kuafu','cg_ba','cg_baiji','cg_xiangliu','cg_fuli','cg_duijue'];
+  const keys = ['key_dream_layers','key_resonance','key_clearcard'];
+  const epis = [
+    ['epi_dawn_common','天亮第七日', !!meta.endings.length],
+    ['epi_letter_fuli','浮黎的信', meta.endings.length>0],
+    ['epi_beihai_thaw','北海解冻', meta.endings.includes('A')||meta.endings.includes('F')||meta.endings.includes('B')],
+    ['epi_kids_lamp','孩子们的灯', meta.endings.length>0],
+    ['epi_dream_layer','闭目练习', meta.endings.length>0],
+  ];
+  const playEpi = lb => { p.close(); show(vnScreen()); S.shown = {}; S.cg = null; restoreScene(); runSub(lb, () => { try { game.hub ? game.hub() : location.reload(); } catch(e) { location.reload(); } }); };
   p.body.append(h('h3', {}, `结局 ${meta.endings.length}/6`), h('div.gal', {}, Object.entries(ENDN).map(([k,n]) => meta.endings.includes(k.toUpperCase()) ? h('div.gcell', { onclick:()=>view(asset('cg/end_'+k)) }, h('img', {src:asset('cg/end_'+k)}), h('span', {}, '结局'+k.toUpperCase()+' · '+n)) : h('div.gcell.locked', {}, h('span', {}, '结局'+k.toUpperCase()+' · ？？？')))),
+    h('h3', {}, '招牌画'), h('div.gal', {}, ...keys.map(c => h('div.gcell', { onclick:()=>view(asset('cg/'+c)) }, h('img', {src:asset('cg/'+c)}), h('span', {}, c.replace('key_',''))))),
+    h('h3', {}, '营火手记'), h('div.gal', {}, ...[['yangui','晏归'],['baiji','白霁'],['xianwei','衔微'],['qi','戚'],['ali','阿篱'],['kualing','夸铃'],['fuli','浮黎'],['xuanming','玄冥']].map(([id,n]) => h('div.gcell', { onclick:()=>playEpi('journal_'+id) }, h('span', {}, n)))),
+    h('h3', {}, '九州长夜志'), h('div.gal', {}, ...['jincheng','qingqiu','donghai','changyang','baize','kunlun','hundun','yugu','chishui','beihai','youdu','guixu'].map(id => h('div.gcell', { onclick:()=>playEpi('lore_'+id) }, h('span', {}, ({jincheng:'烬城',qingqiu:'青丘',donghai:'东海',changyang:'长羊',baize:'白泽',kunlun:'昆仑',hundun:'混沌',yugu:'禺谷',chishui:'赤水',beihai:'北海',youdu:'幽都',guixu:'归墟'})[id])))),
+    h('h3', {}, '后日谈'), h('div.gal', {}, ...epis.map(([lb,n,ok]) => ok ? h('div.gcell', { onclick:()=>playEpi(lb) }, h('span', {}, n)) : h('div.gcell.locked', {}, h('span', {}, '？？？ · '+n)))),
     h('h3', {}, `剧情 CG ${cgs.filter(c=>meta.cgs.includes(c)).length}/${cgs.length}`), h('div.gal', {}, cgs.map(c => meta.cgs.includes(c) ? h('div.gcell', { onclick:()=>view(asset('cg/'+c)) }, h('img', {src:asset('cg/'+c)})) : h('div.gcell.locked', {}, h('span', {}, '？？？')))));
   const list = (await idbGet('gallery')) || [];
   const ai = h('div.gal');
