@@ -16,28 +16,27 @@ import { openCamp } from './camp.js';
 // —— 标题 ——
 export function titleScreen(){
   const latest = latestSave();
-  const primary = latest!=null
-    ? btn('继续旅程', ()=>game.loadSlot(latest), 'tmenu primary gold-lacquer')
-    : btn('新的旅程', async ()=>{ if (latest!=null && !(await confirmBox('开始新的旅程？已有存档不会被删除。'))) return; game.newGame(); }, 'tmenu primary gold-lacquer');
-  const secondary = latest!=null
-    ? btn('新的旅程', async ()=>{ if (!(await confirmBox('开始新的旅程？已有存档不会被删除。'))) return; game.newGame(); }, 'tmenu secondary')
-    : null;
-  const root = h('div.screen.title', {},
+  const enter = () => {
+    sfx('click');
+    if (latest != null) game.loadSlot(latest);
+    else game.newGame();
+  };
+  const root = h('div.screen.title', { onclick: (e) => {
+    if (e.target.closest('.t-corner')) return;
+    enter();
+  } },
     h('div.t-bg', { style:{backgroundImage:`url(${asset('cg/key_title_splash')})`} }),
-    h('div.t-bg.t-bg2', { style:{backgroundImage:`url(${asset('cg/key_dream_layers')})`, opacity:'0.28'} }),
+    h('div.t-bg.t-bg2', { style:{backgroundImage:`url(${asset('cg/key_dream_layers')})`, opacity:'0.18'} }),
     h('div.t-shade'),
-    h('div.t-wick'),
-    h('div.t-logo', {}, h('div.t-main', {}, '烛龙纪'), h('div.t-sub', {}, '长 夜 山 海'), h('div.t-en', {}, 'CHRONICLE OF THE TORCH DRAGON'), h('div.t-hook', {}, '灯芯 · 烛瞳 · 梦层 · 共鸣')),
-    h('div.t-menu', {},
-      primary,
-      btn('山海闯关', ()=>{ if (latest!=null) { if (!load(latest)) return; } else newGame(); game.hub(); }, 'tmenu secondary'),
-      secondary,
-      h('div.t-sec', {},
-        btn('档', ()=>openSaves('load'), 'tmenu ticon'),
-        btn('忆', ()=>openGallery(), 'tmenu ticon'),
-        btn('成', ()=>openAchievements(), 'tmenu ticon'),
-        btn('设', ()=>openSettings(), 'tmenu ticon'))),
-    h('div.t-foot', {}, `已见证结局 ${meta.endings.length}/15 · v2.0 · 山海经神话原创故事`));
+    h('div.t-logo', {},
+      h('div.t-main', {}, '烛龙纪'),
+      h('div.t-sub', {}, '长夜山海')),
+    h('div.t-tap', {},
+      h('div.t-tap-bar', {}, latest != null ? '轻触屏幕继续' : '轻触屏幕开始')),
+    h('div.t-corner', {},
+      h('button.t-ico', { type:'button', title:'读档', onclick:(e)=>{ e.stopPropagation(); openSaves('load'); } }, '档'),
+      h('button.t-ico', { type:'button', title:'设置', onclick:(e)=>{ e.stopPropagation(); openSettings(); } }, '设')),
+    h('div.t-foot', {}, `v2.0`));
   return root;
 }
 function latestSave(){

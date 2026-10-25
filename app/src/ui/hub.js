@@ -65,25 +65,31 @@ export function hubBadges(){ const m = AP.MISSIONS.filter(x => !S.daily.claimed[
 export function hubScreen(){
   AP.ensureAct(); const lead = S.act.team[0] || 'yangui'; const b = hubBadges();
   const nextStage = (() => { for (const rid of REGION_ORDER) for (const id of REGION_STAGES[rid].slice(0, 10)) if (!S.act.cleared[id]) return AP.stageUnlocked(id) ? STAGES[id] : null; return null; })();
-  const tile = (cls, name, sub, on, badge) => h('div.htile.' + cls, { onclick: () => { sfx('click'); on(); } }, h('b', {}, name), h('small', {}, sub), dot(badge));
-  const root = screen('hub', 'cg/key_hub_sanctuary',
-    h('div.hub-head', {}, h('div.hub-logo', {}, '烬 城'), h('div.hub-hr', {}, btn('菜单', () => openMenu(), 'sm'), bar())),
-    h('div.hub-hooks', {}, h('span', {}, '灯芯'), h('span', {}, '烛瞳'), h('span', {}, '梦层'), h('span', {}, '共鸣'), nextStage ? h('em', {}, '下一关 · ' + nextStage.name) : h('em', {}, '山海已通')),
+  const tile = (cls, name, sub, on, badge) => h('div.htile.' + cls, { onclick: () => { sfx('click'); on(); } }, h('b', {}, name), sub ? h('small', {}, sub) : null, dot(badge));
+  const more = () => {
+    const p = panel('更多', { cls: 'hub-more' });
+    const row = (name, on, badge) => h('button.hm-row', { onclick: () => { p.close(); sfx('click'); on(); } }, h('b', {}, name), badge ? h('i.rdot') : null);
+    p.body.append(
+      row('山海异兽', () => show(petScreen()), b.pets > 0),
+      row('铸灯铁坊', () => show(forgeScreen())),
+      row('烬城建设', () => show(cityScreen())),
+      row('信物秘境', () => show(secretStagesScreen()), b.secrets > 0),
+      row('九州探索', () => game.world()),
+      row('菜单', () => openMenu()));
+  };
+  const nextSub = nextStage ? nextStage.name : '已通';
+  const root = screen('hub.clean', 'cg/key_hub_sanctuary',
+    h('div.hub-head', {}, h('div.hub-logo', {}, '烬城'), h('div.hub-hr', {}, bar(), btn('菜单', () => openMenu(), 'sm ghost'))),
     h('div.hub-main', {},
       h('div.hub-hero', { onclick: () => show(heroesScreen(lead)) },
         h('img.hh-por', { src: portrait(lead) }),
-        h('div.hh-info', {}, h('b', {}, CHARS[lead].name), h('small', {}, CHARS[lead].title), h('span', {}, `Lv ${S.party[lead].lv} · 战力 ${power(lead)}`),
-          h('div.hh-team', {}, ...S.act.team.map(id => h('img', { src: portrait(id) }))))),
-      h('div.hub-grid', {},
-        tile('t-adv', '山海闯关', nextStage ? `下一关 · ${REGIONS[nextStage.region].name.split('·')[0]} ${nextStage.idx + 1}「${nextStage.name}」` : `九州 99 关 · ★${AP.totalStars()}`, () => show(adventureScreen(nextStage?.region))),
-        tile('t-story', '主线剧情', S.chapter || '序章', () => game.story()),
-        tile('t-trial', '试炼', `镇妖塔 ${S.act.tower}/100 · 每日秘境`, () => show(trialScreen()), b.m > 0),
-        tile('t-hero', '伙伴', `${AP.actRoster().length}/${ACTION_ROSTER.length} 名 · 技能与装备`, () => show(heroesScreen()), b.sp),
-        tile('t-pet', '山海异兽', `${Object.keys(S.act.pets).length} 只 · 灵魄孵化`, () => show(petScreen()), b.pets > 0),
-        tile('t-forge', '铸灯铁坊', '锻造 · 分解', () => show(forgeScreen())),
-        tile('t-city', '烬城建设', '升级建筑获得加成', () => show(cityScreen())),
-        tile('t-secret', '信物秘境', `${KEY_SECRET_IDS.filter(id=>AP.stageUnlocked(id)).length}/${KEY_SECRET_IDS.length} 已开 · 关键道具专属`, () => show(secretStagesScreen()), b.secrets > 0),
-        tile('t-world', '九州探索', '地图 · 支线 · 采集', () => game.world()))));
+        h('div.hh-info', {}, h('b', {}, CHARS[lead].name), h('span', {}, `Lv ${S.party[lead].lv}`))),
+      h('div.hub-grid.slim', {},
+        tile('t-adv', '闯关', nextSub, () => show(adventureScreen(nextStage?.region))),
+        tile('t-story', '剧情', S.chapter ? S.chapter.split('·')[0].trim() : '序章', () => game.story()),
+        tile('t-hero', '伙伴', null, () => show(heroesScreen()), b.sp),
+        tile('t-trial', '试炼', null, () => show(trialScreen()), b.m > 0),
+        tile('t-more', '更多', null, more, b.pets > 0 || b.secrets > 0))));
   return root;
 }
 

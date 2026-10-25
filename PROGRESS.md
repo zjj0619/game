@@ -1,5 +1,35 @@
 # progress notes (for agent continuity)
 
+## Genshin-like Title + De-AI Polish · 2026-10-25 ~13:20 Asia/Shanghai
+
+覆盖上一轮「多按钮漆金」方向。按用户三点：标题像原神点屏进入、枢纽少而精、去 AI 味。
+
+### 1. 标题（原神式）
+- 移除「新的旅程」大漆金钮、山海闯关等并列入口、底部档/忆/成/设圆形按键排
+- 整屏可点进入（有档继续 / 无档新开）；底栏半透明长条「轻触屏幕开始/继续」，呼吸低对比，非按钮形态
+- 角落仅极小「档」「设」图标；Logo 去掉金箔立体堆叠，改为克制光晕
+
+### 2. 枢纽精简
+- 主入口 5 个：闯关 / 剧情 / 伙伴 / 试炼 / 更多；异兽、铁坊、建设、秘境、探索收进「更多」面板
+- 去掉 hub-hooks 灯芯/烛瞳等芯片条；磁贴文案极短；立绘区更大更干净；留白
+
+### 3. 去 AI 味（字体 / 特效 / 层级）
+- `premium.css` 重写为克制奢华；theme/hub 减弱 letter-spacing、金渐变字、glow 描边
+- 烬粒默认更少更淡（fx dust 10 / ambient 28）；转场更短更干净；VN 对话框去装饰噪音
+- 战斗 HUD 保留可用性，ready-pulse / 闪白更克制
+
+### 验收
+- `npm run build` OK；boot→hub `errs:[]`；磁贴 `[闯关,剧情,伙伴,试炼,更多]`
+- 截图 `docs/premium_polish2/`：01_title / 02_hub / 03_action / 04_vn（844×390@2x）
+- 本地 commit（genshin-like title + de-AI polish）；**未 push**；无 APK；未耗 MiniMax
+
+### 诚实缺口
+- 战斗技能钮仍偏密（玩法需要），未做大改布局
+- 标题/枢纽去味到位；全局个别旧 gold 按钮/结算字距仍可再压一轮
+- VN/action 截图为编排/战斗中态以保证可读
+
+---
+
 ## Premium Juice Pass · 2026-10-25 ~13:10 Asia/Shanghai
 
 对标正式横屏手游观感，做了一轮 **Premium Juice Pass**（不推翻玩法、不删 17 手摆关、不 APK、不 push）。

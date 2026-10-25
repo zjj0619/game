@@ -30,7 +30,7 @@ body{font-family:var(--serif)}
 .panel-wrap.small .panel{width:min(70vw,30rem)}
 @keyframes panelIn{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
 .panel-head{padding:6px 14px 0 18px;background:linear-gradient(180deg,rgba(226,191,110,.07),transparent);border-bottom:1px solid rgba(226,191,110,.25)}
-.panel-title{font-family:var(--title);font-size:22px;letter-spacing:.18em;color:#f6e3b4;text-shadow:0 0 12px rgba(226,191,110,.35)}
+.panel-title{font-family:var(--title);font-size:18px;letter-spacing:.1em;color:#efe4c8;text-shadow:0 1px 6px rgba(0,0,0,.5)}
 .tab{font-size:15px;padding:8px 10px 9px;color:#a89f8c;position:relative}
 .tab.on{color:#ffe7b0;border-bottom-color:transparent}
 .tab.on::after{content:"";position:absolute;left:20%;right:20%;bottom:-1px;height:2px;background:linear-gradient(90deg,transparent,#ffd77a,transparent);box-shadow:0 0 8px #ffd77a}
@@ -62,7 +62,7 @@ h3{font-family:var(--title);font-weight:400;font-size:18px;letter-spacing:.12em;
 .reward.out{animation:fadeout .22s forwards}
 .rw-box{text-align:center;position:relative;padding:22px 40px 16px}
 .rw-box::before{content:"";position:absolute;left:50%;top:50%;width:520px;height:520px;margin:-260px 0 0 -260px;background:conic-gradient(from 0deg,transparent 0 10deg,rgba(255,215,130,.12) 10deg 20deg,transparent 20deg 40deg,rgba(255,215,130,.12) 40deg 50deg,transparent 50deg 70deg,rgba(255,215,130,.12) 70deg 80deg,transparent 80deg);border-radius:50%;animation:spin 18s linear infinite;z-index:-1;-webkit-mask-image:radial-gradient(circle,#000 20%,transparent 70%);mask-image:radial-gradient(circle,#000 20%,transparent 70%)}
-.rw-title{font-family:var(--title);font-size:34px;letter-spacing:.3em;color:#ffe7a8;text-shadow:0 0 22px rgba(255,200,100,.8),0 3px 0 #5a3410;animation:rwT .5s cubic-bezier(.2,1.4,.4,1)}
+.rw-title{font-family:var(--title);font-size:28px;letter-spacing:.18em;color:#f0e0b0;text-shadow:0 2px 10px rgba(0,0,0,.6);animation:rwT .4s ease-out}
 @keyframes rwT{from{opacity:0;transform:scale(1.6)}to{opacity:1;transform:none}}
 .rw-items{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:18px 0 10px;max-width:80vw}
 .rw-item{width:86px;padding:10px 4px 8px;background:linear-gradient(180deg,rgba(60,48,28,.9),rgba(20,16,12,.95));border:1px solid rgba(255,215,130,.6);border-radius:4px;box-shadow:0 0 16px rgba(255,200,100,.25);animation:rwI .45s cubic-bezier(.2,1.4,.4,1) backwards;display:flex;flex-direction:column;align-items:center;gap:4px}
@@ -72,7 +72,7 @@ h3{font-family:var(--title);font-weight:400;font-size:18px;letter-spacing:.12em;
 .rw-tap{font-size:12px;color:#b8a888;animation:blink 1.4s infinite}
 
 /* —— 标题 —— */
-.t-main{font-family:var(--title);font-weight:400;font-size:64px;letter-spacing:.22em;background:linear-gradient(180deg,#fff6d8,#f0cf82 45%,#b07a32);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(255,190,90,.45)) drop-shadow(0 3px 0 rgba(60,30,8,.9))}
+.t-main{font-family:var(--title);font-weight:400;font-size:clamp(40px,8.5vh,56px);letter-spacing:.12em;color:#f2e6c8;background:none;-webkit-background-clip:unset;background-clip:unset;filter:none;text-shadow:0 2px 12px rgba(0,0,0,.65),0 0 1px rgba(0,0,0,.8)}
 .t-sub{font-family:var(--title);font-size:22px;letter-spacing:.8em;color:#e8dcc0;text-shadow:0 2px 6px #000}
 .t-logo{left:calc(var(--sl) + 4vw);top:9vh}
 .t-logo::after{content:"";display:block;width:240px;height:1px;margin-top:12px;background:linear-gradient(90deg,#e2bf6e,transparent)}
@@ -98,7 +98,7 @@ h3{font-family:var(--title);font-weight:400;font-size:18px;letter-spacing:.12em;
 /* —— 视觉小说：电影感 —— */
 .vn-box{left:0;right:0;bottom:0;min-height:31%;padding:30px calc(var(--sr) + 9vw) 18px calc(var(--sl) + 9vw);border:none;border-radius:0;background:linear-gradient(180deg,transparent,rgba(4,4,10,.72) 26%,rgba(4,4,10,.92));box-shadow:none}
 .vn-box::before{left:8vw;right:8vw;top:20px;opacity:.55}
-.vn-name{top:2px;left:calc(var(--sl) + 9vw);font-family:var(--title);font-weight:400;font-size:21px;letter-spacing:.24em;color:#ffe7b0;background:none;padding:0 6px;text-shadow:0 0 12px rgba(255,200,110,.6),0 2px 4px #000}
+.vn-name{top:2px;left:calc(var(--sl) + 9vw);font-family:var(--title);font-weight:400;font-size:18px;letter-spacing:.08em;color:#f0e4c4;background:rgba(0,0,0,.22);padding:2px 12px 3px;border-left:2px solid rgba(226,191,110,.5);text-shadow:0 1px 4px #000}
 .vn-name::after{content:"";display:block;height:1px;margin-top:2px;background:linear-gradient(90deg,#e2bf6e,transparent);width:140%}
 .vn-face{left:calc(var(--sl) + 1.2vw);bottom:16px;width:96px;height:96px;border-radius:50%;border:2px solid #e2bf6e;box-shadow:0 0 18px rgba(255,200,110,.4)}
 .vn-face.on~.vn-name{left:calc(var(--sl) + 9vw)}
@@ -210,7 +210,7 @@ h3{font-family:var(--title);font-weight:400;font-size:18px;letter-spacing:.12em;
 .pd-main .eslots{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .pd-main .eslot{min-width:0}
 .title .t-bg2{animation:kenburns 55s ease-in-out infinite alternate-reverse;mix-blend-mode:soft-light;pointer-events:none}
-.t-hook{margin-top:10px;font-size:13px;letter-spacing:.45em;color:#e6d6a0;opacity:.85;text-shadow:0 0 12px rgba(255,180,80,.35)}
+.t-hook{display:none}
 
 /* 异兽助战说明 · 招牌教学 */
 .pt-trait{margin:.35rem 0 .2rem;padding:.45rem .6rem;border-left:2px solid rgba(232,185,92,.55);background:rgba(20,16,10,.35);color:#d9c7a0;font-size:.82rem;line-height:1.45}

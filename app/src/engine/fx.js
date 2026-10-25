@@ -47,7 +47,7 @@ export function setAmbient(kind){
     blue:()=>({x:Math.random()*W(),y:H()+10,vx:0,vy:-0.4-Math.random()*0.6,g:0,f:1,r:1.5+Math.random()*2,c:'#6fd8ff',life:1,decay:0.004,wob:0.7}),
   };
   if (!M[kind]) { ambient=null; return; }
-  ambient = { make:M[kind], n: settings.fx===1?25:60, rate:0.35 }; kick();
+  ambient = { make:M[kind], n: settings.fx===1?12:28, rate:0.28 }; kick();
 }
 export function shake(el=document.getElementById('app'), cls='shake'){ el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(()=>el.classList.remove(cls), 500); }
 export function flash(color='#fff'){
@@ -60,7 +60,7 @@ export function ensureDust(){
   if (dustEl) return dustEl;
   dustEl = document.createElement('div'); dustEl.id = 'zlj-dust'; dustEl.className = 'embers';
   document.body.append(dustEl);
-  const n = settings.fx === 1 ? 10 : settings.fx === 0 ? 0 : 18;
+  const n = settings.fx === 1 ? 6 : settings.fx === 0 ? 0 : 10;
   if (!n) { dustEl.classList.add('off'); return dustEl; }
   for (let i = 0; i < n; i++) {
     const s = document.createElement('span');
