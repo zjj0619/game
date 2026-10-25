@@ -1,0 +1,76 @@
+name: Android release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: android-release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      ZLJ_KEYSTORE_FILE: ${{ runner.temp }}/zhulongji.jks
+      ZLJ_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+      ZLJ_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      ZLJ_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v3
+      - name: Restore fixed signing identity
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$KEYSTORE_BASE64" && test -n "$ZLJ_STORE_PASSWORD" && test -n "$ZLJ_KEY_PASSWORD" && test -n "$ZLJ_KEY_ALIAS" || { echo 'Configure the four Android signing secrets first. See docs/UPDATES.md.'; exit 1; }
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$ZLJ_KEYSTORE_FILE"
+          chmod 600 "$ZLJ_KEYSTORE_FILE"
+      - run: sdkmanager 'platforms;android-34' 'build-tools;34.0.0'
+      - name: Validate and build
+        working-directory: app
+        run: |
+          npm ci
+          npm test
+          npm run build
+          npm run validate
+          npx cap sync android
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+      - name: Package update assets
+        run: |
+          mkdir -p release
+          VERSION=$(node -p "require('./app/version.json').version")
+          cp app/android/app/build/outputs/apk/release/app-release.apk "release/zhulongji-$VERSION.apk"
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose "release/zhulongji-$VERSION.apk"
+          node app/tools/release.mjs manifest "release/zhulongji-$VERSION.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-release
+          path: release/
+      - name: Publish tagged release or prepare manual draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(node -p "require('./app/version.json').version")
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            gh release create "v$VERSION" release/* --draft --verify-tag --title "烛龙纪 $VERSION" --notes-file CHANGELOG.md
+            gh release edit "v$VERSION" --draft=false --latest
+          else
+            gh release create "v$VERSION" release/* --draft --target "$GITHUB_SHA" --title "烛龙纪 $VERSION" --notes-file CHANGELOG.md
+          fi
+      - name: Remove signing file
+        if: always()
+        run: rm -f "$ZLJ_KEYSTORE_FILE"

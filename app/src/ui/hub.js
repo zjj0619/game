@@ -128,7 +128,7 @@ export function stageDetail(stage, opts = {}){
     h('div.sd-wrap', {},
       h('div.sd-l', {},
         h('div.sd-card', { style: { backgroundImage: `url(${stageCard(stage)})` } }, h('b', {}, stage.name), stage.desc ? h('small', {}, stage.desc) : null),
-        h('div.sd-meta', {}, chip('推荐等级 ' + (stage.lv + (hard ? 8 : 0))), chip(OBJ_NAME[stage.obj] + (stage.time ? ` · ${stage.time}秒` : ''), 'obj'), best ? chip('最佳 ' + best, 'best') : chip('首通奖励 ✦' + (80 + stage.lv * 25), 'first'), chip('约 2–4 分钟', 'time'), chip('S：速通·少伤·两层·共鸣', 's')),
+        h('div.sd-meta', {}, chip('推荐等级 ' + (stage.lv + (hard ? 8 : 0))), chip(OBJ_NAME[stage.obj] + (stage.time ? ` · ${stage.time}秒` : ''), 'obj'), best ? chip('最佳 ' + best, 'best') : chip('首通奖励 ✦' + (80 + stage.lv * 25), 'first'), chip('约 2–4 分钟', 'time'), chip('评价：速通·少伤；巧战额外加分', 's')),
         boss ? h('div.sd-boss', {}, h('img', { src: asset(boss.img) }), h('div', {}, h('b', {}, '首领 · ' + boss.name), h('small', {}, `${elChip(boss.el)?.textContent || ''}属性 · ${boss.pat.length} 阶段`), h('p', {}, '留意地面的红色预警，在它出招之前闪开。冲刺时短暂无敌。'))) : null,
         h('div.sd-foes', {}, h('div.sd-h', {}, '出没异兽'), h('div.sd-fl', {}, ...foeChips(stage).map(f => h('div.sd-f', { title: f.desc || '' }, h('img', { src: asset(f.img), style: f.tint ? { filter: 'drop-shadow(0 0 3px ' + f.tint + ')' } : null }), h('span', {}, f.name), h('small', {}, AI_NAME[f.ai] + (f.tier === 1 ? '·精英' : ''))))))
       ),
@@ -142,10 +142,10 @@ export function stageDetail(stage, opts = {}){
           btn('出 战', () => { S.act.team = team.slice(); p.close(); launch(stage, { team, hard, ...opts }); }, 'gold big')))));
   }; render();
 }
-export async function launch(stage, opts){
-  AP.ensureAct(); if (!S.act.tut.controls) { await controlsGuide(); S.act.tut.controls = true; }
+export async function launch(stage, opts = {}){
+  AP.ensureAct(); if (!S.act.tut.controls) { await controlsGuide(true); S.act.tut.controls = true; if(stage.id==='jincheng_1') S.act.tut.lamp=true; }
   await signatureTutorials(stage);
-  const prev = S.mode; S.mode = 'action'; const res = await runStage(stage, opts); S.mode = 'hub';
+  const prev = S.mode; S.mode = 'action'; const res = await runStage(stage, opts); if(res.abandoned) return; S.mode = 'hub';
   if (res.quit) { opts.back ? opts.back() : show(adventureScreen(stage.region)); return; }
   if (res.retry) return launch(stage, opts);
   if (opts.hard && res.win) { res.gold *= 2; res.exp *= 2; }
@@ -182,28 +182,36 @@ async function signatureTutorials(stage){
   if ((id === 'jincheng_3' || id === 'jincheng_5') && !T.dream) {
     await tip('dream', '招牌 · 闭目 / 睁眼', [
       ['梦', '切换叠层', '点「梦」（键 R）在睁眼层与闭目层之间切换。闭目掉梦屑与异兽灵魄，部分平台会换。'],
-      ['S', '两层皆历', '想拿 S 评价：每一层至少清过一波。短 CD，别在红圈里硬切。'],
+      ['S', '双层清波', '在两层实际交战并清波，可获得额外评价。普通通关无需强制切层。'],
     ]);
   }
   if ((id === 'jincheng_6' || stage.boss) && !T.reso && (S.act.team || []).length >= 1) {
     await tip('reso', '招牌 · 灯火共鸣', [
-      ['灯', '同伴合击', '换人积攒共鸣槽，满后点「灯」（键 T）触发合击光爆，并回一点血。'],
+      ['灯', '同伴合击', '看破弱点、精准闪避与终结后换人可积攒共鸣；槽满点「灯」（键 T）发动伙伴合击。'],
       ['心', '好感加成', '剧情里对同伴好感越高，共鸣字幕与伤害越华丽。'],
     ]);
   }
 }
 
-export function controlsGuide(){ return new Promise(res => { const p = panel('操作指南', { modal: true, cls: 'guide', onclose: res });
+export function controlsGuide(quick=false){ return new Promise(res => { const p = panel(quick?'先守住这盏灯':'操作指南', { modal: true, cls: 'guide', onclose: res });
   const row = (g, t, d) => h('div.gd-r', {}, h('span.gd-g', {}, g), h('div', {}, h('b', {}, t), h('p', {}, d)));
+  if(quick) {
+    p.body.append(h('p',{},'城外的灯熄了，夜鬼正向烬城靠近。晏归，提灯走一趟。'),h('div.gd',{},
+      row('◎','移动与跳跃','左摇杆移动，上推或点跳跃。键盘使用方向键、K。'),
+      row('⚔','挥刀与闪避','按住攻击出连击，点冲刺躲避。键盘使用 J、L。'),
+      row('灯','把敌人引入光里','脚下灯域会削弱夜鬼，靠近后再挥刀。')),
+      h('p.gd-tip',{},'这次先学会守灯，其余能力会在后续关卡逐步介绍。'),h('div.row.center',{},btn('提灯出发',()=>p.close(),'gold')));
+    return;
+  }
   p.body.append(h('div.gd', {},
     row('◎', '左摇杆', '左右移动；向上推跳跃，向下推可从平台落下。'), row('⚔', '攻击', '连按打出四段连击；空中攻击可让敌人浮空。按住持续攻击。'),
     row('⤒', '跳跃', '可二段跳。部分角色的被动可三段跳。'), row('➤', '冲刺', '短距离冲刺，冲刺过程无敌——闪避首领红色预警的关键。'),
-    row('技', '技能 ×5', '消耗法力，冷却后可再次使用。在「伙伴 · 技能」里升级并更换技能。'), row('龍', '变身', `连击与受击积攒怒气，满后变身：大幅强化并获得专属攻击（${ULT_LV} 级解锁）。`),
+    row('技', '自选技能', '消耗法力，冷却后可再次使用。在「伙伴 · 技能」里升级并更换技能。'), row('龍', '变身', `连击与受击积攒怒气，满后变身：大幅强化并获得专属攻击（${ULT_LV} 级解锁）。`),
     row('⇄', '换人 / 灵药', '随时切换出战伙伴；灵药回复气血与法力，每关数量有限。'),
     row('瞳 E', '烛瞳', '耗蓝开启视野：弱点浮出、秘匣/秘径金线显形，首领预警提前显现。'),
-    row('梦 R', '闭目·睁眼', '切换梦境叠层：闭目掉梦屑与异兽之卵，部分平台与首领只在一侧出现。'),
+    row('梦 R', '闭目·睁眼', '切换梦境叠层：闭目掉梦屑与异兽之卵，两层的平台和敌人组合不同，清场后可闭目进入梦门挑战。'),
     row('灯 T', '灯火共鸣', '共鸣槽满后触发同伴合击；好感越高威力与字幕越华丽。'),
-    h('p.gd-tip', {}, '评价按用时、受击、连击、两层皆历与秘匣计算：S 评价额外技能点与丰厚赏赐。')), h('div.row.center', {}, btn('明白了', () => p.close(), 'gold')));
+    h('p.gd-tip', {}, '评价按用时、受击和连击计算；双层清波、精准闪避和看破弱点额外加分：S 评价额外技能点与丰厚赏赐。')), h('div.row.center', {}, btn('明白了', () => p.close(), 'gold')));
 }); }
 function resultScreen(stage, res, out, opts){
   const win = res.win; const lvl = Object.entries(out.ups);
@@ -232,7 +240,7 @@ function resultScreen(stage, res, out, opts){
           h('div.rs-card-row', {}, h('em', {}, '烛瞳破弱点'), h('b', {}, String(res.eyeMarks || 0) + ' 处')),
           h('div.rs-card-row', {}, h('em', {}, '秘匣'), h('b', {}, String(res.secrets || 0) + ' 个')),
           h('div.rs-card-row', {}, h('em', {}, '梦屑'), h('b', {}, String(res.dust || 0))),
-          h('div.rs-card-row', {}, h('em', {}, '两层皆历'), h('b', {}, (res.dreamSeen && res.awakeSeen) ? '✓' : '—')),
+          h('div.rs-card-row', {}, h('em', {}, '双层清波'), h('b', {}, res.layerClears?.every(n=>n>0) ? '✓' : '—')),
           h('div.rs-card-s', {}, '《烛龙纪·长夜山海》'),
           h('button.rs-share', { type: 'button', onclick: (e) => { e.stopPropagation(); shareClearCard(stage, res); } }, '✦ 收进画廊')) : null,
         !win ? h('p.rs-tip', {}, tipFor(stage, res)) : null),
@@ -278,7 +286,7 @@ async function shareClearCard(stage, res){
       ['烛瞳破弱点', (res.eyeMarks || 0) + ' 处'],
       ['秘匣', (res.secrets || 0) + ' 个'],
       ['梦屑', String(res.dust || 0)],
-      ['两层皆历', (res.dreamSeen && res.awakeSeen) ? '✓' : '—'],
+      ['双层清波', res.layerClears?.every(n=>n>0) ? '✓' : '—'],
     ];
     g.font = '24px sans-serif'; g.textAlign = 'left';
     rows.forEach((r, i) => {
@@ -330,8 +338,8 @@ export function heroesScreen(sel, tab = 'skill'){
     return h('div.hr-it' + (id === sel ? '.on' : '') + (own ? '' : '.lock'), { onclick: () => { if (!own) { toast(AP.heroUnlockHint(id)); return; } sfx('page'); show(heroesScreen(id, tab)); } },
       h('img', { src: portrait(id) }), h('div', {}, h('b', {}, CHARS[id].name), h('small', {}, own ? `Lv ${S.party[id].lv} · ${ACHARS[id].role}` : '未加入')), dot(b)); }));
   const c = CHARS[sel], A = ACHARS[sel], p = S.party[sel];
-  const tabs = h('div.hr-tabs', {}, ...[['skill', '技能'], ['stat', '属性'], ['gear', '装备'], ['skin', '外观']].map(([k, n]) => h('div.tab' + (k === tab ? '.on' : ''), { onclick: () => show(heroesScreen(sel, k)) }, n)));
-  const body = h('div.hr-body'); if (tab === 'skill') skillTab(body, sel); else if (tab === 'stat') statTab(body, sel); else if (tab === 'skin') skinTab(body, sel); else gearTab(body, sel);
+  const tabs = h('div.hr-tabs', {}, ...[['skill', '技能'], ['lamp','灯道'], ['stat', '属性'], ['gear', '装备'], ['skin', '外观']].map(([k, n]) => h('div.tab' + (k === tab ? '.on' : ''), { onclick: () => show(heroesScreen(sel, k)) }, n)));
+  const body = h('div.hr-body'); if (tab === 'skill') skillTab(body, sel); else if (tab==='lamp') lampPathTab(body,sel); else if (tab === 'stat') statTab(body, sel); else if (tab === 'skin') skinTab(body, sel); else gearTab(body, sel);
   const inTeam = S.act.team.includes(sel);
   return screen('heroes', 'bg/dengta', header('伙伴'), h('div.hr-wrap', {}, list,
     h('div.hr-card', {}, h('img.hr-por', { src: portrait(sel, sel==='yangui' ? 'battle' : null) }), h('div.hr-name', {}, h('b', {}, c.name), h('small', {}, c.title)),
@@ -339,6 +347,14 @@ export function heroesScreen(sel, tab = 'skill'){
       h('div.hr-lv', {}, `Lv ${p.lv}`, h('div.hr-exp', {}, h('i', { style: { width: (p.lv >= 40 ? 100 : p.exp / expNeed(p.lv) * 100) + '%' } })), h('small', {}, `战力 ${power(sel)}`)),
       btn(inTeam ? (S.act.team[0] === sel ? '队长' : '已在队伍') : '设为队长', () => { S.act.team = [sel, ...S.act.team.filter(x => x !== sel)].slice(0, 3); saveNow(); show(heroesScreen(sel, tab)); }, inTeam && S.act.team[0] === sel ? 'sm disabled' : 'sm gold')),
     h('div.hr-main', {}, tabs, body)));
+}
+function lampPathTab(body,id) {
+  body.append(h('h3',{},'提灯之道'),h('p',{},'出战前可免费切换，作用于整支队伍。'));
+  for(const [key,path] of Object.entries(AP.LAMP_PATHS)) {
+    const selected=S.act.lampPath===key, unlocked=key==='keeper'||S.act.cleared.jincheng_3;
+    body.append(h('div.lamp-path'+(selected?'.selected':''),{},h('h3',{},path.name),h('p',{},path.desc),
+      btn(selected?'当前灯道':unlocked?'选择此道':'通关坠星坑后开放',()=>{if(AP.chooseLampPath(key)){saveNow();show(heroesScreen(id,'lamp'));}},selected||!unlocked?'sm disabled':'sm gold')));
+  }
 }
 function skillDesc(sk, lv){ const bits = []; if (sk.pow) bits.push(`威力 ${Math.round(sk.pow * skillPow(lv) * 100)}%`); if (sk.mp) bits.push(`法力 ${sk.mp}`); if (sk.cd) bits.push(`冷却 ${(sk.cd * skillCd(lv)).toFixed(1)}秒`); if (sk.dur) bits.push(`持续 ${sk.dur}秒`); return bits.join(' · '); }
 function skillTab(body, id){

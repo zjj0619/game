@@ -2,6 +2,7 @@
 import { REGIONS, REGION_ORDER } from '../data/regions.js';
 import { AFOES, ABOSSES } from './foes.js';
 import { applyHandStages, HAND } from './handStages.js';
+import { balanceGeneratedStage } from './rules.js';
 export const POOLS = {
   jincheng:['yegui','dengyan','yuanqin'], qingqiu:['humei','dengyan','gudiao','yegui'], donghai:['chiru','jellyfish','jiaoren','haiyuan','yuanqin'],
   changyang:['wushou','gugukui','toulou','kui','zheng'], kunlun:['qinyuan','yingzhao','suanni','yuchan','kui'], hundun:['hundunyy','huan','fei','mengmo','qinyuan'],
@@ -222,6 +223,7 @@ for (const st of Object.values(STAGES)) if (!st.desc) {
 }
 
 // 手写招牌关覆盖（青丘→归墟）
+for (const stage of Object.values(STAGES)) balanceGeneratedStage(stage);
 applyHandStages(STAGES);
 for (const [id, h] of Object.entries(HAND)) {
   if (STAGES[id] && h.desc) STAGES[id].desc = h.desc;

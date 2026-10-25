@@ -2,6 +2,7 @@
 for (const P of [Element.prototype, DocumentFragment.prototype]) for (const fn of ["append","prepend","replaceChildren"]) { const o = P[fn]; P[fn] = function(...k){ return o.apply(this, k.filter(x=>x!=null && x!==false)); }; }
 // 小型 DOM 工具
 import { sfx } from './audio.js';
+import { assetPath } from './assets.js';
 export const $ = (s, r=document) => r.querySelector(s);
 export function h(tag, attrs={}, ...kids){
   const [t, ...cls] = tag.split('.'); const e = document.createElement(t||'div');
@@ -17,7 +18,7 @@ export function h(tag, attrs={}, ...kids){
   return e;
 }
 export function btn(label, on, cls=''){ return h('button.btn'+(cls?'.'+cls.split(' ').join('.'):''), { onclick:(e)=>{ e.stopPropagation(); sfx('click'); haptic('light'); on&&on(e); } }, label); }
-export const asset = p => `assets/${p}.webp`;
+export const asset = p => `assets/${assetPath(p)}.webp`;
 export const icon = (key, cls='') => h('img.icon'+(cls?'.'+cls:''), { src: asset('icon/'+key), alt:'', draggable:'false' });
 
 let toastBox;

@@ -5,6 +5,7 @@ import './explore.css';
 import './action.css';
 import './hub.css';
 import './premium.css';
+import './improvements.css';
 import { addMember, healAll, S, settings, meta, saveMeta, newGame, setToast, load, save, AUTO, ach, slotInfo, SAVE_SLOTS } from './engine/state.js';
 import { initAudio, playBgm, stopBgm } from './engine/audio.js';
 import { h, toast, asset } from './engine/ui.js';
@@ -13,20 +14,21 @@ import { battle } from './engine/battle.js';
 import { titleScreen, worldScreen, regionScreen } from './ui/screens.js';
 import { exploreScreen } from './engine/explore.js';
 import { openMenu } from './ui/menu.js';
-import { hubScreen, launch, adventureScreen } from './ui/hub.js';
+import { hubScreen, launch, adventureScreen, stageDetail } from './ui/hub.js';
 import { STAGES, SIGNATURE_IDS } from './action/stages.js';
 import { ensureAct } from './action/progress.js';
 import { endingScreen } from './ui/ending.js';
 import { setAmbient, ensureDust } from './engine/fx.js';
 import { nextBond } from './data/bonds.js';
 import { ITEMS } from './data/items.js';
+import { initUpdates } from './engine/updates.js';
 
 const app = document.getElementById('app');
 setToast((m,k)=>toast(m,k));
 let firstGesture = false;
 document.addEventListener('pointerdown', () => { if (!firstGesture) { firstGesture = true; initAudio(); } }, { capture:true });
 
-export function clearScreens(){ for (const s of [...app.querySelectorAll('.screen')]) s.remove(); for (const p of [...app.querySelectorAll('.panel-wrap')]) p.remove(); }
+export function clearScreens(){ for (const s of [...app.querySelectorAll('.screen')]) { s.dispose?.(); s.remove(); } for (const p of [...app.querySelectorAll('.panel-wrap')]) p.remove(); }
 const TRANS = { title:'fade', hub:'gold', action:'ink', result:'gold', vn:'fade', world:'slide', region:'slide', explore:'slide', adventure:'gold' };
 export function show(el, kind){
   clearScreens(); app.append(el);
@@ -39,6 +41,7 @@ export function show(el, kind){
 export const game = {
   title(){ stopVN(); S && (S.mode='title'); show(titleScreen()); playBgm('title'); setAmbient('embers'); },
   newGame(){ newGame(); clearBacklog(); show(vnScreen()); restoreScene(); runMain('start'); },
+  newAdventure(){ newGame(); clearBacklog(); S.prevMode='vn'; game.hub(); stageDetail(STAGES.jincheng_1); },
   resume(){ // 根据 S.mode 恢复
     stopVN(); clearBacklog();
     if (S.mode==='hub' || S.mode==='action') { game.hub(); return; }
@@ -81,3 +84,4 @@ async function boot(){
 }
 ensureDust();
 boot();
+initUpdates();

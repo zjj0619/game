@@ -14,6 +14,7 @@ import { show } from '../main.js';
 import { game } from '../main.js';
 import { questState, questProgress } from './screens.js';
 import { talentView, setView, refinePanel, refineLv, freePoints } from './progress.js';
+import { APP_VERSION, openUpdates } from '../engine/updates.js';
 
 const TABS = [['party','队伍'],['bag','行囊'],['craft','炼制'],['quest','任务'],['codex','图鉴'],['ach','成就'],['save','存档'],['load','读档'],['settings','设置'],['title','标题']];
 export function openMenu(tab='party'){
@@ -171,6 +172,13 @@ function settingsBody(body){
     h('h3', {}, '声音'), slider('master','主音量',0,1), slider('music','音乐',0,1), slider('sfx','音效',0,1), slider('voice','配音',0,1),
     h('h3', {}, '文字'), slider('textSpeed','文字速度',10,100,5,v=>v>=100?'瞬间':v+'字/秒'), slider('autoDelay','自动间隔',600,4000,100,v=>(v/1000).toFixed(1)+'秒'), toggle('skipAll','快进未读文本'),
     h('h3', {}, '画面与战斗'), slider('fx','粒子特效',0,2,1,v=>['关','简','全'][v]), slider('battleSpeed','战斗速度',1,3,1,v=>'×'+v), toggle('autoBattle','默认自动战斗'),
+    slider('shakeIntensity','震屏强度',0,1,0.1), toggle('flashes','命中闪光'),
+    h('h3', {}, '触控'), toggle('leftHanded','左手战斗布局'),
+    h('div.set',{},h('span',{},'技能布局'),h('select.input',{onchange:e=>{settings.combatLayout=e.target.value;saveSettings();}},
+      h('option',{value:'compact',selected:settings.combatLayout!=='full'},'简洁 · 两个自选技能'),h('option',{value:'full',selected:settings.combatLayout==='full'},'完整 · 五个技能'))),
+    slider('controlScale','按键大小',0.75,1.2,0.05), slider('controlOpacity','按键不透明度',0.35,1,0.05),
+    h('p.tiny',{},'出战前可选择布局。简洁布局显示技能槽中的前两个技能；点击伙伴头像即可换人。'),
+    h('h3',{},'版本与更新'),h('div.row',{},h('span',{},`当前版本 ${APP_VERSION}`),btn('检查 GitHub 更新',()=>openUpdates(),'sm gold')),
     h('h3', {}, '灵感（MiniMax AI）'),
     h('p.tiny', {}, '填写你自己的 MiniMax Token Plan API Key 后，可在营火处与同伴 AI 夜谈、求白泽卜筮、进入 AI 生成的梦境异闻、以“画境”绘制场景与自画像，并为对白生成配音。Key 只保存在本机，不会上传到除 MiniMax 官方接口以外的任何地方。'),
     toggle('aiEnabled','启用 AI 功能'),
@@ -185,7 +193,7 @@ function settingsBody(body){
       btn('清除 Key', ()=>{ settings.apiKey=''; keyInp.value=''; saveSettings(); status.textContent='已清除'; }, 'sm')),
     h('h3', {}, '数据'),
     h('div.row', {}, btn('清除全部数据', async ()=>{ if (!(await confirmBox('将删除所有存档、成就与设置，确定吗？'))) return; localStorage.clear(); location.reload(); }, 'sm danger')),
-    h('p.tiny', {}, '烛龙纪·长夜山海 v1.0 · 美术：AI 生成并经后期处理 · 音乐：程序化生成（WebAudio） · 故事：原创，取材自《山海经》《楚辞》等'));
+    h('p.tiny', {}, `烛龙纪·长夜山海 v${APP_VERSION} · 原创山海叙事 · MIDI 编曲与程序音效 · 美术经生成与后期处理`));
 }
 // —— 画廊 ——
 export async function openGallery(){

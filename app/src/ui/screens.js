@@ -13,6 +13,7 @@ import { vnScreen, restoreScene } from '../engine/vn.js';
 import { game, show } from '../main.js';
 import { openMenu, openSaves, openSettings, openGallery, openAchievements, openShop } from './menu.js';
 import { openCamp } from './camp.js';
+import { APP_VERSION, openUpdates } from '../engine/updates.js';
 
 // —— 标题 ——
 export function titleScreen(){
@@ -20,7 +21,7 @@ export function titleScreen(){
   const enter = () => {
     sfx('click');
     if (latest != null) game.loadSlot(latest);
-    else game.newGame();
+    else game.newAdventure();
   };
   const root = h('div.screen.title', { onclick: (e) => {
     if (e.target.closest('.t-corner')) return;
@@ -36,9 +37,11 @@ export function titleScreen(){
     h('div.t-tap', {},
       h('div.t-tap-bar', {}, latest != null ? '轻触屏幕继续' : '轻触屏幕开始')),
     h('div.t-corner', {},
+      h('button.t-ico', { type:'button', title:'从序章开始剧情旅程', onclick:e=>{e.stopPropagation();game.newGame();} }, '叙'),
+      h('button.t-ico', { type:'button', title:'检查游戏更新', onclick:e=>{e.stopPropagation();openUpdates();} }, '更'),
       h('button.t-ico', { type:'button', title:'读档', onclick:(e)=>{ e.stopPropagation(); openSaves('load'); } }, '档'),
       h('button.t-ico', { type:'button', title:'设置', onclick:(e)=>{ e.stopPropagation(); openSettings(); } }, '设')),
-    h('div.t-foot', {}, `v2.0`));
+    h('div.t-foot', {}, `v${APP_VERSION}`));
   return root;
 }
 function latestSave(){

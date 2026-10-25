@@ -1,17 +1,22 @@
 apply plugin: 'com.android.application'
 
 def ksProps = new Properties()
-def ksFile = new File('/workspace/game/keystore/keystore.properties')
+def ksFile = rootProject.file('../../keystore/keystore.properties')
 if (ksFile.exists()) { ksFile.withInputStream { ksProps.load(it) } }
+def releaseInfo = new groovy.json.JsonSlurper().parse(rootProject.file('../version.json'))
+def keyPath = System.getenv('ZLJ_KEYSTORE_FILE') ?: ksProps['storeFile']
+def keyFile = keyPath ? new File(keyPath) : null
+if (keyFile && !keyFile.isAbsolute()) keyFile = new File(ksFile.parentFile, keyPath)
+def canSign = keyFile?.isFile()
 
 android {
     signingConfigs {
         release {
-            if (ksFile.exists()) {
-                storeFile file(ksProps['storeFile'])
-                storePassword ksProps['storePassword']
-                keyAlias ksProps['keyAlias']
-                keyPassword ksProps['keyPassword']
+            if (canSign) {
+                storeFile keyFile
+                storePassword System.getenv('ZLJ_STORE_PASSWORD') ?: ksProps['storePassword']
+                keyAlias System.getenv('ZLJ_KEY_ALIAS') ?: ksProps['keyAlias']
+                keyPassword System.getenv('ZLJ_KEY_PASSWORD') ?: ksProps['keyPassword']
             }
         }
     }
@@ -21,8 +26,8 @@ android {
         applicationId "com.jiaqi.zhulongji"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
-        versionName "1.1"
+        versionCode releaseInfo.versionCode as int
+        versionName releaseInfo.version
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -32,10 +37,16 @@ android {
     }
     buildTypes {
         release {
-            if (ksFile.exists()) signingConfig signingConfigs.release
+            if (canSign) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+    }
+}
+
+gradle.taskGraph.whenReady { graph ->
+    if (graph.hasTask(':app:assembleRelease') && !canSign) {
+        throw new GradleException('Release signing is required. Run npm run signing:init in app/, or configure ZLJ_KEYSTORE_FILE and signing environment variables.')
     }
 }
 

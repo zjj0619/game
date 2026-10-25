@@ -37,6 +37,7 @@ export function rise(x, y, color='#ffe9a8', n=16){
 }
 // 环境粒子：embers 余烬 / snow 雪 / stars 星尘 / petals 桃花 / none
 export function setAmbient(kind){
+  kind = ({ mist:'blue', dust:'stars' })[kind] || kind;
   ensure(); if (!settings.fx || kind==='none' || !kind) { ambient=null; return; }
   const W=()=>innerWidth, H=()=>innerHeight;
   const M = {

@@ -8,11 +8,42 @@ function A(waves, o = {}) {
     const b = String(id).replace(/_[ev]$/, '');
     return o.dreamElite ? b + '_e' : (b.includes('meng') || b.includes('ye') || b.includes('hei') ? b : b + '_e');
   }));
-  return { waves, dreamWaves, plat: o.plat ?? 2, platsLayout: o.plats || null, hazard: o.hazard || null, boss: o.boss || null, note: o.note || '' };
+  return { waves, dreamWaves, plat: o.plat ?? 2, platsLayout: o.plats || null, dreamPlatsLayout:o.dreamPlats || null, hazard: o.hazard || null, boss: o.boss || null, note: o.note || '' };
 }
 
 /** 签名关：id → 覆盖字段 */
 export const HAND = {
+  jincheng_1: {
+    signature:true, name:'城墙外的雪', obj:'clear',
+    desc:'城外的灯熄了。把夜鬼引入脚下灯域，再挥刀击退它们。',
+    arenas:[A([['yegui','yegui']],{plat:0})],
+  },
+  jincheng_2: {
+    signature:true, name:'灯市夜巡', obj:'clear',
+    desc:'烛瞳能标记弱点。先看破灯魇，再冲刺接近；清场后闭目走入梦门，可挑战额外灵魄。',
+    arenas:[A([['yegui','dengyan']],{plats:[[0.4,170,110]],dreamPlats:[[0.6,145,120]]}), A([['dengyan','yegui','yegui']],{plat:0})],
+  },
+  jincheng_3: {
+    signature:true, name:'坠星坑', obj:'clear',
+    desc:'梦中的石阶与现实不同。分别在两层击退一波敌人，清场后寻找高处秘匣。',
+    arenas:[A([['yegui','yegui'],['dengyan','yegui']],{plats:[[0.25,180,110],[0.65,150,120]],dreamPlats:[[0.3,150,110],[0.7,120,140]]}), A([['dengyan','dengyan']],{plats:[[0.5,165,160]]})],
+  },
+  jincheng_4: {
+    signature:true, name:'断桥灯影', obj:'clear',
+    desc:'连续战斗后的短途探索。利用平台接近飞行异兽，终结攻击后换人可获得接力共鸣。',
+    arenas:[A([['yegui','yuanqin']],{plats:[[0.3,170,130],[0.65,145,110]]}),A([['dengyan','yegui','yuanqin']],{plats:[[0.5,160,150]]})],
+  },
+  jincheng_5: {
+    signature:true, name:'废弃烽台', obj:'guard',
+    desc:'第一次护灯。灯火是据点，先拦住接近它的敌人；清场会补充灯火。',
+    arenas:[A([['yegui','yegui'],['dengyan','yegui']],{plat:0}),A([],{plat:0,boss:'ab_fengxi'})],
+    _handBossInArenas:true,
+  },
+  jincheng_6: {
+    signature:true, name:'夜鬼巷', obj:'clear',
+    desc:'夜鬼伏在巷中。看破弱点、精准闪避或终结后换人，让共鸣真正来自配合。',
+    arenas:[A([['yegui','dengyan'],['yegui_e']],{plats:[[0.3,175,100],[0.7,145,120]]}),A([['dengyan','yuanqin','yegui']],{plats:[[0.5,150,160]]})],
+  },
   // —— 青丘：狐火叠灯 + 梦层竹台 ——
   qingqiu_5: {
     signature: true,
