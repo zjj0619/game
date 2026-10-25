@@ -97,3 +97,8 @@ d: ice jiao(冰蛟), nightmare mo(梦貘), tubo(土伯), black serpent guard(黑
 - 画廊接入灯典、书简、梦日记、夜祭；通关札 CSS 光泽动画
 - build + boot2 OK；持续朝 150k 推进
 - 故事编译约 14.8万字 / 38+ 文件 / 849+ labels（逼近 150k）
+
+## 里程碑
+- 故事编译 **150516 chars** / 40 files / 8198 cmds / 912 labels（达标 ~150k）
+- 招牌系统可玩 + CREATIVE_HOOKS.md；关键艺术 6 张招牌画
+- 无 remote，push 待配置；无 APK；boot2 清洁
