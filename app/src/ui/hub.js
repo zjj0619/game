@@ -78,12 +78,14 @@ export function adventureScreen(rid){
     h('div.adv-map', {}, svg, ...nodes, h('div.adv-lore', {}, h('b', {}, R.name), h('p', {}, R.desc || ''))));
 }
 function foeChips(stage){ const seen = new Set(); for (const a of stage.arenas) for (const w of a.waves || []) for (const f of w) seen.add(f); return [...seen].slice(0, 9).map(f => AFOES[f]).filter(Boolean); }
+export function stageCard(stage){ const k = stage.kind === 'tower' ? 'tower' : stage.kind === 'rush' ? 'rush' : stage.kind === 'daily' ? stage.id : stage.id; return asset('stagecard/' + k); }
 export function stageDetail(stage, opts = {}){
   AP.ensureAct(); const p = panel(stage.name, { cls: 'sdetail' }); let hard = false; let team = S.act.team.filter(id => S.party[id]).slice(0, 3); if (!team.length) team = ['yangui'];
   const boss = stage.boss ? ABOSSES[stage.boss] : null; const best = S.act.best[stage.id];
   const render = () => { p.body.replaceChildren(
     h('div.sd-wrap', {},
       h('div.sd-l', {},
+        h('div.sd-card', { style: { backgroundImage: `url(${stageCard(stage)})` } }, h('b', {}, stage.name), stage.desc ? h('small', {}, stage.desc) : null),
         h('div.sd-meta', {}, chip('推荐等级 ' + (stage.lv + (hard ? 8 : 0))), chip(OBJ_NAME[stage.obj] + (stage.time ? ` · ${stage.time}秒` : ''), 'obj'), best ? chip('最佳 ' + best, 'best') : chip('首通奖励 ✦' + (80 + stage.lv * 25), 'first')),
         boss ? h('div.sd-boss', {}, h('img', { src: asset(boss.img) }), h('div', {}, h('b', {}, '首领 · ' + boss.name), h('small', {}, `${elChip(boss.el)?.textContent || ''}属性 · ${boss.pat.length} 阶段`), h('p', {}, '留意地面的红色预警，在它出招之前闪开。冲刺时短暂无敌。'))) : null,
         h('div.sd-foes', {}, h('div.sd-h', {}, '出没异兽'), h('div.sd-fl', {}, ...foeChips(stage).map(f => h('div.sd-f', { title: f.desc || '' }, h('img', { src: asset(f.img), style: f.tint ? { filter: 'drop-shadow(0 0 3px ' + f.tint + ')' } : null }), h('span', {}, f.name), h('small', {}, AI_NAME[f.ai] + (f.tier === 1 ? '·精英' : ''))))))
@@ -277,7 +279,7 @@ export function trialScreen(tab = 'tower'){
     for (let i = Math.min(100, f + 3); i >= Math.max(1, f - 2); i--) { const s = towerStage(i); floors.push(h('div.tw-f' + (i < f ? '.done' : i === f ? '.cur' : '.lock') + (s.boss ? '.boss' : ''), {}, h('b', {}, s.name), h('small', {}, `Lv ${s.lv}` + (s.boss ? ' · 首领 ' + ABOSSES[s.boss].name : '') + (s.obj === 'timed' ? ' · 限时' : '')), i === f ? btn('挑战', () => stageDetail(s, { back }), 'gold sm') : i < f ? chip('已通过') : null)); }
     body.append(h('div.tw-wrap', {}, h('div.tw-l', {}, h('b', {}, `最高 第 ${S.act.tower} 层`), h('p', {}, '镇妖塔共一百层，层层递进。每十层镇守一名首领。每层只能向上，失败可无限重试。'), h('p', {}, '奖励：首次登顶每层获得星砂与经验，首领层必掉装备。')), h('div.tw-list', {}, ...floors))); }
   if (tab === 'daily') { body.append(h('div.dl-grid', {}, ...DAILY.map(d => { const used = S.daily.done[d.id] || 0; const left = AP.DAILY_TRIES - used; const s = dailyStage(d, lv);
-    return h('div.dl-c' + (left <= 0 ? '.used' : ''), { style: { backgroundImage: `linear-gradient(180deg,rgba(10,10,18,.2),rgba(10,10,18,.92)),url(${asset('bg/' + d.bg)})` } }, h('b', {}, d.name), h('p', {}, d.desc), h('small', {}, `Lv ${s.lv} · 今日剩余 ${left}/${AP.DAILY_TRIES}`),
+    return h('div.dl-c' + (left <= 0 ? '.used' : ''), { style: { backgroundImage: `linear-gradient(180deg,rgba(10,10,18,.2),rgba(10,10,18,.92)),url(${asset('stagecard/' + d.id)})` } }, h('b', {}, d.name), h('p', {}, d.desc), h('small', {}, `Lv ${s.lv} · 今日剩余 ${left}/${AP.DAILY_TRIES}`),
       btn(left > 0 ? '进入' : '明日再来', () => { if (left <= 0) return; stageDetail(s, { back, onWin: () => { S.daily.done[d.id] = used + 1; } }); }, left > 0 ? 'gold sm' : 'sm disabled')); }))); }
   if (tab === 'rush') { const ok = !!S.act.cleared.kunlun_10; const s = rushStage(); s.lv = Math.max(10, lv);
     body.append(h('div.rush', {}, h('b', {}, '首领连战 · 十殿'), h('p', {}, '连续挑战十名首领，中途不能补给灵药之外的东西。气血在首领之间不会恢复。'), h('div.rush-l', {}, ...s.rush.map(b => h('div', {}, h('img', { src: asset(ABOSSES[b].img) }), h('small', {}, ABOSSES[b].name)))),

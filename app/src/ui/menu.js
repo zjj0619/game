@@ -134,7 +134,7 @@ function tabCodex(body){
 export function openAchievements(){ const p=panel('成就'); achList(p.body); }
 function achList(body){
   const n = Object.keys(meta.ach).length;
-  body.append(h('p.tiny', {}, `已达成 ${n}/${Object.keys(ACHIEVEMENTS).length}`), h('div.achs', {}, Object.entries(ACHIEVEMENTS).map(([k,a]) => h('div.achv'+(meta.ach[k]?'.got':''), {}, h('div.ach-ic', {}, meta.ach[k]?'✦':'◇'), h('div', {}, h('b', {}, a.name), h('small', {}, a.desc))))));
+  body.append(h('p.tiny', {}, `已达成 ${n}/${Object.keys(ACHIEVEMENTS).length}`), h('div.achs', {}, Object.entries(ACHIEVEMENTS).map(([k,a]) => h('div.achv'+(meta.ach[k]?'.got':''), {}, h('img.ach-ic', { src: asset('ui/ach/' + k), alt: '' }), h('div', {}, h('b', {}, a.name), h('small', {}, a.desc))))));
 }
 // —— 存读档 ——
 export function openSaves(mode){ const p = panel(mode==='save'?'存档':'读档', { cls:'saves' }); saveList(p.body, mode, p); }

@@ -245,3 +245,6 @@
 .sk-it{background:rgba(20,16,12,.55);border:1px solid rgba(255,210,140,.18);border-radius:8px;padding:4px;display:flex;flex-direction:column;align-items:center;cursor:pointer}
 .sk-it img{height:78px;object-fit:contain}.sk-it span{font-size:11px}
 .sk-it.on{border-color:#ffcf6a;box-shadow:0 0 8px rgba(255,200,100,.4)}.sk-it.sel{outline:2px solid #fff6}.sk-it.lock img{filter:brightness(.35) grayscale(.6)}
+.sd-card{height:6.4rem;border-radius:.6rem;background-size:cover;background-position:center;position:relative;padding:.7rem .9rem;display:flex;flex-direction:column;justify-content:flex-end;box-shadow:inset 0 0 0 1px rgba(255,214,150,.22),0 .3rem 1rem rgba(0,0,0,.4);margin-bottom:.5rem;overflow:hidden}
+.sd-card b{font-family:var(--font-title,serif);font-size:1.25rem;color:#ffe6b8;text-shadow:0 2px 6px #000;letter-spacing:.12em}
+.sd-card small{color:#d8cdb8;opacity:.85;text-shadow:0 1px 4px #000;max-width:60%;line-height:1.35}

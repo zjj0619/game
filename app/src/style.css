@@ -184,7 +184,8 @@ p{line-height:1.7;margin:.4em 0}
 .achs{display:grid;grid-template-columns:repeat(auto-fill,minmax(14rem,1fr));gap:.35rem}
 .achv{display:flex;gap:.5rem;align-items:center;padding:.35rem .5rem;border:1px solid rgba(255,255,255,.06);border-radius:.3rem;opacity:.45}
 .achv.got{opacity:1;border-color:var(--line);background:rgba(226,191,110,.07)} .achv b{font-size:.82rem;display:block} .achv small{font-size:.68rem}
-.ach-ic{font-size:1.3rem;color:var(--gold);width:1.6rem;text-align:center}
+.ach-ic{width:2.6rem;height:2.6rem;flex:none;filter:grayscale(1) brightness(.45);transition:filter .3s}
+.achv.got .ach-ic{filter:drop-shadow(0 0 6px rgba(255,200,120,.45))}
 /* 存档 */
 .slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(17rem,1fr));gap:.4rem}
 .slot{display:flex;gap:.6rem;align-items:center;padding:.5rem .7rem;border:1px solid var(--line);border-radius:.3rem;background:rgba(0,0,0,.3);cursor:pointer;min-height:3.6rem}

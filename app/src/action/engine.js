@@ -82,7 +82,7 @@ export function runStage(stage, opts = {}){
     document.querySelector('#app').append(root);
     let bgImg = img('bg/' + (stage.bg || 'jincheng')); let ridge = null;
     // 视差层（tools/gen/px.py）：远景 / 中景 / 前景，按区域与关卡序号取图
-    const pxKey = 'px/' + (stage.region || 'jincheng') + '_' + (((stage.idx ?? 0) % 11 + 11) % 11 + 1); const PX = { far: img(pxKey + '_far'), mid: img(pxKey + '_mid'), near: img(pxKey + '_near') };
+    const pxKey = 'px/' + (stage.region || 'jincheng') + '_' + (((stage.idx ?? 0) % 11 + 11) % 11 + 1); const GRD = img('ground/' + (stage.region || 'jincheng') + '_' + (((stage.idx ?? 0) % 8 + 8) % 8)); const PX = { far: img(pxKey + '_far'), mid: img(pxKey + '_mid'), near: img(pxKey + '_near') };
     function pxDraw(im, spd, hgt, bottom, alpha = 1){ if (!ok(im)) return false; const w = hgt * im.naturalWidth / im.naturalHeight; const ox = -((st.cam * spd * U) % w); g.globalAlpha = alpha; for (let x = ox - (ox > 0 ? w : 0); x < cv.width; x += w) g.drawImage(im, x, bottom - hgt, w, hgt); g.globalAlpha = 1; return true; }
     function resize(){ dpr = Math.min(2, devicePixelRatio || 1); W = root.clientWidth || innerWidth; H = root.clientHeight || innerHeight; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); U = cv.height / VH; VW = cv.width / U; layoutArenas(); worldEnd = arenas[arenas.length - 1].x1 + 40; buildRidge(); }
     function buildRidge(){ const c = document.createElement('canvas'); c.width = Math.round(cv.width * 1.6); c.height = cv.height; const q = c.getContext('2d');
@@ -449,8 +449,9 @@ export function runStage(stage, opts = {}){
       const L = st.cam - 40, R = st.cam + VW + 40;
       // 地面
       const gg = g.createLinearGradient(0, GY, 0, VH); gg.addColorStop(0, '#2a2418'); gg.addColorStop(0.08, '#14110c'); gg.addColorStop(1, '#07060a'); g.fillStyle = gg; g.fillRect(L, GY, R - L, VH - GY);
+      if (ok(GRD)) { const tw = 128, th = VH - GY + 2; g.globalAlpha = 0.9; for (let x = Math.floor(L / tw) * tw; x < R; x += tw) g.drawImage(GRD, x, GY, tw, th); g.globalAlpha = 1; const gd = g.createLinearGradient(0, GY, 0, VH); gd.addColorStop(0, 'rgba(7,6,10,0)'); gd.addColorStop(1, 'rgba(7,6,10,.8)'); g.fillStyle = gd; g.fillRect(L, GY, R - L, VH - GY); }
       g.fillStyle = 'rgba(255,214,140,.22)'; g.fillRect(L, GY, R - L, 1.5);
-      for (const a of arenas) { if (a.x1 < L || a.x0 > R) continue; for (const p of a.plats || []) { g.fillStyle = 'rgba(40,32,22,.92)'; g.fillRect(p.x, p.y, p.w, 7); g.fillStyle = 'rgba(255,210,140,.45)'; g.fillRect(p.x, p.y, p.w, 1.5); }
+      for (const a of arenas) { if (a.x1 < L || a.x0 > R) continue; for (const p of a.plats || []) { g.fillStyle = 'rgba(40,32,22,.92)'; g.fillRect(p.x, p.y, p.w, 7); if (ok(GRD)) g.drawImage(GRD, 0, 0, Math.min(512, p.w * 4), 28, p.x, p.y, p.w, 7); g.fillStyle = 'rgba(255,210,140,.45)'; g.fillRect(p.x, p.y, p.w, 1.5); }
         if (st.locked && st.cur === a.i) for (const gx of [a.x0, a.x1]) { const gr = g.createLinearGradient(gx - 8, 0, gx + 8, 0); gr.addColorStop(0, 'rgba(255,90,60,0)'); gr.addColorStop(0.5, `rgba(255,120,70,${0.35 + 0.2 * Math.sin(st.t * 6)})`); gr.addColorStop(1, 'rgba(255,90,60,0)'); g.fillStyle = gr; g.fillRect(gx - 8, 40, 16, GY - 40); } }
       if (st.lamp) { const lp = img('spr/o_lamp_lit'); drawSprite(lp, st.lamp.x, GY, 46, 1); g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(st.lamp.x - 18, GY - 56, 36, 4); g.fillStyle = '#ffcf6a'; g.fillRect(st.lamp.x - 18, GY - 56, 36 * clamp(st.lamp.hp / 100, 0, 1), 4); }
       // 预警
