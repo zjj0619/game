@@ -1,0 +1,9 @@
+idle 待机/枢纽默认
+lamp 持灯（Q版全身，枢纽可选）
+lamp_por 持灯（半身强化灯火）
+battle 战斗前倾
+think 思索近景
+smile 通关/温暖
+hurt 受伤/凝重
+cast 施法/仪式
+title 标题/宣传

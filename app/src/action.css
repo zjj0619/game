@@ -145,3 +145,7 @@
 .ak-goals{font-size:11px;gap:4px}
 .ak-goals span{padding:2px 6px;border-radius:3px;background:rgba(0,0,0,.45);border:1px solid rgba(226,191,110,.25)}
 .ak-goals span.ok{border-color:#7ecf7a;color:#b8f0a8}
+
+
+/* —— combat VFX overlays (polish3) —— */
+.ak-combo.on.pop b{text-shadow:0 0 18px #ff7a2a,0 0 36px #ffb03a,2px 2px 0 #5a1a00}

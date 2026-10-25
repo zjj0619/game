@@ -172,11 +172,20 @@
 .ak-sk.ready-pulse:not(.nomp):not(.empty){animation:skReady 1.8s ease-in-out infinite}
 @keyframes skReady{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 2px rgba(255,210,120,.3)}}
 .ak-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:15;mix-blend-mode:screen}
-.ak-flash.on{animation:akFlash .1s ease-out}
-@keyframes akFlash{0%{opacity:.4}100%{opacity:0}}
-.ak-phase{position:absolute;left:0;right:0;top:30%;text-align:center;font-family:var(--title);font-size:clamp(24px,4.5vw,36px);letter-spacing:.2em;color:#ffc8b8;text-shadow:0 2px 12px rgba(80,0,0,.8);opacity:0;pointer-events:none;z-index:16}
-.ak-phase.on{animation:akPhase 1.5s ease-out forwards}
-@keyframes akPhase{0%{opacity:0;transform:scale(1.2)}15%{opacity:1;transform:scale(1)}70%{opacity:1}100%{opacity:0}}
+.ak-flash.on{animation:akFlash .12s ease-out}
+.ak-flash.on.crit{animation:akFlashCrit .18s ease-out;background:radial-gradient(circle,#fff 0%,#ffe08a 40%,transparent 70%)}
+.ak-flash.on.kill{animation:akFlashKill .28s ease-out;background:radial-gradient(circle,#fff 0%,#ff9a6a 35%,#ff4a3a55 60%,transparent 80%)}
+@keyframes akFlash{0%{opacity:.45}100%{opacity:0}}
+@keyframes akFlashCrit{0%{opacity:.7}40%{opacity:.35}100%{opacity:0}}
+@keyframes akFlashKill{0%{opacity:.85}30%{opacity:.5}100%{opacity:0}}
+.ak-phase{position:absolute;left:0;right:0;top:28%;text-align:center;font-family:var(--title);font-size:clamp(26px,5vw,40px);letter-spacing:.28em;color:#ffc8b8;text-shadow:0 0 24px #ff4a3a,0 2px 12px rgba(80,0,0,.9),0 0 60px #ff6a20;opacity:0;pointer-events:none;z-index:16}
+.ak-phase.on{animation:akPhase 1.7s ease-out forwards}
+.ak-phase.on::before,.ak-phase.on::after{content:"";position:absolute;left:10%;right:10%;height:2px;background:linear-gradient(90deg,transparent,#ff8a5a,transparent);opacity:.7}
+.ak-phase.on::before{top:-18px}.ak-phase.on::after{bottom:-18px}
+@keyframes akPhase{0%{opacity:0;transform:scale(1.35);letter-spacing:.5em;filter:blur(4px)}12%{opacity:1;transform:scale(1);letter-spacing:.28em;filter:blur(0)}70%{opacity:1}100%{opacity:0;transform:translateY(-12px)}}
+.ak-mile{position:absolute;left:0;right:0;top:22%;text-align:center;font-family:var(--title);font-size:clamp(20px,3.8vw,32px);letter-spacing:.35em;color:#ffe08a;text-shadow:0 0 18px #ff9a3a,0 2px 4px #000;opacity:0;pointer-events:none;z-index:14}
+.ak-mile.on{animation:akMile .9s ease-out forwards}
+@keyframes akMile{0%{opacity:0;transform:scale(1.6);letter-spacing:.6em}15%{opacity:1;transform:scale(1)}70%{opacity:.85}100%{opacity:0;transform:translateY(-10px)}}
 
 /* —— VN 克制 —— */
 .vn-box{
@@ -241,3 +250,91 @@
   mask-image:none!important;-webkit-mask-image:none!important;
   object-fit:cover;object-position:top center;opacity:1;
 }
+
+/* —— v3 填图 / 多姿态 —— */
+.screen.hub.clean .htile{
+  background-size:cover!important;background-position:center!important;
+  min-height:72px;
+}
+.screen.hub.clean .htile b,.screen.hub.clean .htile small{
+  position:relative;z-index:1;
+  text-shadow:0 1px 8px rgba(0,0,0,.85),0 0 2px #000;
+}
+.screen.hub.clean .htile.t-adv{min-height:88px}
+.screen.hub.clean .htile.t-more{
+  background-size:cover!important;
+}
+.screen.hub.clean .hub-hero{
+  background:linear-gradient(180deg,rgba(18,14,28,.15),rgba(5,6,14,.55))!important;
+  border:1px solid rgba(255,255,255,.1)!important;
+  box-shadow:inset 0 0 40px rgba(0,0,0,.25)!important;
+}
+.screen.hub.clean .hh-por{
+  object-fit:contain!important;object-position:center bottom!important;
+  transform:scale(1.08);transform-origin:50% 100%;
+}
+
+/* 更多：图文行 */
+.hub-more.filled .panel-body{gap:8px;padding:.2rem 0 .4rem}
+.hub-more.filled .hm-row{
+  min-height:56px;padding:.65rem 1rem .65rem 1rem;
+  background-size:cover!important;background-position:center!important;
+  border:1px solid rgba(255,255,255,.12)!important;
+  border-radius:6px;position:relative;overflow:hidden;
+  box-shadow:inset 0 -24px 40px rgba(0,0,0,.55);
+}
+.hub-more.filled .hm-row b{
+  position:relative;z-index:1;font-size:15px;letter-spacing:.14em;
+  text-shadow:0 1px 8px #000,0 0 2px #000;
+}
+.hub-more.filled .hm-row .rdot{z-index:1}
+
+/* 试炼层卡填图 */
+.tw-f{
+  background-size:cover!important;background-position:center!important;
+  border:1px solid rgba(255,255,255,.1)!important;
+  min-height:52px;
+}
+.tw-f b,.tw-f small{text-shadow:0 1px 6px #000}
+
+/* 结算主角姿 */
+.rs-hero{
+  position:absolute;right:2%;bottom:0;height:92%;width:auto;max-width:38%;
+  object-fit:contain;object-position:bottom right;pointer-events:none;z-index:2;
+  filter:drop-shadow(0 8px 24px rgba(0,0,0,.55));
+  opacity:.95;
+}
+.screen.result .rs-box{position:relative;z-index:3}
+.screen.result.win .rs-hero{filter:drop-shadow(0 0 18px rgba(255,190,100,.25)) drop-shadow(0 8px 24px rgba(0,0,0,.5))}
+.screen.result.lose .rs-hero{filter:grayscale(.25) brightness(.85) drop-shadow(0 8px 24px rgba(0,0,0,.6))}
+
+/* 标题侧影姿（不抢底栏） */
+.screen.title .t-hero-fig{
+  position:absolute;right:max(2vw,var(--sr));bottom:0;height:78%;width:auto;max-width:42%;
+  object-fit:contain;object-position:bottom right;pointer-events:none;z-index:1;
+  opacity:.88;filter:drop-shadow(0 10px 28px rgba(0,0,0,.65));
+  mask-image:linear-gradient(90deg,transparent 0%,#000 18%);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 18%);
+}
+
+/* 面板轻场景底，避免大块空黑 */
+.panel{
+  background:
+    linear-gradient(180deg,rgba(14,12,22,.88),rgba(8,7,14,.94)),
+    url(/assets/cg/key_candle_eye.webp) center/cover!important;
+  background-blend-mode:normal!important;
+}
+.panel-body{position:relative;z-index:1}
+.panel-wrap.hub-more .panel{
+  background:
+    linear-gradient(180deg,rgba(10,9,16,.82),rgba(6,5,12,.9)),
+    url(/assets/cg/key_dream_layers.webp) center/cover!important;
+}
+
+/* 伙伴卡底 */
+.hr-card{
+  background:
+    linear-gradient(180deg,rgba(8,8,16,.2),rgba(5,6,14,.75)),
+    url(/assets/bg/yuetai.webp) center/cover!important;
+}
+.hr-por{filter:drop-shadow(0 6px 16px rgba(0,0,0,.5))}

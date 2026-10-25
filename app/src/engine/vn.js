@@ -2,6 +2,7 @@
 import { S, settings, meta, saveMeta, cond, applyEffects, unlock, ach, save, AUTO } from './state.js';
 import { CHARS, NAME2ID } from '../data/characters.js';
 import { h, btn, asset, toast, sleep, panel } from './ui.js';
+import { vnPose, portrait as posePor } from './pose.js';
 import { sfx, playBgm, playVoice, stopVoice } from './audio.js';
 import { shake as fxShake, flash as fxFlash, setAmbient } from './fx.js';
 import { aiReady, tts } from './ai.js';
@@ -55,12 +56,18 @@ export function setBg(name, instant){
   on.classList.add('on'); off.classList.remove('on'); if (instant) { on.style.transition='none'; requestAnimationFrame(()=>on.style.transition=''); }
   setAmbient(AMBIENT[name]||'none');
 }
-function porSrc(id){ return asset('por/'+id); }
+
+function refreshHeroPose(mood){
+  const el = D.chars && D.chars.querySelector('[data-id="yangui"] img');
+  if (el) el.src = porSrc('yangui', mood || '');
+  if (D.face && D.face.classList.contains('on')) D.face.style.backgroundImage = `url(${porSrc('yangui', mood || '')})`;
+}
+function porSrc(id, mood){ return id==='yangui' ? vnPose(id, mood) : asset('por/'+id); }
 export function showChar(id, pos='center'){
   if (!CHARS[id]) return;
   S.shown[id] = pos; unlock('c_'+id);
   let el = D.chars.querySelector(`[data-id="${id}"]`);
-  if (!el) { el = h('div.vn-char.enter', { 'data-id':id }, h('img', { src:porSrc(id), draggable:'false' })); D.chars.append(el); setTimeout(()=>el.classList.remove('enter'), 30); }
+  if (!el) { el = h('div.vn-char.enter', { 'data-id':id }, h('img', { src:porSrc(id, 'think'), draggable:'false' })); D.chars.append(el); setTimeout(()=>el.classList.remove('enter'), 30); }
   POS.forEach(p=>el.classList.remove(p)); el.classList.add(pos);
 }
 export function hideChar(id){
@@ -107,9 +114,10 @@ async function say(c){
   const id = c.who ? NAME2ID[c.who] : null;
   D.box.classList.toggle('narr', !c.who);
   D.name.textContent = c.who || ''; D.name.style.display = c.who ? '' : 'none';
-  if (id && CHARS[id] && !S.shown[id]) { D.face.style.backgroundImage=`url(${porSrc(id)})`; D.face.classList.add('on'); } else D.face.classList.remove('on');
-  highlight(id && S.shown[id] ? id : null);
   const text = c.text.replace(/\{name\}/g, '晏归');
+  if (id && CHARS[id] && !S.shown[id]) { D.face.style.backgroundImage=`url(${porSrc(id, text)})`; D.face.classList.add('on'); } else D.face.classList.remove('on');
+  if (id === 'yangui' || (S.shown && S.shown.yangui)) refreshHeroPose(text);
+  highlight(id && S.shown[id] ? id : null);
   backlog.push({who:c.who, text}); if (backlog.length>300) backlog.shift();
   const read = meta.readLines[c.at];
   if (mode.skip && !read && !settings.skipAll) { mode.skip=false; updTools(); }

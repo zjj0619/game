@@ -71,12 +71,16 @@ export function tickEye(ctx, dt){
 }
 
 export function toggleEye(ctx){
-  const { st, C, say, sfx } = ctx;
+  const { st, C, say, sfx, P, ring, part, sparks, flashHit } = ctx;
   if (st.over) return;
-  if (st.eyeOn) { st.eyeOn = false; st.eyeCd = EYE_CD; return; }
+  if (st.eyeOn) { st.eyeOn = false; st.eyeCd = EYE_CD; part && part(P.x, P.y - 40, '#ff8a9a', 10, 120, 0.4, 2); return; }
   if (st.eyeCd > 0) return;
   if (C().mp < 5) { say('法力不足', 0.7); return; }
   st.eyeOn = true; sfx && sfx('eye'); say('烛瞳 · 开', 0.6);
+  ring && ring(P.x, P.y - 36, 48, '#ff5a6a', 0.45);
+  part && part(P.x, P.y - 40, '#ff8a9a', 22, 200, 0.6, 2.5);
+  sparks && sparks(P.x, P.y - 40, '#ffd0d0', 12, 1);
+  flashHit && flashHit();
 }
 
 /** 命中时消费弱点 → 必暴 */
@@ -94,7 +98,11 @@ export function toggleDream(ctx){
   st.dreamFlips = (st.dreamFlips || 0) + 1;
   if (st.dream) st.dreamSeen = true; else st.awakeSeen = true;
   sfx && sfx('flip'); shake && shake(8);
-  part && part(P.x, P.y - 30, st.dream ? '#7ec8ff' : '#ffcf6a', 36, 280, 0.9, 4);
+  part && part(P.x, P.y - 30, st.dream ? '#7ec8ff' : '#ffcf6a', 48, 320, 1.0, 4);
+  ring && ctx.ring(P.x, P.y - 30, 90, st.dream ? '#7ec8ff' : '#ffcf6a', 0.6);
+  ctx.shock && ctx.shock(P.x, P.y - 20, 70, st.dream ? '#7ec8ff' : '#ffcf6a', 0.45);
+  ctx.vfx && ctx.vfx('smoke', st.dream ? 'ice' : 'light', P.x, P.y - 30, 140, { life: 0.7 });
+  ctx.flashHit && ctx.flashHit();
   say(st.dream ? '闭目 · 堕入梦层' : '睁眼 · 回到长夜', 1.4);
   // 梦层：现有敌人转为梦魇形态；睁眼层恢复
   for (const f of foes) {
@@ -135,7 +143,7 @@ export function tickReso(ctx, dt){
 export function onSwapReso(ctx){ ctx.st._resoBoost = 40; ctx.st.reso = Math.min(RESO_NEED, (ctx.st.reso || 0) + 18); }
 
 export function fireReso(ctx){
-  const { st, P, C, roster, ri, say, sfx, shake, ring, part, heal, hitCircle, num } = ctx;
+  const { st, P, C, roster, ri, say, sfx, shake, ring, part, heal, hitCircle, num, GY } = ctx;
   if (!st.resoReady && (st.reso || 0) < RESO_NEED) return;
   st.reso = 0; st.resoReady = false;
   const me = C().id;
@@ -152,8 +160,14 @@ export function fireReso(ctx){
     ctx.root.append(cut); setTimeout(() => cut.remove(), 1600 + (bond >= 90 ? 400 : 0));
   }
   const rad = 200 * bondMul;
-  ring && ring(P.x, P.y - 26, rad * 0.9, '#ffcf6a', 0.8);
-  part && part(P.x, P.y - 30, '#ffe7a0', Math.round(50 * bondMul), 360, 1.1, 5);
+  ring && ring(P.x, P.y - 26, rad * 0.9, '#ffcf6a', 0.9);
+  ring && ring(P.x, P.y - 26, rad * 0.55, '#ffffff', 0.5);
+  part && part(P.x, P.y - 30, '#ffe7a0', Math.round(64 * bondMul), 400, 1.2, 5);
+  ctx.shock && ctx.shock(P.x, (GY || 232) - 4, rad * 0.7, '#ffcf6a', 0.55);
+  ctx.crack && ctx.crack(P.x, GY || 232, rad * 0.6, 1.2);
+  ctx.sparks && ctx.sparks(P.x, P.y - 30, '#ffffff', Math.round(20 * bondMul), 1);
+  ctx.vfx && ctx.vfx('burst', 'light', P.x, P.y - 30, rad * 1.1, { life: 0.6 });
+  ctx.flashHit && ctx.flashHit('crit');
   hitCircle && hitCircle(P.x, P.y - P.h / 2, rad, 3.2 * bondMul, { skill: true, heavy: true, kb: 280, col: '#ffcf6a', st: ['brk', 0.8] });
   for (const r of roster) if (r.alive) { const n = Math.round(r.s.hp * 0.12 * bondMul); r.hp = Math.min(r.s.hp, r.hp + n); }
   heal && heal(C().s.hp * 0.08 * bondMul, true);
@@ -195,6 +209,13 @@ export function drawHooks(g, ctx, camHelpers){
   // 灯芯边缘一圈细线
   g.strokeStyle = st.dream ? 'rgba(160,220,255,0.35)' : 'rgba(255,210,120,0.4)';
   g.lineWidth = 1.2; g.beginPath(); g.arc(P.x, P.y - 20, Rlamp * (0.92 + 0.04 * Math.sin(st.t * 3)), 0, 6.283); g.stroke();
+  // 灯芯内焰粒子感（轻量）
+  if (!st.dream) {
+    g.globalAlpha = 0.35 + 0.15 * Math.sin(st.t * 6);
+    g.fillStyle = '#ffcf6a';
+    g.beginPath(); g.arc(P.x, P.y - 28 - Math.sin(st.t * 5) * 2, 5 + Math.sin(st.t * 7), 0, 6.283); g.fill();
+    g.globalAlpha = 1;
+  }
   g.restore();
 
   // 烛瞳：弱点红点 + 隐身显形提示
@@ -206,8 +227,11 @@ export function drawHooks(g, ctx, camHelpers){
         const a = Math.min(1, f.weakMark); const y = f.y - f.h - 10;
         g.globalAlpha = 0.5 + 0.5 * a; g.fillStyle = '#ff3a3a';
         g.beginPath(); g.arc(f.x, y, 3.5 + a * 2, 0, 6.283); g.fill();
-        g.strokeStyle = '#ffd0d0'; g.lineWidth = 1; g.beginPath(); g.arc(f.x, y, 7 + a * 3, 0, 6.283); g.stroke();
-        if (f.weakMark >= 1) { g.fillStyle = '#ffe08a'; g.font = 'bold 9px sans-serif'; g.textAlign = 'center'; g.fillText('弱点', f.x, y - 10); }
+        g.strokeStyle = '#ffd0d0'; g.lineWidth = 1.4; g.beginPath(); g.arc(f.x, y, 7 + a * 3, 0, 6.283); g.stroke();
+        g.globalAlpha = 0.25 + 0.2 * Math.sin(st.t * 8); g.strokeStyle = '#ff6a6a'; g.lineWidth = 2;
+        g.beginPath(); g.arc(f.x, y, 12 + a * 4 + Math.sin(st.t * 6), 0, 6.283); g.stroke();
+        if (f.weakMark >= 1) { g.globalAlpha = 1; g.fillStyle = '#ffe08a'; g.font = 'bold 9px sans-serif'; g.textAlign = 'center'; g.fillText('弱点', f.x, y - 10);
+          g.strokeStyle = '#ffd24a'; g.lineWidth = 1.5; g.beginPath(); g.arc(f.x, f.y - f.h * 0.55, f.w * 0.7, 0, 6.283); g.stroke(); }
       }
     }
     g.restore();
@@ -258,6 +282,15 @@ export function drawDreamTint(g, cv, st){
   const vg = g.createRadialGradient(cv.width / 2, cv.height / 2, cv.height * 0.35, cv.width / 2, cv.height / 2, cv.width * 0.7);
   vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(10,20,50,0.45)');
   g.fillStyle = vg; g.fillRect(0, 0, cv.width, cv.height);
+  // 漂浮梦尘
+  g.globalAlpha = 0.35;
+  for (let i = 0; i < 12; i++) {
+    const x = ((st.t * 30 + i * 97) % (cv.width + 40)) - 20;
+    const y = (Math.sin(st.t * 1.3 + i) * 0.35 + 0.5) * cv.height;
+    g.fillStyle = i % 2 ? '#9ad4ff' : '#c9e8ff';
+    g.beginPath(); g.arc(x, y, 1.5 + (i % 3), 0, 6.283); g.fill();
+  }
+  g.globalAlpha = 1;
 }
 
 export function sGoals(stage, st){

@@ -292,3 +292,16 @@ d: ice jiao(冰蛟), nightmare mo(梦貘), tubo(土伯), black serpent guard(黑
 - 故事编译 **150516 chars** / 40 files / 8198 cmds / 912 labels（达标 ~150k）
 - 招牌系统可玩 + CREATIVE_HOOKS.md；关键艺术 6 张招牌画
 - 无 remote，push 待配置；无 APK；boot2 清洁
+
+## 2026-10-25 Premium Polish3 · 多姿态主角 + 填图 + combat VFX（Asia/Shanghai）
+- 晏归多姿态：`tools/gen/yangui_poses.py` → `app/public/assets/por/pose/yangui_{idle,lamp,lamp_por,battle,think,smile,hurt,cast,title}.webp`；`app/src/engine/pose.js` 按 hub/VN mood/result/title 切换
+- 枢纽填图：5 主磁贴 +「更多」行均挂 stagecard/场景底图；通关札 `rs-hero` 笑/伤姿态；标题 `t-hero-fig` 用 title 姿
+- **战斗 VFX 大幅加强**（`action/engine.js` + `hooks.js` + CSS）：
+  - `settings.fx` 0/1/2 预算（关/简/全），粒子 cap 可降
+  - 普攻双层刀光 + 火花 + 终结冲击波/裂痕/速度线；暴击 shock+闪白；击杀碎裂/残影/消散
+  - 技能元素色：火环/雷弧/灯金/梦青/瞳红；nova/quake/dash 强化
+  - 连击里程碑全屏 `.ak-mile`；Boss 预警圈脉冲、砸地 shock+crack、阶段字幕+粒子爆发
+  - 灯芯内焰、烛瞳弱点光环、闭目梦尘、共鸣冲击与裂地
+  - 残影/速度线（冲刺）；受击闪白+火花
+- 截图 `docs/premium_polish3/`：01_title 02_hub 03_hub_more 04_vn 05_action **06_action_vfx** 07_result；shot 脚本 errs:[]
+- 禁止 MiniMax / 不 APK / 不 push；本轮并入同一 commit

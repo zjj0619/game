@@ -15,11 +15,12 @@ import { runStage } from '../action/engine.js';
 import * as AP from '../action/progress.js';
 import { game, show } from '../main.js';
 import { openMenu } from './menu.js';
+import { portrait as posePor, hubPose, resultPose, POSES } from '../engine/pose.js';
 
 const EL_NAME = { fire:'火', water:'水', wood:'木', metal:'金', earth:'土', light:'光', dark:'暗', none:'无' };
 const OBJ_NAME = { clear:'歼灭全部敌人', timed:'限时内抵达终点', guard:'护住长明灯不灭' };
 const RCOL = r => RARITY[r]?.col || '#ccc';
-const portrait = id => asset('por/' + id);
+const portrait = (id, pose) => posePor(id, pose);
 const gearName = id => ITEMS[id]?.name || id;
 const fmt = n => n >= 10000 ? (n / 10000).toFixed(1) + '万' : String(n);
 function power(id){ const s = AP.actStats(id); return Math.round(s.hp * 0.25 + (s.atk + s.mag) * 2.2 + s.def * 2 + (s.crit || 0) * 300); }
@@ -65,31 +66,35 @@ export function hubBadges(){ const m = AP.MISSIONS.filter(x => !S.daily.claimed[
 export function hubScreen(){
   AP.ensureAct(); const lead = S.act.team[0] || 'yangui'; const b = hubBadges();
   const nextStage = (() => { for (const rid of REGION_ORDER) for (const id of REGION_STAGES[rid].slice(0, 10)) if (!S.act.cleared[id]) return AP.stageUnlocked(id) ? STAGES[id] : null; return null; })();
-  const tile = (cls, name, sub, on, badge) => h('div.htile.' + cls, { onclick: () => { sfx('click'); on(); } }, h('b', {}, name), sub ? h('small', {}, sub) : null, dot(badge));
+  const tileBg = (path) => path ? { backgroundImage: `linear-gradient(0deg,rgba(5,6,14,.78),rgba(5,6,14,.22)),url(${asset(path)})` } : {};
+  const tile = (cls, name, sub, on, badge, bg) => h('div.htile.' + cls, { onclick: () => { sfx('click'); on(); }, style: tileBg(bg) }, h('b', {}, name), sub ? h('small', {}, sub) : null, dot(badge));
+  const MORE_ROWS = [
+    ['山海异兽', () => show(petScreen()), b.pets > 0, 'bg/qingqiu_forest'],
+    ['铸灯铁坊', () => show(forgeScreen()), false, 'bg/yugu'],
+    ['烬城建设', () => show(cityScreen()), false, 'bg/jincheng'],
+    ['信物秘境', () => show(secretStagesScreen()), b.secrets > 0, 'cg/key_secret_realm'],
+    ['九州探索', () => game.world(), false, 'bg/guixu'],
+    ['菜单', () => openMenu(), false, 'cg/key_candle_eye'],
+  ];
   const more = () => {
-    const p = panel('更多', { cls: 'hub-more' });
-    const row = (name, on, badge) => h('button.hm-row', { onclick: () => { p.close(); sfx('click'); on(); } }, h('b', {}, name), badge ? h('i.rdot') : null);
-    p.body.append(
-      row('山海异兽', () => show(petScreen()), b.pets > 0),
-      row('铸灯铁坊', () => show(forgeScreen())),
-      row('烬城建设', () => show(cityScreen())),
-      row('信物秘境', () => show(secretStagesScreen()), b.secrets > 0),
-      row('九州探索', () => game.world()),
-      row('菜单', () => openMenu()));
+    const p = panel('更多', { cls: 'hub-more filled' });
+    const row = (name, on, badge, bg) => h('button.hm-row', { onclick: () => { p.close(); sfx('click'); on(); }, style: tileBg(bg) }, h('b', {}, name), badge ? h('i.rdot') : null);
+    p.body.append(...MORE_ROWS.map(([n, on, badge, bg]) => row(n, on, badge, bg)));
   };
   const nextSub = nextStage ? nextStage.name : '已通';
+  const advBg = nextStage ? ('stagecard/' + nextStage.id) : 'bg/kunlun_gate';
   const root = screen('hub.clean', 'cg/key_hub_sanctuary',
     h('div.hub-head', {}, h('div.hub-logo', {}, '烬城'), h('div.hub-hr', {}, bar(), btn('菜单', () => openMenu(), 'sm ghost'))),
     h('div.hub-main', {},
       h('div.hub-hero', { onclick: () => show(heroesScreen(lead)) },
-        h('img.hh-por', { src: portrait(lead) }),
+        h('img.hh-por', { src: hubPose(lead) }),
         h('div.hh-info', {}, h('b', {}, CHARS[lead].name), h('span', {}, `Lv ${S.party[lead].lv}`))),
       h('div.hub-grid.slim', {},
-        tile('t-adv', '闯关', nextSub, () => show(adventureScreen(nextStage?.region))),
-        tile('t-story', '剧情', S.chapter ? S.chapter.split('·')[0].trim() : '序章', () => game.story()),
-        tile('t-hero', '伙伴', null, () => show(heroesScreen()), b.sp),
-        tile('t-trial', '试炼', null, () => show(trialScreen()), b.m > 0),
-        tile('t-more', '更多', null, more, b.pets > 0 || b.secrets > 0))));
+        tile('t-adv', '闯关', nextSub, () => show(adventureScreen(nextStage?.region)), false, advBg),
+        tile('t-story', '剧情', S.chapter ? S.chapter.split('·')[0].trim() : '序章', () => game.story(), false, 'bg/zhulong_eye'),
+        tile('t-hero', '伙伴', null, () => show(heroesScreen()), b.sp, 'bg/yuetai'),
+        tile('t-trial', '试炼', null, () => show(trialScreen()), b.m > 0, 'bg/dengta'),
+        tile('t-more', '更多', null, more, b.pets > 0 || b.secrets > 0, 'cg/key_dream_layers'))));
   return root;
 }
 
@@ -205,6 +210,7 @@ function resultScreen(stage, res, out, opts){
   const next = (() => { if (stage.kind === 'tower') return towerStage(stage.floor + 1); if (!REGION_STAGES[stage.region] || stage.kind !== 'normal' && stage.kind !== 'boss') return null; const ids = REGION_STAGES[stage.region]; const nx = ids[stage.idx + 1] || REGION_STAGES[REGION_ORDER[stage.ri + 1]]?.[0]; return nx && AP.stageUnlocked(nx) && !STAGES[nx].hidden ? STAGES[nx] : null; })();
   const back = () => opts.back ? opts.back() : show(adventureScreen(stage.region));
   const root = screen('result' + (win ? '.win' : '.lose'), 'bg/' + (stage.bg || 'jincheng'),
+    h('img.rs-hero', { src: resultPose(win), alt: '' }),
     h('div.rs-box', {},
       h('div.rs-l', {}, h('div.rs-title', {}, win ? '闯 关 成 功' : res.why === '时间耗尽' ? '时 间 耗 尽' : res.why === '灯火熄灭' ? '长 明 灯 灭' : '败 退'),
         win ? h('div.rs-rank.r' + res.rating, {}, res.rating) : h('div.rs-rank.rF', {}, '败'),
@@ -325,7 +331,7 @@ export function heroesScreen(sel, tab = 'skill'){
   const body = h('div.hr-body'); if (tab === 'skill') skillTab(body, sel); else if (tab === 'stat') statTab(body, sel); else if (tab === 'skin') skinTab(body, sel); else gearTab(body, sel);
   const inTeam = S.act.team.includes(sel);
   return screen('heroes', 'bg/dengta', header('伙伴'), h('div.hr-wrap', {}, list,
-    h('div.hr-card', {}, h('img.hr-por', { src: portrait(sel) }), h('div.hr-name', {}, h('b', {}, c.name), h('small', {}, c.title)),
+    h('div.hr-card', {}, h('img.hr-por', { src: portrait(sel, sel==='yangui' ? 'battle' : null) }), h('div.hr-name', {}, h('b', {}, c.name), h('small', {}, c.title)),
       h('div.hr-tags', {}, elChip(c.el), c.el2 ? elChip(c.el2) : null, chip(WEAPON[A.wpn].name), chip(A.role)),
       h('div.hr-lv', {}, `Lv ${p.lv}`, h('div.hr-exp', {}, h('i', { style: { width: (p.lv >= 40 ? 100 : p.exp / expNeed(p.lv) * 100) + '%' } })), h('small', {}, `战力 ${power(sel)}`)),
       btn(inTeam ? (S.act.team[0] === sel ? '队长' : '已在队伍') : '设为队长', () => { S.act.team = [sel, ...S.act.team.filter(x => x !== sel)].slice(0, 3); saveNow(); show(heroesScreen(sel, tab)); }, inTeam && S.act.team[0] === sel ? 'sm disabled' : 'sm gold')),
@@ -476,7 +482,8 @@ export function trialScreen(tab = 'tower'){
   const tabs = h('div.hr-tabs', {}, ...[['tower', '镇妖塔'], ['daily', '每日秘境'], ['rush', '首领连战'], ['mission', '每日委托']].map(([k, n]) => h('div.tab' + (k === tab ? '.on' : ''), { onclick: () => show(trialScreen(k)) }, n, k === 'mission' && hubBadges().m ? h('i.rdot') : null)));
   const body = h('div.tr-body'); const back = () => show(trialScreen(tab)); const lv = Math.max(...AP.actRoster().map(id => S.party[id].lv));
   if (tab === 'tower') { const f = S.act.tower + 1; const floors = [];
-    for (let i = Math.min(100, f + 3); i >= Math.max(1, f - 2); i--) { const s = towerStage(i); floors.push(h('div.tw-f' + (i < f ? '.done' : i === f ? '.cur' : '.lock') + (s.boss ? '.boss' : ''), {}, h('b', {}, s.name), h('small', {}, `Lv ${s.lv}` + (s.boss ? ' · 首领 ' + ABOSSES[s.boss].name : '') + (s.obj === 'timed' ? ' · 限时' : '')), i === f ? btn('挑战', () => { sfx('tower'); stageDetail(s, { back }); }, 'gold sm') : i < f ? chip('已通过') : null)); }
+    const TW_BG = ['bg/dengta','bg/youdu','bg/hundun','bg/guixu','bg/zhulong_eye'];
+    for (let i = Math.min(100, f + 3); i >= Math.max(1, f - 2); i--) { const s = towerStage(i); const bg = TW_BG[i % TW_BG.length]; floors.push(h('div.tw-f' + (i < f ? '.done' : i === f ? '.cur' : '.lock') + (s.boss ? '.boss' : ''), { style: { backgroundImage: `linear-gradient(90deg,rgba(5,6,14,.82),rgba(5,6,14,.45)),url(${asset(bg)})` } }, h('b', {}, s.name), h('small', {}, `Lv ${s.lv}` + (s.boss ? ' · 首领 ' + ABOSSES[s.boss].name : '') + (s.obj === 'timed' ? ' · 限时' : '')), i === f ? btn('挑战', () => { sfx('tower'); stageDetail(s, { back }); }, 'gold sm') : i < f ? chip('已通过') : null)); }
     if (!S.act.tut.tower) { S.act.tut.tower = true; toast('镇妖塔：失败可无限重试，适合练招牌与刷材料'); }
     body.append(h('div.tw-wrap', {}, h('div.tw-l', {}, h('b', {}, `最高 第 ${S.act.tower} 层`), h('p', {}, '镇妖塔共一百层，层层递进。每十层镇守一名首领。每层只能向上，失败可无限重试。前五层偏教学难度。'), h('p', {}, '奖励：首次登顶每层获得星砂与经验，首领层必掉装备。通关外观「塔影袍」需爬到指定层。')), h('div.tw-list', {}, ...floors))); }
   if (tab === 'daily') { body.append(h('div.dl-grid', {}, ...DAILY.map(d => { const used = S.daily.done[d.id] || 0; const left = AP.DAILY_TRIES - used; const s = dailyStage(d, lv);

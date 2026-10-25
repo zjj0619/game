@@ -4,6 +4,7 @@ import { REGIONS, REGION_ORDER } from '../data/regions.js';
 import { QUESTS } from '../data/quests.js';
 import { ITEMS } from '../data/items.js';
 import { ENEMIES } from '../data/enemies.js';
+import { titlePose } from '../engine/pose.js';
 import { h, btn, asset, icon, toast, panel, confirmBox, fmtTime } from '../engine/ui.js';
 import { playBgm, sfx } from '../engine/audio.js';
 import { setAmbient } from '../engine/fx.js';
@@ -31,6 +32,7 @@ export function titleScreen(){
     h('div.t-logo', {},
       h('div.t-main', {}, '烛龙纪'),
       h('div.t-sub', {}, '长夜山海')),
+    h('img.t-hero-fig', { src: titlePose(), alt: '', draggable: 'false' }),
     h('div.t-tap', {},
       h('div.t-tap-bar', {}, latest != null ? '轻触屏幕继续' : '轻触屏幕开始')),
     h('div.t-corner', {},
