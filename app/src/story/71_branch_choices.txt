@@ -1,0 +1,225 @@
+# 关卡分支 · 关键道具 · 权重偏移（由主线 @goto 切入）
+# —— 第二章后：是否救灯塔下的孩子 ——
+*br_ch2_kids
+@bg jincheng
+@bgm warm
+@note 灯塔下传来哭声
+>两个孩子抱着灭掉的纸灯。旁边是玄冥使者留下的冷雾。
+? 立刻扑过去护住他们 -> br_ch2_save | flag:kids_lamp hope+5 aff:baiji+3
+? 先清雾，再救人——稳妥些 -> br_ch2_careful | hope+2
+? 叫孩子们自己跑；你去堵使者 -> br_ch2_distract | hope+1 flag:kids_lamp
+*br_ch2_save
+>纸灯重新亮起时，最小的孩子把一颗种子塞进你口袋。
+@do item:k_false_dawn
+@goto i0_start
+*br_ch2_careful
+>雾散了。孩子们还在。你松了口气——也错过了那颗种子。
+@goto i0_start
+*br_ch2_distract
+>使者追你时，孩子们逃进巷子。纸灯被踩扁了。
+@goto i0_start
+
+# —— 第三章：青丘·白霁的抉择 ——
+*br_ch3_baiji
+@bg qingqiu_forest
+@bgm warm
+@show baiji right
+白霁：前面有一条「捷径」。捷径下面……可能是陷阱。
+? 跟她走捷径（更快，风险更高） -> br_ch3_fast | flag:baiji_shortcut aff:baiji+6 hope+1
+? 绕远路，把她护在身后 -> br_ch3_safe | flag:baiji_protected aff:baiji+8 hope+3
+? 让她先探路，你殿后 -> br_ch3_test | aff:baiji-4 hope-1 flag:weary
+*br_ch3_fast
+>捷径尽头果然有陷阱。白霁替你挡了一爪——咬牙不吭声。
+@do item:k_keepsake_baiji
+@goto i1_start
+*br_ch3_safe
+>她嘴上嫌你慢，尾巴却晃得很欢。
+@do item:k_keepsake_baiji
+@goto i1_start
+*br_ch3_test
+白霁：……你试试。下次我不拦了。
+@goto i1_start
+
+# —— 第四章：东海·衔微填海石 ——
+*br_ch4_xw
+@bg donghai
+@bgm dream
+@show xianwei right
+衔微：石头可以填海。也可以砸人。你想用哪一种？
+? 「填海。我不砸人。」 -> br_ch4_fill | flag:xw_sea_oath aff:xianwei+10 hope+4
+? 「必要时，砸一下也无妨。」 -> br_ch4_smash | flag:xw_pragmatic aff:xianwei+2 hope+1
+? 「石头先给我。我替你决定。」 -> br_ch4_take | aff:xianwei-3 hope-1
+*br_ch4_fill
+>她把填海石递给你。石上刻着极小的「归」字。
+@do item:k_keepsake_xianwei item:k_scale_gold
+@goto i2_start
+*br_ch4_smash
+>她点头。实用派。石仍给你，只是刻痕更深。
+@do item:k_keepsake_xianwei
+@goto i2_start
+*br_ch4_take
+衔微：……决定权在你。可别忘了海还在。
+@goto i2_start
+
+# —— 第五章：夸父遗迹·夸铃 ——
+*br_ch5_kl
+@bg yugu
+@bgm battle
+@show kualing right
+夸铃：前面那条路，能抄到日落处！可是很渴！
+? 把水囊全给他，自己咬牙 -> br_ch5_give | flag:kl_chase aff:kualing+12 hope+3
+? 一人一半，一起跑 -> br_ch5_share | flag:kl_chase aff:kualing+8 hope+2
+? 留着自己用。他体格好 -> br_ch5_keep | aff:kualing-5 hope-2 flag:weary
+*br_ch5_give
+夸铃：你真好！这个给你——跑起来别掉！
+@do item:k_keepsake_kualing
+@goto i7_start
+*br_ch5_share
+>两人一起喘。羽落在你肩上。
+@do item:k_keepsake_kualing
+@goto i7_start
+*br_ch5_keep
+夸铃：……哦。那我自己跑。
+@goto i7_start
+
+# —— 第六章：赤水·阿篱 ——
+*br_ch6_ali
+@bg chishui
+@bgm dream
+@show ali right
+阿篱：草说，前面有两条路。一条通向「等」，一条通向「找」。
+? 我陪你等 -> br_ch6_wait | flag:ali_wait aff:ali+12 hope+4
+? 我们一起去找那个人 -> br_ch6_seek | flag:ali_seek aff:ali+8 hope+2
+? 我有自己的灯要守。不能久留 -> br_ch6_leave | aff:ali-3 hope-1
+*br_ch6_wait
+>她把草结系在你腕上。结打得很慢，像在练习「永远」。
+@do item:k_keepsake_ali
+@goto i8_start
+*br_ch6_seek
+阿篱：那……我们慢慢找。草会认路。
+@do item:k_keepsake_ali
+@goto i8_start
+*br_ch6_leave
+阿篱：……嗯。草会记得你来过。
+@goto i8_start
+
+# —— 第七章：烛龙遗蜕·浮黎密信 ——
+*br_ch7_fuli
+@bg zhulong_eye
+@bgm sad
+@show fuli center
+浮黎：这封信……写了很多年。你可以不看。
+? 当场拆开 -> br_ch7_read | flag:read_sealed aff:fuli+10 hope+3
+? 收下，等真正需要时再看 -> br_ch7_keep | flag:has_sealed aff:fuli+6 hope+2
+? 推回去。「我不想知道。」 -> br_ch7_refuse | aff:fuli-8 hope-4 flag:weary
+*br_ch7_read
+>密信烫手。字里有歉意，也有不肯说完的爱。
+@do item:k_letter_sealed flag:read_sealed
+@goto br_ch11_note
+*br_ch7_keep
+>蜡封完好。沉甸甸的。
+@do item:k_letter_sealed
+@goto br_ch11_note
+*br_ch7_refuse
+浮黎：……也好。有些话，烂在心里也算一种结局。
+@goto br_ch11_note
+
+# —— 第八章：刑天·戚的无头誓 ——
+*br_ch8_qi
+@bg changyang
+@bgm tense
+@show qi center
+戚：某无头。故无所顾瞻。你有头——你怕不怕？
+? 「怕。但还是站在这里。」 -> br_ch8_brave | flag:qi_oath aff:qi+12 hope+5
+? 「不怕。死过一次了。」 -> br_ch8_dead | flag:qi_oath aff:qi+8 hope+2
+? 「怕到想逃。你拉住我。」 -> br_ch8_hold | flag:qi_oath aff:qi+10 hope+3
+*br_ch8_brave
+戚：好。戴上此环。某的誓，便是你的誓。
+@do item:k_keepsake_qi
+@goto i3_start
+*br_ch8_dead
+戚：……有趣。戴上。
+@do item:k_keepsake_qi
+@goto i3_start
+*br_ch8_hold
+>戚的大手扣住你肩。环落进掌心。
+@do item:k_keepsake_qi
+@goto i3_start
+
+# —— 第九章：相柳·饶与不饶 ——
+*br_ch9_xl
+@bg beihai
+@bgm guixu
+@fx snow
+@show xiangliu center
+相柳：杀了我，海会清一阵。放了我，海会脏得久一点——但九头里有一个，其实怕黑。
+? 饶过他。灯调暗一点 -> br_ch9_spare | flag:xiangliu_spared hope+6
+? 斩首。九州不能再赌 -> br_ch9_kill | flag:xiangliu_slain hope+2
+? 逼他交出一滴泪作人质 -> br_ch9_tear | flag:xiangliu_spared flag:xl_bond hope+4
+*br_ch9_spare
+>九头退去。一滴泪落在礁石上，结成梦鳞。
+@do item:k_xiangliu_tear item:k_scale_dream
+@goto i9_start
+*br_ch9_kill
+>海面清了一寸。你的手很干净。心里有一点脏。
+@goto i9_start
+*br_ch9_tear
+>泪落掌心。冷。像一句没说完的「谢谢」。
+@do item:k_xiangliu_tear item:k_scale_dream flag:xl_bond
+@goto i9_start
+
+# —— 第十章：梦层上瘾风险 ——
+*br_ch10_dream
+@bg dream
+@bgm dream
+@fx blue
+>你已在梦层停留太久。现实的灯芯在发颤。
+? 立刻翻回醒层 -> br_ch10_wake | hope+2
+? 再留一会——梦里有钥匙 -> br_ch10_stay | flag:dream_addict var:dream_flips+2 hope-2
+? 把诅咒残灯点着，强行钉在梦里 -> br_ch10_curse | flag:dream_addict item:k_lamp_cursed var:dream_flips+5 hope-8 flag:weary
+*br_ch10_wake
+>醒来时太阳很刺。你感激这种刺。
+@goto i11_start
+*br_ch10_stay
+>钥匙找到了。钥匙背面写着：别太久。
+@do item:k_scale_black
+@goto i11_start
+*br_ch10_curse
+>残灯亮起。世界变得无比清晰——清晰到可怕。
+@goto i11_start
+
+# —— 第十一章：玄冥夜札 ——
+*br_ch11_note
+@bg youdu
+@bgm sad
+>石桌上压着一封没有署名的夜札。墨迹还湿。
+? 读完再走 -> br_ch11_read | flag:read_night_note item:k_night_note hope+3
+? 带走，不读——怕被说服 -> br_ch11_take | item:k_night_note hope+1
+? 烧掉。不想听长夜的道理 -> br_ch11_burn | hope-2 flag:weary
+*br_ch11_read
+>三行字。读完后，你对「敌人」这个词产生了一点动摇。
+@goto i10_start
+*br_ch11_take
+>札在袖中像一块冰。
+@goto i10_start
+*br_ch11_burn
+>火很旺。灰里有半个「谢」字。
+@goto i10_start
+
+# —— 第十二章：墨鳞还是金鳞 ——
+*br_ch12_scale
+@bg kunlun_gate
+@bgm tense
+>最后一片鳞在祭坛上。一面金，一面墨。
+? 取金鳞——白天更长 -> br_ch12_gold | item:k_scale_gold hope+4 flag:path_day
+? 取墨鳞——夜里更真 -> br_ch12_black | item:k_scale_black hope+2 flag:path_night
+? 两面都不取。空手进终局 -> br_ch12_none | hope+1 flag:path_empty
+*br_ch12_gold
+>金光刺眼。你想起孩子们的笑。
+@goto i12_start
+*br_ch12_black
+>墨光沉静。你想起密信末尾那句「对不起」。
+@goto i12_start
+*br_ch12_none
+>祭坛空着。像在等一个还没想好的人。
+@goto i12_start

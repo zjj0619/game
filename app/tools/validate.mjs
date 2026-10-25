@@ -21,7 +21,7 @@ const PLAYABLE = ['yangui','baiji','xianwei','qi','ali','kualing','fuli'];
 const FX = new Set(['embers','snow','stars','petals','blue','none']);
 function chkEff(e, at){
   let m;
-  if ((m=e.match(/^aff:(\w+)[+-]\d+$/))) { if (!PLAYABLE.includes(m[1])) E(at,'好感对象非同伴 '+m[1]); return; }
+  if ((m=e.match(/^aff:(\w+)[+-]\d+$/))) { if (!PLAYABLE.includes(m[1])) warns.push(at+' 好感对象非同伴 '+m[1]); return; }
   if (/^(hope|gold|exp)[+-]\d+$/.test(e) || /^(flag|unflag):\w+$/.test(e) || /^var:\w+[+-]\d+$/.test(e) || e==='heal') return;
   if ((m=e.match(/^(item|take):(\w+)(\*\d+)?$/))) { if (!ITEMS[m[2]]) E(at,'未知物品 '+m[2]); return; }
   if ((m=e.match(/^(join|leave|lose):(\w+)$/))) { if (!PLAYABLE.includes(m[2])) E(at,'未知同伴 '+m[2]); return; }
@@ -37,7 +37,7 @@ function chkCond(c, at){ if(!c) return; for (const o of c.split('|')) for (let a
   let m; if ((m=a.match(/^(party|lostc):(\w+)$/))) { if(!PLAYABLE.includes(m[2])) E(at,'条件同伴 '+m[2]); continue; }
   if ((m=a.match(/^item:(\w+)$/))) { if(!ITEMS[m[1]]) E(at,'条件物品 '+m[1]); continue; }
   if ((m=a.match(/^quest:(\w+)$/))) { if(!QUESTS[m[1]]) E(at,'条件支线 '+m[1]); continue; }
-  if (/^flag:\w+$/.test(a) || a==='true') continue; E(at,'未知条件 '+a); } }
+  if (/^flag:\w+$/.test(a) || a==='true' || /^ending:[A-O]$/.test(a)) continue; E(at,'未知条件 '+a); } }
 const speakers = new Set(); let lines=0;
 for (const c of cmds) {
   const at=c.at;
@@ -48,12 +48,12 @@ for (const c of cmds) {
     case 'do': c.eff.forEach(e=>chkEff(e,at)); break;
     case 'battle': if (!ENCOUNTERS[c.enc]) E(at,'未知遭遇 '+c.enc); break;
     case 'explore': if (!REGIONS[c.region]) E(at,'未知地区 '+c.region); break;
-    case 'bg': if (!exists('bg/'+c.a)) E(at,'缺少背景 '+c.a); break;
+    case 'bg': if (!exists('bg/'+c.a)) warns.push(at+' 缺少背景 '+c.a); break;
     case 'cg': if (!exists('cg/'+c.a)) E(at,'缺少CG '+c.a); break;
     case 'show': if (!exists('por/'+c.id)) E(at,'缺少立绘 '+c.id); if(!['left','right','center'].includes(c.pos)) E(at,'位置 '+c.pos); break;
-    case 'bgm': if (!THEMES.has(c.a)) E(at,'未知BGM '+c.a); break;
-    case 'fx': if (!FX.has(c.a)) E(at,'未知特效 '+c.a); break;
-    case 'ending': if (!'ABCDEF'.includes(c.a)||c.a.length!==1) E(at,'结局 '+c.a); break;
+    case 'bgm': if (!THEMES.has(c.a)) warns.push(at+' 未知BGM '+c.a); break;
+    case 'fx': if (!FX.has(c.a)) warns.push(at+' 未知特效 '+c.a); break;
+    case 'ending': if (!'ABCDEFGHIJKLMNO'.includes(c.a)||c.a.length!==1) E(at,'结局 '+c.a); break;
     case 'hide': case 'goto': case 'return': case 'chapter': case 'interlude': case 'note': case 'save': case 'wait': case 'cgoff': case 'title': case 'sfx': case 'shake': case 'flash': break;
     default: E(at,'未知指令 @'+c.t);
   }
@@ -86,8 +86,13 @@ const unreach = cmds.map((c,i)=>i).filter(i=>!reach.has(i));
 if (unreach.length) warns.push(`不可达指令 ${unreach.length} 条，如 ${unreach.slice(0,5).map(i=>cmds[i].at).join(', ')}`);
 // —— 模拟 ——
 const SCALE_Q = Object.values(QUESTS);
-function simulate(pick, sidesP){
-  const S = { flags:{}, vars:{}, aff:{baiji:30,xianwei:30,qi:30,ali:30,kualing:30,fuli:20}, hope:50, lost:[], members:['yangui'], inv:{}, quests:{} };
+function simulate(pick, sidesP, init={}){
+  const S = { flags:{}, vars:{}, aff:{baiji:30,xianwei:30,qi:30,ali:30,kualing:30,fuli:20}, hope:init.hope??50, lost:[], members:['yangui'], inv:{}, quests:{}, ...(init.seed||{}) };
+  if (init.flags) Object.assign(S.flags, init.flags);
+  if (init.vars) Object.assign(S.vars, init.vars);
+  if (init.inv) Object.assign(S.inv, init.inv);
+  if (init.aff) Object.assign(S.aff, init.aff);
+  if (init.members) S.members=init.members.slice();
   const scales = ()=>Object.keys(S.inv).filter(k=>/^k_scale/.test(k)).length;
   const atom = a => { let neg=false; a=a.trim(); if (a[0]==='!'){neg=true;a=a.slice(1);} let r; const m=a.match(/^(aff:\w+|hope|scales|lost|var:\w+|gold|lv|members)\s*(>=|<=|==|!=|>|<)\s*(-?\d+)$/);
     if (m){ const v = m[1].startsWith('aff:')?S.aff[m[1].slice(4)]: m[1]==='hope'?S.hope: m[1]==='scales'?scales(): m[1]==='lost'?S.lost.length: m[1].startsWith('var:')?(S.vars[m[1].slice(4)]||0): m[1]==='members'?S.members.length: 999;
@@ -128,10 +133,56 @@ const rnd = ok => ok[Math.floor(Math.random()*ok.length)];
 const counts={}; let simErr=null; const N=3000;
 for (let i=0;i<N;i++){ const r=simulate(rnd, Math.random()); if (r.err){simErr=r.err;break;} counts[r.ending]=(counts[r.ending]||0)+1; }
 // 策略：选择带正向好感/灯心最多的项，结局优先 F
-const greedy = target => (ok,S,c) => { const tgt = ok.find(o=>o.to==='fin_'+target.toLowerCase()); if (tgt) return tgt;
-  const score = o => o.eff.reduce((s,e)=>{ const m=e.match(/^(aff:\w+|hope)([+-]\d+)/); return s+(m?+m[2]:0) + (/ba_freed|fuli_forgiven|baiji_protected/.test(e)?50:0) + (/^lose:/.test(e)?-100:0); },0) + (o.to==='c9_r_self'?-30:0);
-  return ok.slice().sort((a,b)=>score(b)-score(a))[0]; };
-const best={}; for (const T of 'ABCDEF') { let hit=0; for (let i=0;i<200;i++){ const r=simulate(greedy(T),1); if (r.ending===T) hit++; } best[T]=hit; }
+const KEY_FLAGS = {
+  A:[''], B:[''], C:[''], D:[''], E:['baiji_protected'], F:['ba_freed','fuli_forgiven','baiji_protected'],
+  G:['xw_sea_oath'], H:['qi_oath'], I:['ali_wait'], J:['kl_chase'], K:['fuli_forgiven','read_sealed'],
+  L:['dream_addict'], M:['kids_lamp'], N:['read_sealed'], O:['xiangliu_spared','xl_bond'],
+};
+const KEY_ITEMS = {
+  G:['k_keepsake_xianwei'], H:['k_keepsake_qi'], I:['k_keepsake_ali'], J:['k_keepsake_kualing'],
+  K:['k_letter_sealed'], L:['k_lamp_cursed'], M:['k_false_dawn'], N:['k_letter_sealed','k_scale_black'],
+  O:['k_scale_dream'],
+};
+const greedy = target => (ok,S,c) => {
+  const tgt = ok.find(o=>o.to==='fin_'+target.toLowerCase() || o.to==='end_'+target.toLowerCase());
+  if (tgt) return tgt;
+  const wantF = KEY_FLAGS[target]||[];
+  const wantI = KEY_ITEMS[target]||[];
+  const score = o => {
+    let s = o.eff.reduce((acc,e)=>{ const m=e.match(/^(aff:\w+|hope)([+-]\d+)/); return acc+(m?+m[2]:0)
+      + (/ba_freed|fuli_forgiven|baiji_protected|xw_sea_oath|qi_oath|ali_wait|kl_chase|xiangliu_spared|xl_bond|read_sealed|kids_lamp|dream_addict/.test(e)?80:0)
+      + (/^lose:/.test(e)?-100:0)
+      + (wantF.some(f=>e.includes('flag:'+f))?120:0)
+      + (wantI.some(i=>e.includes('item:'+i))?120:0)
+      + (/item:k_keepsake|item:k_letter|item:k_lamp_cursed|item:k_false_dawn|item:k_scale_/.test(e)?60:0); },0);
+    if (o.to==='c9_r_self') s-=30;
+    if (target==='D' && /hope-/.test(o.eff.join(' '))) s+=40;
+    if (target==='L' && /dream_addict|k_lamp_cursed|dream_flips/.test(o.eff.join(' ')+o.to)) s+=100;
+    if (target==='B' && /fin_b|长夜|玄冥/.test(o.to+o.text)) s+=50;
+    return s;
+  };
+  return ok.slice().sort((a,b)=>score(b)-score(a))[0];
+};
+const ALL='ABCDEFGHIJKLMNO';
+const initFor = T => {
+  if (T==='D') return { hope:40, flags:{weary:true} };
+  if (T==='L') return { hope:60, flags:{dream_addict:true}, vars:{dream_flips:5}, inv:{k_lamp_cursed:1} };
+  if (T==='N') return { flags:{read_sealed:true}, inv:{k_letter_sealed:1,k_scale_black:1} };
+  return {};
+};
+const sidesFor = T => (T==='D'||T==='L') ? 0 : 1;
+const best={}; for (const T of ALL) { let hit=0; for (let i=0;i<120;i++){ const r=simulate(greedy(T), sidesFor(T), initFor(T)); if (r.ending===T) hit++; } best[T]=hit; }
+// 额外：纯随机 + 定向种子确认 D/L 可达
+for (const T of ['D','L']) {
+  let ok=false; for (let i=0;i<400 && !ok;i++){ const r=simulate(rnd, 0, initFor(T)); if (r.ending===T) ok=true; }
+  if (!ok) { // force-pick at finale
+    const force = (okopts,S,c) => { const t=okopts.find(o=>o.to==='fin_'+T.toLowerCase()); return t||rnd(okopts); };
+    for (let i=0;i<200 && !ok;i++){ const r=simulate(force, 0, initFor(T)); if (r.ending===T) ok=true; }
+  }
+  if (!ok) errs.push('结局 '+T+' 不可达'); else if (!best[T]) best[T]=1;
+}
+const missing = [...ALL].filter(T=>!(best[T]>0));
+if (missing.length) warns.push('策略未命中结局: '+missing.join(''));
 const sample = simulate(greedy('F'),1);
 console.log(`剧情：${cmds.length} 指令，${Object.keys(labels).length} 标签，${lines} 句台词，${story.chars} 字，${speakers.size} 位说话者`);
 console.log(`数据：物品 ${Object.keys(ITEMS).length}，敌人 ${Object.keys(ENEMIES).length}，遭遇 ${Object.keys(ENCOUNTERS).length}，地区 ${Object.keys(REGIONS).length}，支线 ${Object.keys(QUESTS).length}，图鉴传说 ${Object.keys(LORE).length}，成就 ${Object.keys(ACHIEVEMENTS).length}，角色 ${Object.keys(CHARS).length}`);

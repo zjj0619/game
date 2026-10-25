@@ -190,7 +190,14 @@ function settingsBody(body){
 // —— 画廊 ——
 export async function openGallery(){
   const p = panel('回忆 · 画廊', { cls:'gallery' });
-  const ENDN = { a:'长明', b:'长夜', c:'新烛', d:'归墟同眠', e:'狐梦千年', f:'昼夜双瞳' };
+  const ENDN = {
+    a:['长明','灯心明亮，唤醒烛龙'], b:['长夜','接受玄冥的长梦'], c:['新烛','成为新的烛龙'], d:['归墟同眠','灯心燃尽'],
+    e:['狐梦千年','白霁路线守护'], f:['昼夜双瞳','全员羁绊·真结局'], g:['衔石填海','衔微填海石与海誓'],
+    h:['无头之誓','戚的无头誓环'], i:['山鬼待君','阿篱女萝结'], j:['逐日余烬','夸铃日轮羽'],
+    k:['师徒共灯','浮黎密信与宽恕'], l:['噩梦永昼','诅咒残灯·梦瘾'], m:['假日将尽','孩子们的假日之种'],
+    n:['鳞下密信','读完密信与墨鳞'], o:['相柳之泪','饶过相柳·梦鳞'],
+  };
+  const END_HINT = Object.fromEntries(Object.entries(ENDN).map(([k,v])=>[k,v[1]]));
   const view = src => { const v = h('div.viewer', { onclick:()=>v.remove() }, h('img', { src })); document.getElementById('app').append(v); };
   const cgs = ['cg_dengjin','cg_jingwei','cg_xingtian','cg_xiwangmu','cg_baize','cg_dijiang','cg_kuafu','cg_ba','cg_baiji','cg_xiangliu','cg_fuli','cg_duijue'];
   const keys = ['key_title_splash','key_dream_layers','key_resonance','key_skill_cutin','key_clearcard','key_reward_popup','key_lamp_radius','key_candle_eye','key_hub_sanctuary'];
@@ -202,7 +209,26 @@ export async function openGallery(){
     ['epi_dream_layer','闭目练习', meta.endings.length>0],
   ];
   const playEpi = lb => { p.close(); show(vnScreen()); S.shown = {}; S.cg = null; restoreScene(); runSub(lb, () => { try { game.hub ? game.hub() : location.reload(); } catch(e) { location.reload(); } }); };
-  p.body.append(h('h3', {}, `结局 ${meta.endings.length}/6`), h('div.gal', {}, Object.entries(ENDN).map(([k,n]) => meta.endings.includes(k.toUpperCase()) ? h('div.gcell', { onclick:()=>view(asset('cg/end_'+k)) }, h('img', {src:asset('cg/end_'+k)}), h('span', {}, '结局'+k.toUpperCase()+' · '+n)) : h('div.gcell.locked', {}, h('span', {}, '结局'+k.toUpperCase()+' · ？？？')))),
+  const hiddenScenes = [
+    ['hide_night_note','玄冥夜札', !!(S.inv&&S.inv.k_night_note)||!!S.flags.read_night_note],
+    ['hide_sealed_letter','浮黎密信', !!(S.inv&&S.inv.k_letter_sealed)],
+    ['hide_kids_seed','假日之种', !!(S.inv&&S.inv.k_false_dawn)||!!S.flags.kids_lamp],
+    ['hide_xiangliu_tear','相柳之泪', !!S.flags.xiangliu_spared],
+    ['hide_gift_baiji','狐火穗', (S.aff&&S.aff.baiji>=60)||!!(S.inv&&S.inv.k_keepsake_baiji)],
+    ['hide_gift_xianwei','填海石', (S.aff&&S.aff.xianwei>=60)||!!(S.inv&&S.inv.k_keepsake_xianwei)],
+    ['hide_gift_qi','无头誓环', (S.aff&&S.aff.qi>=60)||!!(S.inv&&S.inv.k_keepsake_qi)],
+    ['hide_gift_ali','女萝结', (S.aff&&S.aff.ali>=60)||!!(S.inv&&S.inv.k_keepsake_ali)],
+    ['hide_gift_kualing','日轮羽', (S.aff&&S.aff.kualing>=60)||!!(S.inv&&S.inv.k_keepsake_kualing)],
+  ];
+  p.body.append(h('h3', {}, `结局 ${meta.endings.length}/15`), h('div.gal', {}, Object.entries(ENDN).map(([k,v]) => {
+    const n=v[0], hint=v[1];
+    return meta.endings.includes(k.toUpperCase())
+      ? h('div.gcell', { onclick:()=>view(asset('cg/end_'+k)) }, h('img', {src:asset('cg/end_'+k)}), h('span', {}, '结局'+k.toUpperCase()+' · '+n))
+      : h('div.gcell.locked', {}, h('span', {}, '结局'+k.toUpperCase()+' · ？？？'), h('small', {}, hint));
+  })),
+    h('h3', {}, '隐藏夜札'), h('div.gal', {}, ...hiddenScenes.map(([lb,n,ok]) => ok
+      ? h('div.gcell', { onclick:()=>playEpi(lb) }, h('span', {}, n))
+      : h('div.gcell.locked', {}, h('span', {}, '？？？'), h('small', {}, '推进主线或收集关键道具解锁')))),
     h('h3', {}, '招牌画'), h('div.gal', {}, ...keys.map(c => h('div.gcell', { onclick:()=>view(asset('cg/'+c)) }, h('img', {src:asset('cg/'+c)}), h('span', {}, c.replace('key_',''))))),
     h('h3', {}, '灯下回想'), h('div.gal', {}, ...Array.from({length:14},(_,i)=>h('div.gcell',{onclick:()=>playEpi('recall_'+i+'_1')}, h('span', {}, '回想·'+i)))),
     h('h3', {}, '章末夜记'), h('div.gal', {}, ...Array.from({length:13},(_,i)=>h('div.gcell',{onclick:()=>playEpi('night_'+i)}, h('span', {}, '夜记·'+i)))),

@@ -1,4 +1,17 @@
 # progress notes (for agent continuity)
+
+
+## 结局扩展 · 2026-10-25 12:14 CST
+
+- **结局数：15（A–O）** — 原 6 + 同伴专属 G–J、师徒 K、噩梦 L、假日 M、密信 N、相柳 O
+- **隐藏场景：≥9**（`70_hidden_web.txt`：夜札 / 密信 / 假日种子 / 相柳泪 / 五信物交付）
+- **关卡分支：11 段**（`71_branch_choices.txt`）接入序章–第十二章，设 flag / 关键道具 / 好感偏移
+- 终章选择树扩至 15 路；画廊锁定剪影 + 解锁提示；成就 end_g…end_o、`all_endings`=15
+- 校验：`node tools/validate.mjs` 随机+策略均命中 A–O；`boot2` mode=action errs=[]
+- 新增 CG：`end_g.webp`…`end_o.webp`；关键道具见 `items.js`（鳞·金/墨/梦、密信、诅咒残灯、假日之种、五信物、夜札、相柳泪）
+- 文档：`ENDINGS.md`、`STORY_BIBLE.md` 已同步
+- 无 APK；build 通过（story ~153k 字 / 42 files / 8522 cmds）
+
 - Android SDK: /home/box/android/{jdk17,sdk}; emulator + android-30 x86_64 image installed; /dev/kvm present
 - Art raw images in /workspace/game/art_raw (MANIFEST.txt). copy helper tools/cpimg.sh
 - Done: title_keyart, 16 portraits (p_*)

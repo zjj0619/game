@@ -1,0 +1,223 @@
+# 隐藏结局正文 · 夜札 · 信物线（主线不剧透）
+# —— 结局 G：衔石填海 ——
+*end_g
+@chapter 14|衔石|海还没有满
+@bg donghai
+@bgm warm
+@fx petals
+@show xianwei right
+@show yangui left
+衔微：海很大。
+晏归：我知道。
+衔微：可是石头会积起来。一天一颗，也算。
+>她把填海石重新塞回你掌心。七片烛瞳被她一块一块地丢进浪里——不是放弃，是垫脚。
+>据说后来东海浅了一寸。孩子们在退潮时能捡到会发光的石子。
+@hide all
+@ending G
+
+# —— 结局 H：无头之誓 ——
+*end_h
+@chapter 14|无头|鼓声未歇
+@bg changyang
+@bgm tense
+@fx embers
+@show qi center
+戚：某无头，故无所顾瞻。
+戚：你有头。便替某看完这场仗——看到它真正停下来。
+>戚把无头誓环砸进归墟。七片烛瞳化作十二面战鼓，擂响三百年未完的涿鹿。
+>鼓停之时，九州再无「必须死的人」。只有愿意放下斧的人。
+@hide all
+@ending H
+
+# —— 结局 I：山鬼待君 ——
+*end_i
+@chapter 14|待君|赤豹还在
+@bg chishui
+@bgm dream
+@fx petals
+@show ali right
+阿篱：你若迷路……跟着草走。
+阿篱：草会把你带回我这里。
+>阿篱没有要你睁开或闭上烛龙的眼。她只要一盏很小的灯，放在赤豹卧处。
+>后来有人说，山里有一座永远不开的门。门后有人在等。等了很久，也不着急。
+@hide all
+@ending I
+
+# —— 结局 J：逐日余烬 ——
+*end_j
+@chapter 14|逐日|跑起来
+@bg yugu
+@bgm battle
+@fx embers
+@show kualing right
+夸铃：祖宗没追到的那个——我们接着追！
+晏归：太阳已经……
+夸铃：那就追余烬！余烬也会亮！
+>夸铃扯着你跑进禺谷。七片烛瞳被他当作火把，一根一根插在地平线上。
+>人们抬头时，会看见一串会跑的小太阳。渴了，就喝一口夸铃留的水。
+@hide all
+@ending J
+
+# —— 结局 K：师徒共灯 ——
+*end_k
+@chapter 14|共灯|密信已拆
+@bg dengta
+@bgm dawn
+@fx embers
+@show fuli center
+@show yangui left
+>你把浮黎密信按在灯罩上。蜡融化时，字显出来：「若你还愿意叫我师父——我们重新把灯点一遍。」
+浮黎：……归儿。这次，我站在你身后。
+晏归：不。站在旁边。
+>师徒二人各执半片烛瞳。烬城灯塔亮了两倍。烛龙在远处轻轻眨了一下眼——像是打了个招呼。
+@hide all
+@ending K
+
+# —— 结局 L：噩梦永昼 ——
+*end_l
+@chapter 14|噩梦|永不合眼的昼
+@bg zhulong_eye
+@bgm guixu
+@fx blue
+@show yangui left
+>诅咒残灯点到最亮的时候，梦层与醒层粘在了一起。
+>九州所有人都醒着，却都在做梦。太阳是假的，影子会说话，灯芯往肉里长。
+>你想闭目——可是眼皮被金线缝住了。
+>有人在远处喊你的名字。你听不清。那大概是你还愿意醒来的最后一次。
+@hide all
+@ending L
+
+# —— 结局 M：假日将尽 ——
+*end_m
+@chapter 14|假日|孩子们的太阳
+@bg jincheng
+@bgm warm
+@fx embers
+@show yangui left
+>你把灯交给孩子们时，他们笑得很响。
+>他们把假日之种埋进灯塔下的土里。第二天，土里钻出一盏纸糊的太阳——很小，却够整条街暖一上午。
+>烛龙在天上偷看了一眼，又悄悄闭上。像是怕吓着他们。
+>后来史书只写一句：「是年，童子燃假日，长夜稍缓。」
+@hide all
+@ending M
+
+# —— 结局 N：鳞下密信 ——
+*end_n
+@chapter 14|密信|不争
+@bg kunlun_gate
+@bgm sad
+@fx snow
+>你没有点燃，也没有沉睡。你只是把墨鳞压在密信上，一字一句读完。
+>信的末尾没有签名。只有一行小字：「对不起。以及——谢谢你还肯读。」
+>七片烛瞳自行散作星砂，落进昆仑的书缝里。九州的结局，被这一次「不选择」轻轻搁置。
+>有人说这算烂尾。有人说这才是成年人的勇气。
+@hide all
+@ending N
+
+# —— 结局 O：相柳之泪 ——
+*end_o
+@chapter 14|相柳|九头退去之后
+@bg beihai
+@bgm dream
+@fx snow
+@show xiangliu center
+>相柳只剩下一颗头时，把那滴泪交给你。泪里有海，有怨，有「其实我也怕黑」。
+相柳：……别点太亮。亮了，我的孩子们会散。
+晏归：那我就点一盏刚好够你看见路的。
+>梦鳞嵌进灯罩。北海解冻了一半——刚好够鱼游，也刚好够九头在深处睡觉。
+>你没有成为英雄。你成为了一个肯把灯调暗一点的人。
+@hide all
+@ending O
+
+# —— 隐藏夜札 / 信物场景（营火与画廊入口） ——
+*hide_night_note
+@do ach:hidden_web
+@bg youdu
+@bgm sad
+@fx snow
+@note 玄冥夜札
+>札上只有三行：
+>「醒着的人啊——」
+>「梦不是慈悲的全部。」
+>「但醒着，也请记得做梦的人。」
+@do flag:read_night_note hope+2
+@if item:k_lamp_cursed -> hide_cursed_touch
+@return
+*hide_cursed_touch
+>残灯在袖中跳了一下。你几乎想把它点着。
+? 现在就点 -> hide_cursed_yes | flag:dream_addict var:dream_flips+3 hope-5
+? 先收好，等真正需要时 -> hide_cursed_no | hope+1
+*hide_cursed_yes
+>火一闪，你看见自己闭着眼睛走路的样子。很安详。也很可怕。
+@return
+*hide_cursed_no
+>你把残灯用布包好。布上渗出一点冷汗。
+@return
+
+*hide_sealed_letter
+@bg kunlun_gate
+@bgm warm
+@note 浮黎密信
+? 拆开蜡封 -> hide_letter_read | flag:read_sealed hope+3 aff:fuli+8
+? 先不拆。带在身上就好 -> hide_letter_keep | hope+1
+*hide_letter_read
+>信很长。很长很长。你读到一半时，灯花爆了一下。
+>末句：「若你恨我，就烧掉。若你还叫我师父——我们重新把灯点一遍。」
+@return
+*hide_letter_keep
+>蜡封仍在。像一枚还没做完的决定。
+@return
+
+*hide_kids_seed
+@bg jincheng
+@bgm warm
+@fx embers
+>孩子们把纸太阳塞给你：「守灯人叔叔，帮我们埋！」
+? 帮他们埋在灯塔下 -> hide_kids_yes | flag:kids_lamp item:k_false_dawn hope+4
+? 笑着收下，说「长大再说」 -> hide_kids_later | hope+1
+*hide_kids_yes
+>土很松。种子下去时，像吞进了一句玩笑。
+@return
+*hide_kids_later
+>最小的孩子撇嘴。最大的孩子说：「那我们自己埋。」
+@return
+
+*hide_xiangliu_tear
+@bg beihai
+@bgm guixu
+@fx snow
+@if flag:xiangliu_spared -> hide_xl_ok
+>海面空空。没有泪。
+@return
+*hide_xl_ok
+>一滴冷的东西落在手背。闭目，能看见九条退去的影子。
+@do item:k_xiangliu_tear item:k_scale_dream flag:xl_bond
+>你忽然明白：有些敌人，只是把灯调得太亮的自己。
+@return
+
+# —— 同伴信物交付（羁绊后） ——
+*hide_gift_baiji
+@show baiji right
+白霁：拿着。不许弄丢。——弄丢了我就咬你。
+@do item:k_keepsake_baiji aff:baiji+5 flag:baiji_protected
+@return
+*hide_gift_xianwei
+@show xianwei right
+衔微：这块，垫海。你要是累了，就把它想成我。
+@do item:k_keepsake_xianwei aff:xianwei+5 flag:xw_sea_oath
+@return
+*hide_gift_qi
+@show qi center
+戚：戴上。某的誓，便是你的誓。
+@do item:k_keepsake_qi aff:qi+5 flag:qi_oath
+@return
+*hide_gift_ali
+@show ali right
+阿篱：结给你。草会认得你的脚步。
+@do item:k_keepsake_ali aff:ali+5 flag:ali_wait
+@return
+*hide_gift_kualing
+@show kualing right
+夸铃：羽！跑起来的时候别掉！
+@do item:k_keepsake_kualing aff:kualing+5 flag:kl_chase
+@return

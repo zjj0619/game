@@ -89,4 +89,5 @@
 白霁：我都站在你这边。从青丘那天起，一直都是。
 *c12_last
 @do flag:ch12_done
+@goto br_ch12_scale
 @goto i12_start

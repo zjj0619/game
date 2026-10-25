@@ -163,4 +163,5 @@
 >罗盘底下，有一行小字慢慢显了出来，是浮黎的笔迹：“刑天之首，在常羊之下。”
 @do flag:ch2_done exp+500 gold+500 item:u_gourd*3
 @note 第二章完成 · 衔微正式加入
+@goto br_ch4_xw
 @goto i2_start

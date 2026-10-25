@@ -7,13 +7,22 @@
 >晏归站在烛龙面前。
 >七片烛瞳在他手心里，安静地燃着。
 @if hope<30 | lost>=2 -> fin_d_forced
-@note 你的选择将决定九州的结局
+@note 你的选择将决定九州的结局——以及那些没有写在灯上的路
 ? [flag:ba_freed & flag:fuli_forgiven & scales>=5 & lost==0 & aff:baiji>=60 & aff:xianwei>=60 & aff:qi>=60 & aff:ali>=60 & aff:kualing>=60] 让烛龙与玄冥，各为一眼 -> fin_f
+? [flag:fuli_forgiven & item:k_letter_sealed & party:fuli & aff:fuli>=70 & scales>=6] 把密信按在灯上，与师父共守一盏 -> fin_k
 ? [aff:baiji>=80 & flag:baiji_protected & !lostc:baiji & party:baiji] 牵起白霁的手，回青丘去 -> fin_e
+? [aff:xianwei>=85 & item:k_keepsake_xianwei & flag:xw_sea_oath & party:xianwei] 同衔微去填那片海 -> fin_g
+? [aff:qi>=85 & item:k_keepsake_qi & flag:qi_oath & party:qi] 与戚立下无头之誓 -> fin_h
+? [aff:ali>=85 & item:k_keepsake_ali & flag:ali_wait & party:ali] 陪阿篱等到那个人来——或成为那个人 -> fin_i
+? [aff:kualing>=85 & item:k_keepsake_kualing & flag:kl_chase & party:kualing] 跟着夸铃去追那颗没落完的日 -> fin_j
+? [item:k_letter_sealed & item:k_scale_black & flag:read_sealed] 不争昼与夜。只把密信读完 -> fin_n
+? [flag:xiangliu_spared & item:k_scale_dream & flag:xl_bond] 接住相柳落下的那滴泪 -> fin_o
+? [item:k_lamp_cursed & flag:dream_addict & var:dream_flips>=5] 把诅咒残灯点到最亮——永不睁眼 -> fin_l
+? [item:k_false_dawn & flag:kids_lamp & hope>=70] ……把灯交给孩子们？ -> fin_m
 ? 以我之眼，点燃烛龙 -> fin_a
 ? 接受玄冥的长夜 -> fin_b
 ? 吞下七片烛瞳，成为新的烛龙 -> fin_c
-? [hope<50] 放下手中的灯。……太累了 -> fin_d
+? [hope<50 | flag:weary] 放下手中的灯。……太累了 -> fin_d
 # —— 结局 D：灯心已尽 ——
 *fin_d_forced
 >晏归想抬起手，可是手太沉了。
@@ -166,3 +175,23 @@
 >只有烬城灯塔上的那一盏，晏归一直留着。
 >他说，总要有人记得长夜是什么样子的。
 @ending F
+
+# —— 转往扩展结局（正文见 70_hidden_web） ——
+*fin_g
+@goto end_g
+*fin_h
+@goto end_h
+*fin_i
+@goto end_i
+*fin_j
+@goto end_j
+*fin_k
+@goto end_k
+*fin_l
+@goto end_l
+*fin_m
+@goto end_m
+*fin_n
+@goto end_n
+*fin_o
+@goto end_o

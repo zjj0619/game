@@ -201,4 +201,5 @@
 @note 第一章完成 · 白霁正式加入
 @do item:k_eyeshard
 >后来晏归才知道，那枚鳞片不是烛龙的。那是烛瞳的碎片——第二片，七片中的一片。
+@goto br_ch3_baiji
 @goto i1_start
