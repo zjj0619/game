@@ -10,6 +10,7 @@ import { AFOES, ABOSSES, foeStats, elTint } from './foes.js';
 import { rollGear, RARITY } from './gear.js';
 import { actStats, slotsOf, skillLv, petPower, ultOk } from './progress.js';
 import { ULT_LV } from './data.js';
+import * as HK from './hooks.js';
 
 const VH = 270, GY = 232;
 const GRAV = 1500, T = () => window.__ZLJ_TEST || {};
@@ -46,7 +47,8 @@ export function runStage(stage, opts = {}){
     function layoutArenas(){ let x = 0; for (const a of arenas) { a.x0 = x + 160; a.x1 = a.x0 + W_AR(); a.plats = (PLATS[a.boss ? 0 : (a.plat||0) % PLATS.length]).map(([fx, y, w]) => ({ x: a.x0 + fx * W_AR() - w/2, y, w })); x = a.x1; } }
     let worldEnd = 0;
     const st = { t: 0, hitstop: 0, shake: 0, combo: 0, comboT: 0, maxCombo: 0, hitsTaken: 0, kills: 0, over: false, paused: false, cur: -1, locked: false, cam: 0,
-      gold: 0, loot: {}, souls: {}, exp: 0, slow: 1, lamp: null, bossBar: null, potions: 3 + Math.max(0, (S.city?.herb || 1) - 1), timeLeft: stage.time || 0 };
+      gold: 0, loot: {}, souls: {}, exp: 0, slow: 1, lamp: null, bossBar: null, potions: 3 + Math.max(0, (S.city?.herb || 1) - 1), timeLeft: stage.time || 0,
+      dream: 0, dreamCd: 0, eyeOn: false, eyeCd: 0, eyeT: 0, eyeMarks: 0, reso: 0, resoReady: false, resoUsed: 0, dreamSeen: false, awakeSeen: true, dreamFlips: 0 };
     const foes = [], shots = [], fx = [], zones = [], pickups = [], nums = [], allies = [], tele = [];
     const mk = id => { const s = actStats(id); return { id, s, hp: s.hp, mp: s.mp, rage: 0, cds: {}, alive: true }; };
     const roster = team.map(mk);
@@ -69,6 +71,10 @@ export function runStage(stage, opts = {}){
     hud.ult = btnA('ak-ult', '龍', '变身', v => v && ult());
     hud.swap = btnA('ak-swap', '⇄', '换人', v => v && swap());
     hud.pot = btnA('ak-pot', h('img.ak-poti', { src: asset('icon/ex/hp') }), '灵药', v => v && potion());
+    hud.eye = btnA('ak-eye', '瞳', '烛瞳', v => { if (v) HK.toggleEye(hk()); });
+    hud.dream = btnA('ak-dream', '梦', '闭目', v => v && HK.toggleDream(hk()));
+    hud.reso = btnA('ak-reso', '灯', '共鸣', v => v && HK.fireReso(hk()));
+    hud.resoBar = h('i'); hud.goals = h('div.ak-goals');
     hud.joy = h('div.ak-joy', {}, h('div.ak-knob'));
     hud.face = h('img.ak-face'); hud.hp = h('i'); hud.mp = h('i'); hud.rg = h('i'); hud.hpT = h('span'); hud.name = h('b'); hud.buf = h('div.ak-buf');
     hud.team = h('div.ak-team'); hud.combo = h('div.ak-combo'); hud.obj = h('div.ak-obj'); hud.boss = h('div.ak-boss', {}, h('b'), h('div.ak-bb', {}, h('i'), h('em')), h('span.ak-ph'));
@@ -78,7 +84,8 @@ export function runStage(stage, opts = {}){
       h('div.ak-top', {}, h('div.ak-me', {}, hud.face, h('div.ak-bars', {}, h('div.ak-nm', {}, hud.name, hud.hpT), h('div.ak-hp', {}, hud.hp), h('div.ak-mpb', {}, hud.mp), h('div.ak-rg', {}, hud.rg), hud.buf)), hud.team),
         h('div.ak-mid', {}, h('div.ak-st', {}, stage.name + (hard ? ' · 困难' : '')), hud.obj), h('div.ak-tr', {}, hud.gold, pauseB),
       hud.boss, hud.combo, hud.msg, hud.go, hud.joy,
-      h('div.ak-pad', {}, hud.atk, hud.jump, hud.dash, ...hud.sk, hud.ult, hud.swap, hud.pot));
+      h('div.ak-pad', {}, hud.atk, hud.jump, hud.dash, ...hud.sk, hud.ult, hud.swap, hud.pot, hud.eye, hud.dream, hud.reso),
+      hud.goals, h('div.ak-resoBar', {}, h('b', {}, '共鸣'), h('div.ak-rb', {}, hud.resoBar)));
     document.querySelector('#app').append(root);
     let bgImg = img('bg/' + (stage.bg || 'jincheng')); let ridge = null;
     // 视差层（tools/gen/px.py）：远景 / 中景 / 前景，按区域与关卡序号取图
@@ -92,7 +99,7 @@ export function runStage(stage, opts = {}){
     const kmap = { a: 'l', arrowleft: 'l', d: 'r', arrowright: 'r', w: 'u', arrowup: 'u', s: 'd', arrowdown: 'd' };
     const kd = e => { if (st.over) return; const k = e.key.toLowerCase(); if (kmap[k]) keys[kmap[k]] = true;
       if (k === 'j') { keys.atk = true; attack(); } if (k === ' ' || k === 'k') jump(); if (k === 'l' || k === 'shift') dash();
-      const si = ['u','i','o','p','h'].indexOf(k); if (si >= 0) useSkill(si); if (k === 'y') ult(); if (k === 'q') swap(); if (k === 'escape') pause(); };
+      const si = ['u','i','o','p','h'].indexOf(k); if (si >= 0) useSkill(si); if (k === 'y') ult(); if (k === 'q') swap(); if (k === 'e') HK.toggleEye(hk()); if (k === 'r') HK.toggleDream(hk()); if (k === 't') HK.fireReso(hk()); if (k === 'escape') pause(); };
     const ku = e => { const k = e.key.toLowerCase(); if (kmap[k]) keys[kmap[k]] = false; if (k === 'j') keys.atk = false; };
     addEventListener('keydown', kd); addEventListener('keyup', ku);
     let joy = null; const knob = hud.joy.firstChild;
@@ -102,6 +109,7 @@ export function runStage(stage, opts = {}){
     const joyEnd = () => { joy = null; knob.style.transform = ''; keys.l = keys.r = keys.u = keys.d = false; };
     hud.joy.addEventListener('pointerup', joyEnd); hud.joy.addEventListener('pointercancel', joyEnd);
     function say(text, t = 1.6){ hud.msg.textContent = text; hud.msg.classList.remove('on'); void hud.msg.offsetWidth; hud.msg.classList.add('on'); }
+    function hk(){ return { C, P, st, foes, roster, ri, arenas, say, sfx, shake, ring, part, heal, hitCircle, num, GY, VH, U, VW, eyeOn: st.eyeOn, root, h }; }
     function num(x, y, v, kind){ if (nums.length > 60) nums.shift(); nums.push({ x, y, v, kind, t: 0 }); }
     function part(x, y, col, n = 8, sp = 160, life = 0.5, sz = 3){ for (let i = 0; i < n; i++) { if (fx.length > 380) fx.shift(); const a = Math.random() * 6.283; const s = sp * (0.3 + Math.random()); fx.push({ k: 'p', x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 40, t: 0, life: life * (0.6 + Math.random() * 0.6), col, sz }); } }
     // 序列帧特效（assets/vfx/<type>_<el>/0..11）：叠加混合播放
@@ -124,7 +132,7 @@ export function runStage(stage, opts = {}){
       if (f.def_.boss) base *= 1 + (s.bossDmg || 0); if (f.def_.tier === 1) base *= 1 + (s.eliteDmg || 0);
       if (f.brk > 0) base *= 1.3;
       if (f.def_.ai === 'shield' && !o.skill && !o.launch && Math.sign(P.x - f.x) === f.face && f.guard > 0 && f.state !== 'hurt' && !f.air) { f.guard -= 1; num(f.x, f.y - f.h, '格挡', 'blk'); part(f.x + f.face * 14, f.y - f.h / 2, '#ffffff', 6, 120, 0.25, 2); sfx('hit'); if (f.guard <= 0) { f.stun = 1.4; num(f.x, f.y - f.h - 14, '破盾!', 'crit'); } return 0; }
-      const crit = Math.random() < (s.crit || 0.06) + (ps.critPct || 0) + (ps.critBurn && f.burn > 0 ? ps.critBurn : 0);
+      let crit = Math.random() < (s.crit || 0.06) + (ps.critPct || 0) + (ps.critBurn && f.burn > 0 ? ps.critBurn : 0); if (HK.consumeWeak(f)) { crit = true; st.eyeMarks = (st.eyeMarks||0)+1; }
       let d = base * 100 / (100 + f.def * 2) * rnd(0.92, 1.08); if (crit) d *= 1.6 + (s.critDmg || 0);
       d = Math.max(1, Math.round(d));
       f.hp -= d; f.hitT = 0.12; st.combo++; st.comboT = 2.2; st.maxCombo = Math.max(st.maxCombo, st.combo);
@@ -196,7 +204,7 @@ export function runStage(stage, opts = {}){
       const fs = foeStats(def_, stage.lv + lvAdj, hard); const sz = def_.boss ? 1.9 : def_.size || 1;
       const f = { id, def_, x, y: y ?? GY, vx: 0, vy: 0, w: 30 * sz, h: 52 * sz, face: -1, hp: fs.hp, max: fs.hp, atk: fs.atk, def: fs.def, state: 'idle', stT: 0.5 + Math.random() * 0.6, cd: 1 + Math.random(),
         air: false, fly: def_.ai === 'flyer' || def_.ai === 'healer', baseY: GY - 110 - Math.random() * 30, ph: Math.random() * 6, guard: def_.ai === 'shield' ? 5 : 0, inv: 0.4, burn: 0, poison: 0, frozen: 0, stun: 0, slow: 0, brk: 0, weak: 0, charm: 0, phase: 0, armorT: 0, pat: null };
-      f.im = !def_.boss && !def_.tier ? regionImg(def_.img, stage.ri || 0) : def_.img; preloadAnim(animKey(f.im));
+      f.im = !def_.boss && !def_.tier ? regionImg(def_.img, stage.ri || 0) : def_.img; preloadAnim(animKey(f.im)); if (!def_.boss && (def_.el === 'dark' || def_.ai === 'assassin') && Math.random() < 0.35) { f.stealth = true; f.reveal = false; } if (st.dream && !def_.boss) { f.dream = true; f.max = Math.round(f.max * 1.35); f.hp = f.max; f.atk = Math.round(f.atk * 1.15); f.stealth = true; }
       if (f.fly) f.y = f.baseY; if (def_.boss) { st.bossBar = f; hud.boss.classList.add('on'); hud.boss.querySelector('b').textContent = def_.name; }
       foes.push(f); part(x, f.y - f.h / 2, '#222222', 14, 120, 0.6, 5); return f;
     }
@@ -206,7 +214,15 @@ export function runStage(stage, opts = {}){
       if (a.boss) { const b = spawn(a.boss, a.x1 - 120); if (b) { say('首领 · ' + b.def_.name, 2.2); playBgm('boss'); shake(10); haptic('heavy'); } }
       else nextWave(a);
     }
-    function nextWave(a){ const wv = a.waves[a.wave]; if (!wv) return false; a.wave++; wv.forEach((id, k) => { const side = k % 3 === 2 ? -1 : 1; const x = side > 0 ? a.x1 - 40 - k * 36 : a.x0 + 30 + k * 10; setTimeout(() => !st.over && spawn(id, clamp(x, a.x0 + 20, a.x1 - 20)), k * 160); }); a.pend = performance.now() + wv.length * 160 + 50; if (a.waves.length > 1) say(`第 ${a.wave} / ${a.waves.length} 波`, 1); return true; }
+    function nextWave(a){
+      const pool = (st.dream && a.dreamWaves && a.dreamWaves.length) ? a.dreamWaves : a.waves;
+      const wi = a.wave;
+      const wv = pool[wi]; if (!wv) return false; a.wave++;
+      wv.forEach((id, k) => { const side = k % 3 === 2 ? -1 : 1; const x = side > 0 ? a.x1 - 40 - k * 36 : a.x0 + 30 + k * 10; setTimeout(() => !st.over && spawn(id, clamp(x, a.x0 + 20, a.x1 - 20)), k * 160); });
+      a.pend = performance.now() + wv.length * 160 + 50;
+      if (pool.length > 1) say((st.dream ? '梦层 ' : '') + `第 ${a.wave} / ${pool.length} 波`, 1);
+      return true;
+    }
     // —— 玩家动作 ——
     const busy = () => st.over || st.paused || P.hurtT > 0 || P.lock > 0;
     function jump(){ if (busy()) return; const max = 2 + (pas().jumps || 0) + (P.ultT > 0 && ultDef().fly ? 9 : 0); if (P.ground || P.jumps < max) { if (P.ground) P.jumps = 0; P.vy = P.ground ? -560 : -500; P.ground = false; P.jumps++; part(P.x, P.y, '#ffffff', 5, 80, 0.3, 2); sfx('jump'); if (P.jumps > 1) ring(P.x, P.y, 16, AC().col, 0.25); } }
@@ -266,7 +282,7 @@ export function runStage(stage, opts = {}){
     function ult(){ const c = C(); if (busy() || c.rage < 100 || P.ultT > 0) return; if (!ultOk(c.id)) { say(`${ULT_LV} 级解锁变身`); return; } c.rage = 0; const u = ultDef(); P.ultT = u.dur; P.iT = 1.2; shake(10); st.hitstop = 0.3; haptic('heavy'); sfx('ult');
       ring(P.x, P.y - P.h / 2, 160, u.aura, 0.7); part(P.x, P.y - 30, u.aura, 40, 300, 1); hitCircle(P.x, P.y - P.h / 2, 150, 2.5, { skill: true, heavy: true, kb: 260, col: u.aura }); say(u.name + '！', 1.8); S.stats.ults = (S.stats.ults || 0) + 1; st.ults = (st.ults || 0) + 1; }
     function swap(){ if (roster.length < 2 || P.swapCd > 0 || st.over) return; let n = ri; for (let k = 1; k < roster.length; k++) { const j = (ri + k) % roster.length; if (roster[j].alive) { n = j; break; } } if (n === ri) return;
-      ri = n; P.swapCd = 2.5; P.ultT = 0; P.buffs = []; P.iT = 0.6; part(P.x, P.y - 30, AC().col, 20, 200, 0.5); ring(P.x, P.y - 30, 50, AC().col, 0.4);
+      ri = n; P.swapCd = 2.5; P.ultT = 0; P.buffs = []; P.iT = 0.6; HK.onSwapReso(hk()); part(P.x, P.y - 30, AC().col, 20, 200, 0.5); ring(P.x, P.y - 30, 50, AC().col, 0.4);
       hitCircle(P.x, P.y - P.h / 2, 80, 1.2, { kb: 200 }); say('换人 · ' + CHARS[C().id].name, 0.9); refreshHud(true); sfx('skill'); }
     function potion(){ if (st.potions <= 0 || st.over) return; st.potions--; heal(C().s.hp * 0.4); C().mp = Math.min(C().s.mp, C().mp + C().s.mp * 0.4); part(P.x, P.y - 30, '#8fe0a0', 20, 140, 0.8); }
     // —— 更新：玩家 ——
@@ -278,6 +294,8 @@ export function runStage(stage, opts = {}){
       if (P.ultT > 0) { P.ultT -= dt; const u = ultDef(); if (u.regen) heal(c.s.hp * u.regen * dt, true); if (u.burnAura && st.t % 0.5 < dt) hitCircle(P.x, P.y - P.h / 2, 70, 0.3, { skill: true, kb: 20, st: ['burn', 0.3], col: u.aura }); if (P.ultT <= 0) say('变身结束', 0.8); }
       for (const b of P.buffs) { b.t -= dt; if (b.regen) heal(c.s.hp * b.regen * dt, true); if (b.burnAura && st.t % 0.5 < dt) hitCircle(P.x, P.y - P.h / 2, 60, 0.3, { skill: true, kb: 10, st: ['burn', 0.4] }); if (b.cleanse) { b.cleanse = 0; } }
       P.buffs = P.buffs.filter(b => b.t > 0);
+      if (st.dreamCd > 0) st.dreamCd -= dt;
+      HK.tickLamp(hk(), dt); HK.tickEye(hk(), dt); HK.tickReso(hk(), dt);
       const spd = 210 * (1 + buffV('spd') + (ps.runSpd || 0)) * (P.buffs.some(b => b.slowP) ? 0.6 : 1);
       if (P.dashT > 0) { P.dashT -= dt; if (P.ultT <= 0 || !ultDef().fly) P.vy = Math.min(P.vy, 0); if (st.t % 0.04 < dt) fx.push({ k: 'ghost', x: P.x, y: P.y, face: P.face, id: c.id, t: 0, life: 0.25 }); }
       else if (P.hurtT <= 0 && P.lock <= 0) { const mv = (keys.r ? 1 : 0) - (keys.l ? 1 : 0); if (mv) P.face = mv; const tgt = mv * spd; P.vx += (tgt - P.vx) * Math.min(1, dt * (P.ground ? 14 : 6)); }
@@ -447,6 +465,7 @@ export function runStage(stage, opts = {}){
         if (!okF && !okM && ridge) { const ox = -((st.cam * 0.55 * U) % ridge.width); g.drawImage(ridge, ox, 0); g.drawImage(ridge, ox + ridge.width, 0); } }
       g.setTransform(U, 0, 0, U, (-st.cam + sx) * U, sy * U);
       const L = st.cam - 40, R = st.cam + VW + 40;
+      HK.drawHooks(g, { P, st, foes, U, VW, GY, VH }, { sx, sy, L, R });
       // 地面
       const gg = g.createLinearGradient(0, GY, 0, VH); gg.addColorStop(0, '#2a2418'); gg.addColorStop(0.08, '#14110c'); gg.addColorStop(1, '#07060a'); g.fillStyle = gg; g.fillRect(L, GY, R - L, VH - GY);
       if (ok(GRD)) { const tw = 128, th = VH - GY + 2; g.globalAlpha = 0.9; for (let x = Math.floor(L / tw) * tw; x < R; x += tw) g.drawImage(GRD, x, GY, tw, th); g.globalAlpha = 1; const gd = g.createLinearGradient(0, GY, 0, VH); gd.addColorStop(0, 'rgba(7,6,10,0)'); gd.addColorStop(1, 'rgba(7,6,10,.8)'); g.fillStyle = gd; g.fillRect(L, GY, R - L, VH - GY); }
@@ -468,7 +487,7 @@ export function runStage(stage, opts = {}){
           else if (Math.abs(f.vx || 0) > 8 || (f.lx !== undefined && Math.abs(f.x - f.lx) > 0.3)) fr = frame(akey, 'walk', Math.floor((st.t * 10 + f.ph) % 6));
           else fr = frame(akey, 'idle', Math.floor((st.t * 5 + f.ph) % 4));
           f.lx = f.x; if (fr) { im = fr; hh *= 1.08; f.anim = true; } else f.anim = false; }
-        let alpha = 1; if (f.dead) { alpha = 1 - f.deadT / 0.5; if (alpha <= 0) continue; }
+        let alpha = 1; if (f.stealth && !f.reveal && !st.eyeOn) alpha = 0.12; if (f.dead) { alpha = 1 - f.deadT / 0.5; if (alpha <= 0) continue; }
         g.fillStyle = 'rgba(0,0,0,.35)'; g.beginPath(); g.ellipse(f.x, GY + 1, f.w * 0.7, 4, 0, 0, 6.283); g.fill();
         if (f.def_.aura) { g.globalAlpha = 0.25 + 0.1 * Math.sin(st.t * 4); g.fillStyle = f.def_.aura; g.beginPath(); g.ellipse(f.x, f.y - f.h * 0.55, f.w * 0.9, f.h * 0.75, 0, 0, 6.283); g.fill(); g.globalAlpha = 1; }
         const bob = Math.sin(st.t * 6 + f.ph) * 1.5; const wind = f.state === 'wind' || (f.pat && f.pat.t < 0.3);
@@ -527,6 +546,7 @@ export function runStage(stage, opts = {}){
       g.globalAlpha = 1;
       g.setTransform(1, 0, 0, 1, 0, 0);
       if (C().hp < C().s.hp * 0.3) { const vg = g.createRadialGradient(cv.width / 2, cv.height / 2, cv.height * 0.4, cv.width / 2, cv.height / 2, cv.width * 0.7); vg.addColorStop(0, 'rgba(120,0,0,0)'); vg.addColorStop(1, `rgba(150,0,0,${0.35 + 0.15 * Math.sin(st.t * 6)})`); g.fillStyle = vg; g.fillRect(0, 0, cv.width, cv.height); }
+      HK.drawDreamTint(g, cv, st);
     }
     // —— HUD ——
     let hudCache = {};
@@ -552,6 +572,11 @@ export function runStage(stage, opts = {}){
         set('buf', L.map(x => x.join(':')).join(), () => hud.buf.replaceChildren(...L.map(([ic, n, t]) => h('span.ak-bf', { title: n }, h('img', { src: asset('icon/st/' + ic) }), h('em', {}, t))))); }
       const objT = stage.obj === 'timed' ? `限时 ${Math.max(0, Math.ceil(st.timeLeft))}秒` : stage.obj === 'guard' ? `守灯 ${Math.max(0, Math.round(st.lamp?.hp ?? 100))}%` : `区域 ${Math.min(arenas.length, Math.max(1, st.cur + 1))}/${arenas.length}`;
       set('obj', objT, v => hud.obj.textContent = v);
+      set('reso', Math.round(st.reso||0), v => { hud.resoBar.style.width = (v) + '%'; hud.reso.classList.toggle('ready', !!st.resoReady || v >= 100); });
+      set('dream', st.dream, v => { hud.dream.classList.toggle('on', !!v); hud.dream.querySelector('.t').textContent = v ? '睁眼' : '闭目'; });
+      set('eye', st.eyeOn, v => hud.eye.classList.toggle('on', !!v));
+      set('goals', (st.dreamSeen?1:0)+':'+(st.awakeSeen?1:0)+':'+(st.resoUsed||0)+':'+st.hitsTaken+':'+Math.floor(st.t), () => {
+        const gs = HK.sGoals(stage, st); hud.goals.replaceChildren(...gs.map(g => h('span' + (g.ok ? '.ok' : ''), {}, g.label))); });
       const b = st.bossBar; if (b) set('boss', Math.round(b.hp / b.max * 400), v => { hud.boss.querySelector('.ak-bb i').style.width = (v / 4) + '%'; hud.boss.querySelector('.ak-bb em').textContent = Math.max(0, Math.round(b.hp)) + ' / ' + b.max; });
     }
     // —— 暂停 / 结算 ——
@@ -559,16 +584,16 @@ export function runStage(stage, opts = {}){
     function pause(){ if (st.over) return; st.paused = !st.paused; if (!st.paused) { pbox && pbox.remove(); pbox = null; return; }
       const sl = slotsOf(C().id).map(id => ASKILLS[id]).filter(Boolean);
       pbox = h('div.ak-pausebox', {}, h('div.ak-pin', {}, h('h3', {}, '暂停 · ' + stage.name),
-        h('div.ak-keys', {}, h('p', {}, '左摇杆移动，上推跳跃，下推穿过平台。⚔ 连按出连击，空中可追击；➤ 冲刺带无敌帧，可穿过预警。'), h('p', {}, '怒气满后点「龍」变身；技能消耗法力；队伍头像或 ⇄ 换人。红色区域是首领预警，闪开它！'),
+        h('div.ak-keys', {}, h('p', {}, '左摇杆移动，上推跳跃，下推穿过平台。⚔ 连按出连击，空中可追击；➤ 冲刺带无敌帧，可穿过预警。'), h('p', {}, '招牌：瞳(E)烛瞳见弱点 · 梦(R)闭目/睁眼切换梦层 · 灯(T)灯火共鸣合击。怒气满「龍」变身；⇄ 换人积攒共鸣。'),
           h('div.ak-sklist', {}, ...sl.map(k => h('div', {}, h('img', { src: asset('icon/sk/' + k.id) }), h('b', {}, k.name), h('span', {}, k.desc))))),
         h('div.ak-row', {}, h('button.btn', { onclick: () => pause() }, '继续'), h('button.btn.ghost', { onclick: () => { st.paused = false; end({ win: false, retry: true }); } }, '重来'), h('button.btn.ghost', { onclick: () => { st.paused = false; end({ win: false, quit: true, why: '撤退' }); } }, '撤退'))));
       root.append(pbox); }
     function fail(why){ if (st.over) return; st.over = true; say(why, 2); sfx('lose'); setTimeout(() => end({ win: false, why }), 1400); }
-    function rating(){ const par = 50 + arenas.length * 35 + (stage.boss ? 60 : 0); let sc = 0; if (st.t < par) sc += 2; else if (st.t < par * 1.5) sc += 1; if (st.hitsTaken <= 3) sc += 2; else if (st.hitsTaken <= 10) sc += 1; if (st.maxCombo >= 30) sc += 2; else if (st.maxCombo >= 12) sc += 1; if (roster.every(r => r.alive)) sc += 1; return sc >= 6 ? 'S' : sc >= 4 ? 'A' : sc >= 2 ? 'B' : 'C'; }
+    function rating(){ const par = 50 + arenas.length * 35 + (stage.boss ? 60 : 0); let sc = 0; if (st.t < par) sc += 2; else if (st.t < par * 1.5) sc += 1; if (st.hitsTaken <= 3) sc += 2; else if (st.hitsTaken <= 10) sc += 1; if (st.maxCombo >= 30) sc += 2; else if (st.maxCombo >= 12) sc += 1; if (st.lamp && st.lamp.hp >= 70) sc += 1; sc += HK.ratingBonus(st); return sc >= 6 ? 'S' : sc >= 4 ? 'A' : sc >= 2 ? 'B' : 'C'; }
     function finish(win){ end({ win, rating: rating() }); }
     let ended = false;
     function end(r){ if (ended) return; ended = true; st.over = true; cancelAnimationFrame(raf); removeEventListener('keydown', kd); removeEventListener('keyup', ku); ro.disconnect(); document.removeEventListener('visibilitychange', vis);
-      const res = { win: false, ...r, time: Math.round(st.t), combo: st.maxCombo, hits: st.hitsTaken, kills: st.kills, gold: r.win ? st.gold : Math.floor(st.gold * 0.3), loot: r.win ? st.loot : {}, souls: r.win ? st.souls : {}, exp: r.win ? st.exp : Math.floor(st.exp * 0.3), team, hard, fps: Math.round(fpsAvg), skills: st.skillUsed || 0, ults: st.ults || 0 };
+      const res = { win: false, ...r, time: Math.round(st.t), combo: st.maxCombo, hits: st.hitsTaken, kills: st.kills, dreamFlips: st.dreamFlips||0, resoUsed: st.resoUsed||0, eyeMarks: st.eyeMarks||0, dreamSeen: !!st.dreamSeen, awakeSeen: !!st.awakeSeen, gold: r.win ? st.gold : Math.floor(st.gold * 0.3), loot: r.win ? st.loot : {}, souls: r.win ? st.souls : {}, exp: r.win ? st.exp : Math.floor(st.exp * 0.3), team, hard, fps: Math.round(fpsAvg), skills: st.skillUsed || 0, ults: st.ults || 0 };
       if (window.__act) window.__act.result = res; root.remove(); resolve(res); }
     const vis = () => { if (document.hidden && !st.paused && !st.over) pause(); }; document.addEventListener('visibilitychange', vis);
     // —— 自动战斗机器人（测试 / 托管） ——

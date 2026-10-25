@@ -131,14 +131,42 @@ function resultScreen(stage, res, out, opts){
         win ? h('div.rs-rank.r' + res.rating, {}, res.rating) : h('div.rs-rank.rF', {}, '败'),
         h('div.rs-name', {}, stage.name + (res.hard ? ' · 困难' : '')),
         h('div.rs-stats', {}, h('span', {}, '用时 ' + Math.floor(res.time / 60) + ':' + String(res.time % 60).padStart(2, '0')), h('span', {}, '最高连击 ' + res.combo), h('span', {}, '击败 ' + res.kills), h('span', {}, '受击 ' + res.hits)),
+        win ? h('div.rs-card', {},
+          h('div.rs-card-t', {}, '通 关 札'),
+          h('div.rs-card-row', {}, h('em', {}, '梦层切换'), h('b', {}, String(res.dreamFlips || 0) + ' 次')),
+          h('div.rs-card-row', {}, h('em', {}, '灯火共鸣'), h('b', {}, String(res.resoUsed || 0) + ' 次')),
+          h('div.rs-card-row', {}, h('em', {}, '烛瞳破弱点'), h('b', {}, String(res.eyeMarks || 0) + ' 处')),
+          h('div.rs-card-row', {}, h('em', {}, '两层皆历'), h('b', {}, (res.dreamSeen && res.awakeSeen) ? '✓' : '—')),
+          h('div.rs-card-s', {}, '《烛龙纪·长夜山海》')) : null,
         !win ? h('p.rs-tip', {}, tipFor(stage, res)) : null),
       h('div.rs-r', {},
         h('div.rs-gain', {}, h('b', {}, '✦ ' + out.gold), h('b', {}, '经验 +' + out.exp), out.sp ? h('b.sp', {}, '技能点 +1') : null, out.first ? h('em', {}, '首次通关') : null, out.newBest && win ? h('em', {}, '新纪录') : null),
         lvl.length ? h('div.rs-ups', {}, ...lvl.map(([id, l]) => h('div', {}, h('img', { src: portrait(id) }), `${CHARS[id].name} 升至 Lv ${l[l.length - 1]}`))) : null,
         out.unlocks.length ? h('div.rs-unl', {}, ...out.unlocks.map(u => h('div', {}, '✧ ' + u))) : null,
+        win ? h('div.rs-next', {}, nextUnlockTeaser(stage, out)) : null,
         h('div.rs-items', {}, ...(items.length ? items : [h('div.rs-none', {}, win ? '本关没有掉落' : '失败时不保留掉落，仅获得部分星砂与经验')])),
         h('div.rs-btns', {}, btn('返回', back, ''), btn(win ? '再战一次' : '重新挑战', () => launch(stage, opts), ''), next && win ? btn('下一关 ▶', () => stageDetail(next, opts), 'gold') : null))));
   show(root);
+}
+
+function nextUnlockTeaser(stage, out){
+  const a = S.act || {};
+  const cleared = Object.keys(a.cleared || {}).length;
+  const teasers = [
+    [3, '灯阶升级'],
+    [5, '异兽孵化'],
+    [10, '镇妖塔'],
+    [20, '首领连战 · 十殿'],
+    [30, '外观「长夜锦」'],
+  ];
+  for (const [n, name] of teasers) {
+    if (cleared < n) {
+      const left = n - cleared;
+      return left === 1 ? `再通 1 关解锁「${name}」` : `再通 ${left} 关解锁「${name}」`;
+    }
+  }
+  if (out.unlocks?.length) return '新解锁：' + out.unlocks[0];
+  return '下一把，灯芯会更亮一点。';
 }
 function tipFor(stage, res){ const lv = Math.max(...res.team.map(id => S.party[id].lv)); if (lv < stage.lv - 2) return `队伍等级偏低（推荐 Lv ${stage.lv}）。去前面的关卡或每日「悟道秘境」历练，或在「伙伴」中升级技能、更换装备。`;
   if (res.why === '灯火熄灭') return '护灯关卡：优先击倒靠近长明灯的敌人，远程敌人会直接攻击灯。';

@@ -46,7 +46,13 @@ REGION_ORDER.forEach((rid, ri) => {
         }
         waves.push(grp);
       }
-      arenas.push({ waves, plat: Math.floor(r() * 6), hazard: i >= 3 && r() < 0.35 ? (['spike','fire','ice','poison'][ri % 4]) : null });
+      // 梦层波次：同结构但偏暗属/精英，闭目叠层时使用
+      const dreamWaves = waves.map(grp => grp.map(id => {
+        const base = id.replace(/_[ev]$/, '');
+        const dark = pool.find(x => x !== base && (x.includes('ye') || x.includes('meng') || x.includes('hei') || x.includes('yuan'))) || pool[pool.length - 1];
+        return r() < 0.55 ? (dark + (r() < 0.3 ? '_e' : '')) : (base + '_e');
+      }));
+      arenas.push({ waves, dreamWaves, plat: Math.floor(r() * 6), hazard: i >= 3 && r() < 0.35 ? (['spike','fire','ice','poison'][ri % 4]) : null });
     }
     const id = `${rid}_${i+1}`;
     const st = { id, region:rid, ri, idx:i, name: hidden ? '秘境·' + (ABOSSES[boss]?.name||'') : NAMES[rid][i], lv, boss, arenas, hidden,

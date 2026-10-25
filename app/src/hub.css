@@ -253,3 +253,10 @@
 .pt-img .pt-egg{position:absolute;left:50%;top:55%;width:42%;transform:translate(-50%,-50%);filter:drop-shadow(0 0 12px rgba(255,214,140,.55));animation:ptEgg 2.4s ease-in-out infinite}
 @keyframes ptEgg{0%,100%{transform:translate(-50%,-50%) rotate(-4deg)}50%{transform:translate(-50%,-54%) rotate(4deg)}}
 .fg-ham{width:1.4rem;height:1.4rem;vertical-align:middle;margin-right:.35rem}
+/* 通关札 */
+.rs-card{margin-top:.7rem;padding:.65rem .8rem;border:1px solid rgba(255,200,100,.35);border-radius:.35rem;background:linear-gradient(160deg,rgba(60,40,12,.55),rgba(12,10,6,.8));box-shadow:inset 0 0 20px rgba(255,180,60,.08),0 0 18px rgba(0,0,0,.4)}
+.rs-card-t{font-family:var(--title);color:#ffe08a;letter-spacing:.4em;font-size:.95rem;text-align:center;margin-bottom:.4rem}
+.rs-card-row{display:flex;justify-content:space-between;font-size:.78rem;color:#cbb892;padding:.15rem 0;border-bottom:1px dashed rgba(255,200,100,.12)}
+.rs-card-row b{color:#ffe7a0;font-weight:normal}
+.rs-card-s{margin-top:.45rem;text-align:center;font-size:.65rem;color:#8a7a55;letter-spacing:.15em}
+.rs-next{margin:.5rem 0 .2rem;padding:.4rem .6rem;border-left:2px solid var(--gold);background:rgba(255,200,100,.06);color:#e6d6a0;font-size:.78rem}
