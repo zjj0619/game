@@ -67,3 +67,4 @@ d: ice jiao(冰蛟), nightmare mo(梦貘), tubo(土伯), black serpent guard(黑
 
 ## 新范围（10:41 UTC+8）：v2.0 大扩展（造梦西游式动作闯关、多角色多技能、异兽、家园、塔、日常…资产 1 万+，体积不限，git 管理）
 - [10:45] git init（/workspace/game，.gitignore 排除 keystore/密钥/node_modules/构建产物/art_raw/大截图），已验证暂存区不含 Key
+- [10:43] ✅ v1.1 检查点 APK：dist/zhulongji-v1.1.apk 22,768,876 字节，versionCode 2/1.1，同证书 273e7cc7…，不含 Key。play2 探索通关机器人仍有挂起问题（待在 v2 测试中修）
