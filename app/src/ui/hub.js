@@ -9,7 +9,7 @@ import { playBgm, sfx } from '../engine/audio.js';
 import { setAmbient } from '../engine/fx.js';
 import { ACHARS, ASKILLS, WEAPON, ACTION_ROSTER, SKINS, UNLOCK_LV, ULT_LV, SKILL_MAX, TYPE_NAME, skillPow, skillCd } from '../action/data.js';
 import { AFOES, ABOSSES, AI_NAME, foeStats } from '../action/foes.js';
-import { STAGES, REGION_STAGES, towerStage, rushStage, DAILY, dailyStage } from '../action/stages.js';
+import { STAGES, REGION_STAGES, towerStage, rushStage, DAILY, dailyStage, KEY_SECRET_IDS } from '../action/stages.js';
 import { GEAR, RARITY, GAFF, fxName, rarOf } from '../action/gear.js';
 import { runStage } from '../action/engine.js';
 import * as AP from '../action/progress.js';
@@ -33,8 +33,8 @@ function chip(text, cls = ''){ return h('span.chip' + (cls ? '.' + cls : ''), {}
 function elChip(el){ return el ? h('span.elc', { style:{ background: EL_COLOR?.[el] || '#888' } }, EL_NAME[el] || el) : null; }
 function saveNow(){ try { save(AUTO); } catch (e) {} }
 function dot(on){ return on ? h('i.rdot') : null; }
-export function hubBadges(){ const m = AP.MISSIONS.filter(x => !S.daily.claimed[x.id] && (S.daily.prog[x.id] || 0) >= x.need).length; const pets = Object.keys(AP.PETS).filter(b => !S.act.pets[b] && (S.act.souls[b] || 0) >= AP.SOUL_NEED).length;
-  const sp = AP.actRoster().some(id => AP.spFree(id) > 0 && ACHARS[id].skills.some(k => { const l = AP.skillLv(id, k); return l && l < SKILL_MAX; })); return { m, pets, sp }; }
+export function hubBadges(){ const m = AP.MISSIONS.filter(x => !S.daily.claimed[x.id] && (S.daily.prog[x.id] || 0) >= x.need).length; const pets = Object.keys(AP.PETS).filter(b => !S.act.pets[b] && (S.act.souls[b] || 0) >= AP.SOUL_NEED).length; const secrets = KEY_SECRET_IDS.filter(id => AP.stageUnlocked(id) && !S.act.cleared[id]).length;
+  const sp = AP.actRoster().some(id => AP.spFree(id) > 0 && ACHARS[id].skills.some(k => { const l = AP.skillLv(id, k); return l && l < SKILL_MAX; })); return { m, pets, sp, secrets }; }
 
 // —— 枢纽 ——
 export function hubScreen(){
@@ -57,6 +57,7 @@ export function hubScreen(){
         tile('t-pet', '山海异兽', `${Object.keys(S.act.pets).length} 只 · 灵魄孵化`, () => show(petScreen()), b.pets > 0),
         tile('t-forge', '铸灯铁坊', '锻造 · 分解', () => show(forgeScreen())),
         tile('t-city', '烬城建设', '升级建筑获得加成', () => show(cityScreen())),
+        tile('t-secret', '信物秘境', `${KEY_SECRET_IDS.filter(id=>AP.stageUnlocked(id)).length}/${KEY_SECRET_IDS.length} 已开 · 关键道具专属`, () => show(secretStagesScreen()), b.secrets > 0),
         tile('t-world', '九州探索', '地图 · 支线 · 采集', () => game.world()))));
   return root;
 }
@@ -70,7 +71,7 @@ export function adventureScreen(rid){
     return h('div.adv-tab' + (r === rid ? '.on' : '') + (un ? '' : '.lock'), { onclick: () => { if (!un) { toast(`通关「${REGIONS[REGION_ORDER[i - 1]].name.split('·')[0]}」第 10 关后开放`); return; } sfx('page'); show(adventureScreen(r)); } },
       h('b', {}, R && REGIONS[r].name.split('·')[0]), h('small', {}, un ? `★${AP.regionStars(r)}/33` : '未开放')); }));
   const path = h('svg', {}); const nodes = ids.map((id, i) => { const st = STAGES[id]; const un = AP.stageUnlocked(id); const best = S.act.best[id]; const [x, y] = NODE_POS[i];
-    return h('div.snode' + (st.boss ? '.boss' : '') + (st.hidden ? '.hidden' : '') + (un ? '' : '.lock') + (S.act.cleared[id] ? '.done' : '') + (un && !S.act.cleared[id] ? '.next' : ''), { style:{ left: x + '%', top: y + '%' }, onclick: () => { if (!un) { toast(st.hidden ? '本区十关全部通关后开放' : '先通关上一关'); return; } sfx('click'); stageDetail(st); } },
+    return h('div.snode' + (st.boss ? '.boss' : '') + (st.hidden ? '.hidden' : '') + (un ? '' : '.lock') + (S.act.cleared[id] ? '.done' : '') + (un && !S.act.cleared[id] ? '.next' : ''), { style:{ left: x + '%', top: y + '%' }, onclick: () => { if (!un) { toast(st.kind==='keysecret' ? ('需要：'+(ITEMS[st.needItem]?.name||'关键道具')) : st.hidden ? '本区十关全部通关后开放' : '先通关上一关'); return; } sfx('click'); stageDetail(st); } },
       h('div.sn-c', {}, st.boss ? h('img', { src: asset(ABOSSES[st.boss]?.img || 'enemy/a0') }) : h('span', {}, st.hidden ? '秘' : i + 1)),
       h('div.sn-n', {}, st.name), h('div.sn-s', {}, best ? '★'.repeat(AP.stars(best)) + '☆'.repeat(3 - AP.stars(best)) : un ? 'Lv ' + st.lv : '🔒'), S.act.hard[id] ? h('i.sn-h', {}, '难') : null); });
   const svgNS = 'http://www.w3.org/2000/svg'; const svg = document.createElementNS(svgNS, 'svg'); svg.setAttribute('viewBox', '0 0 100 100'); svg.setAttribute('preserveAspectRatio', 'none'); svg.classList.add('adv-path');
@@ -328,7 +329,7 @@ export function petScreen(sel){
       btn('喂养 ✦200', () => { if (!AP.petFeed(sel, 200)) return toast(pd.lv >= 50 ? '已满级' : '星砂不足'); if (feedEff > 1) pd.exp += Math.round(40 * (feedEff - 1)); sfx('heal'); saveNow(); show(petScreen(sel)); }, 'sm'),
       btn('喂养 ✦1000', () => { if (!AP.petFeed(sel, 1000)) return toast(pd.lv >= 50 ? '已满级' : '星砂不足'); if (feedEff > 1) pd.exp += Math.round(200 * (feedEff - 1)); sfx('heal'); saveNow(); show(petScreen(sel)); }, 'sm'),
       btn(`升星（灵魄 ${n}/${AP.SOUL_NEED * ((pd.star || 0) + 1)}）`, () => { if (!AP.petStar(sel)) return toast('灵魄不足或已满星'); sfx('level'); saveNow(); show(petScreen(sel)); }, 'sm')]
-      : btn('孵 化', () => { if (!AP.hatch(sel)) return toast('灵魄不足'); sfx('ach'); toast(P.name + ' 破卵而出！'); saveNow(); show(petScreen(sel)); }, n >= AP.SOUL_NEED ? 'gold' : 'disabled')));
+      : btn('孵 化', () => { if (!AP.hatch(sel)) return toast('灵魄不足'); sfx('pet'); toast(P.name + ' 破卵而出！'); saveNow(); show(petScreen(sel)); }, n >= AP.SOUL_NEED ? 'gold' : 'disabled')));
   return screen('pets', 'bg/qingqiu_forest', header('山海异兽', null, h('span.hb-n', {}, `已拥有 ${Object.keys(S.act.pets).length}/${all.length}`)), h('div.pt-wrap', {}, grid, detail));
 }
 // —— 铸灯铁坊 ——
@@ -342,7 +343,7 @@ export function forgeScreen(tab = 'forge', t0){
     body.append(h('div.fg-tiers', {}, ...AP.TIER_NAME.map((n, i) => h('div.fg-t' + (i === t ? '.on' : '') + (i > max ? '.lock' : ''), { onclick: () => { if (i > max) return toast((S.city.forge || 1) * 2 - 1 < i ? '升级「铸灯铁坊」解锁' : '推进闯关区域解锁'); show(forgeScreen(tab, i)); } }, n + '阶'))),
       h('div.fg-cost', {}, h('img.fg-ham', { src: asset('icon/ex/hammer') }), `每次锻造：✦${c.gold} · ${ITEMS[m].name} ×${c.mat}（持有 ${S.inv[m] || 0}）` + (t >= 4 ? ` · 星髓晶 ×${c.mat2}（持有 ${S.inv.m_starmarrow || 0}）` : ''), h('small', {}, '品质随机：良品 50% · 精品 30% · 珍品 15% · 神品 5%')),
       h('div.fg-grid', {}, ...['weapon', 'armor', 'charm'].flatMap(slot => [0, 1, 2].map(k => { const id = `g_${slot[0]}${t}${k}2`; const it = ITEMS[id];
-        return h('div.fg-it', {}, icon(it.icon, 'md'), h('b', {}, it.name.replace(/·.$/, '')), h('small', {}, SLOTN[slot] + ' · ' + itemLine({ ...it, affix: [] })), btn('锻造', () => { const r = AP.forge(t, slot, k); if (r.err) return toast(r.err); sfx('fire'); saveNow(); forgeReveal(r.id, () => show(forgeScreen(tab, t))); }, 'sm')); }))));
+        return h('div.fg-it', {}, icon(it.icon, 'md'), h('b', {}, it.name.replace(/·.$/, '')), h('small', {}, SLOTN[slot] + ' · ' + itemLine({ ...it, affix: [] })), btn('锻造', () => { sfx('forge'); const r = AP.forge(t, slot, k); if (r.err) return toast(r.err); sfx('fire'); saveNow(); forgeReveal(r.id, () => show(forgeScreen(tab, t))); }, 'sm')); }))));
   } else {
     const gear = Object.keys(S.inv).filter(k => ITEMS[k]?.gen && S.inv[k] > 0).sort((a, b) => rarOf(a) - rarOf(b) || ITEMS[a].tier - ITEMS[b].tier);
     body.append(h('div.fg-cost', {}, '分解闯关装备，获得星砂与对应阶的锻造材料。', gear.length ? btn('一键分解凡品与良品', async () => { const low = gear.filter(k => rarOf(k) <= 1); if (!low.length) return toast('没有可分解的凡品/良品'); if (!(await confirmBox(`分解 ${low.reduce((a, k) => a + S.inv[k], 0)} 件凡品/良品装备？`))) return; let g = 0; for (const k of low) while (S.inv[k] > 0) g += AP.salvage(k).gold; toast('获得 ✦' + g); saveNow(); show(forgeScreen('salv')); }, 'sm') : null),
@@ -352,13 +353,43 @@ export function forgeScreen(tab = 'forge', t0){
 }
 function forgeReveal(id, done){ const it = ITEMS[id]; const r = rarOf(id); const p = panel('锻造完成', { modal: true, cls: 'small reveal', onclose: done });
   p.body.append(h('div.fr', { style: '--rc:' + RCOL(r) }, h('div.fr-glow'), icon(it.icon, 'lg'), h('b', { style: { color: RCOL(r) } }, it.name), h('small', {}, RARITY[r].name), h('p', {}, itemLine(it))), h('div.row.center', {}, btn('收下', () => p.close(), 'gold'))); if (r >= 3) sfx('ach'); }
+
+// —— 信物秘境：关键道具开启的隐藏战场 ——
+export function secretStagesScreen(){
+  AP.ensureAct();
+  const cards = KEY_SECRET_IDS.map(id => {
+    const st = STAGES[id]; const un = AP.stageUnlocked(id); const best = S.act.best[id];
+    const need = ITEMS[st.needItem]; const have = (S.inv[st.needItem] || 0) > 0;
+    const flagOk = !st.needFlag || !!S.flags[st.needFlag];
+    return h('div.sec-c' + (un ? '' : '.lock') + (S.act.cleared[id] ? '.done' : ''), {
+      onclick: () => {
+        if (!un) {
+          const tips = [];
+          if (!have) tips.push('持有「' + (need?.name || st.needItem) + '」');
+          if (!flagOk) tips.push('完成对应剧情旗帜');
+          if (have && flagOk) tips.push('先通关该区第 5 关');
+          toast(tips.join(' · ') || '尚未解锁'); return;
+        }
+        sfx('secret'); stageDetail(st, { back: () => show(secretStagesScreen()) });
+      }
+    },
+      h('div.sec-bg', { style: { backgroundImage: `url(${asset('bg/' + st.bg)})` } }),
+      h('b', {}, st.name),
+      h('small', {}, un ? (`Lv ${st.lv}` + (best ? ' · ' + '★'.repeat(AP.stars(best)) : ' · 可挑战')) : ('🔒 ' + (need?.name || '关键道具'))),
+      h('p', {}, st.desc || ''),
+      S.act.cleared[id] ? chip('已踏破') : (un ? chip('信物共鸣') : null));
+  });
+  return screen('secrets', 'cg/key_secret_realm', header('信物秘境', null, h('span.hb-n', {}, '关键道具开启的隐藏战场')),
+    h('div.sec-intro', {}, h('p', {}, '主线与关卡选择会掉落信物。持有对应信物并满足旗帜后，此处会出现不写在地图上的战场——通关可获梦屑、稀有材料与隐藏剧情线索。')),
+    h('div.sec-grid', {}, ...cards));
+}
 // —— 烬城建设 ——
 export function cityScreen(){
   AP.ensureAct();
   const cards = AP.CITY.map(b => { const lv = S.city[b.id] || 1; const max = lv >= b.max; const c = AP.cityCost(lv);
     return h('div.ct-c' + (max ? '.max' : ''), {}, h('div.ct-h', {}, h('b', {}, b.name), h('span', {}, 'Lv ' + lv + '/' + b.max)), h('p', {}, '当前：' + b.desc(lv)), !max ? h('p.nx', {}, '升级后：' + b.desc(lv + 1)) : h('p.nx', {}, '已满级'),
       !max ? h('div.ct-cost', {}, `✦${c.gold}`, h('span', {}, `${ITEMS[b.mats[0]].name} ${S.inv[b.mats[0]] || 0}/${c.mat}`), h('span', {}, `${ITEMS[b.mats[1]].name} ${S.inv[b.mats[1]] || 0}/${Math.ceil(c.mat * 0.6)}`)) : null,
-      !max ? btn('升 级', () => { const e = AP.cityUp(b.id); if (e) return toast(e); sfx('level'); toast(b.name + ' 升至 Lv ' + (lv + 1)); saveNow(); show(cityScreen()); }, 'gold sm') : null); });
+      !max ? btn('升 级', () => { const e = AP.cityUp(b.id); if (e) return toast(e); sfx('lamp'); toast(b.name + ' 升至 Lv ' + (lv + 1)); saveNow(); show(cityScreen()); }, 'gold sm') : null); });
   const lit = AP.CITY.reduce((a, b) => a + (S.city[b.id] || 1), 0);
   return screen('city', 'bg/jincheng', header('烬城建设'), h('div.ct-wrap', {}, h('div.ct-intro', {}, h('b', {}, `城中灯火 ${lit}/${AP.CITY.reduce((a, b) => a + b.max, 0)}`), h('p', {}, '长夜之下，烬城是最后一座有灯的城。把闯关带回的材料交给城里的匠人，一点点把它重新点亮。')), h('div.ct-grid', {}, ...cards)));
 }
@@ -368,7 +399,7 @@ export function trialScreen(tab = 'tower'){
   const tabs = h('div.hr-tabs', {}, ...[['tower', '镇妖塔'], ['daily', '每日秘境'], ['rush', '首领连战'], ['mission', '每日委托']].map(([k, n]) => h('div.tab' + (k === tab ? '.on' : ''), { onclick: () => show(trialScreen(k)) }, n, k === 'mission' && hubBadges().m ? h('i.rdot') : null)));
   const body = h('div.tr-body'); const back = () => show(trialScreen(tab)); const lv = Math.max(...AP.actRoster().map(id => S.party[id].lv));
   if (tab === 'tower') { const f = S.act.tower + 1; const floors = [];
-    for (let i = Math.min(100, f + 3); i >= Math.max(1, f - 2); i--) { const s = towerStage(i); floors.push(h('div.tw-f' + (i < f ? '.done' : i === f ? '.cur' : '.lock') + (s.boss ? '.boss' : ''), {}, h('b', {}, s.name), h('small', {}, `Lv ${s.lv}` + (s.boss ? ' · 首领 ' + ABOSSES[s.boss].name : '') + (s.obj === 'timed' ? ' · 限时' : '')), i === f ? btn('挑战', () => stageDetail(s, { back }), 'gold sm') : i < f ? chip('已通过') : null)); }
+    for (let i = Math.min(100, f + 3); i >= Math.max(1, f - 2); i--) { const s = towerStage(i); floors.push(h('div.tw-f' + (i < f ? '.done' : i === f ? '.cur' : '.lock') + (s.boss ? '.boss' : ''), {}, h('b', {}, s.name), h('small', {}, `Lv ${s.lv}` + (s.boss ? ' · 首领 ' + ABOSSES[s.boss].name : '') + (s.obj === 'timed' ? ' · 限时' : '')), i === f ? btn('挑战', () => { sfx('tower'); stageDetail(s, { back }); }, 'gold sm') : i < f ? chip('已通过') : null)); }
     body.append(h('div.tw-wrap', {}, h('div.tw-l', {}, h('b', {}, `最高 第 ${S.act.tower} 层`), h('p', {}, '镇妖塔共一百层，层层递进。每十层镇守一名首领。每层只能向上，失败可无限重试。'), h('p', {}, '奖励：首次登顶每层获得星砂与经验，首领层必掉装备。')), h('div.tw-list', {}, ...floors))); }
   if (tab === 'daily') { body.append(h('div.dl-grid', {}, ...DAILY.map(d => { const used = S.daily.done[d.id] || 0; const left = AP.DAILY_TRIES - used; const s = dailyStage(d, lv);
     return h('div.dl-c' + (left <= 0 ? '.used' : ''), { style: { backgroundImage: `linear-gradient(180deg,rgba(10,10,18,.2),rgba(10,10,18,.92)),url(${asset('stagecard/' + d.id)})` } }, h('b', {}, d.name), h('p', {}, d.desc), h('small', {}, `Lv ${s.lv} · 今日剩余 ${left}/${AP.DAILY_TRIES}`),

@@ -88,6 +88,51 @@ export function dailyStage(d, lv){
   return { id:d.id, region:'jincheng', ri:0, name:d.name, lv, arenas:[{waves:waves.slice(0,2), plat:2},{waves:waves.slice(2), plat:4}], obj:'timed', time:120, bg:d.bg, kind:'daily', reward:d.reward };
 }
 
+
+// —— 关键道具秘境（不进区域主线 11 关列表，单独挂载）——
+export const KEY_SECRETS = [
+  { id:'sec_cursed_lamp', name:'秘境·残灯长廊', needItem:'k_lamp_cursed', needFlag:null, region:'youdu', ri:7, lv:28, boss:'ab_xuanming', bg:'youdu',
+    desc:'诅咒残灯在手时，幽都多出一条无人点名的长廊。' },
+  { id:'sec_sealed_letter', name:'秘境·密信书渊', needItem:'k_letter_sealed', needFlag:'read_sealed', region:'kunlun', ri:4, lv:32, boss:'ab_fuli', bg:'shuge',
+    desc:'拆开密信之后，昆仑书渊会为你让开一条缝。' },
+  { id:'sec_false_dawn', name:'秘境·纸日旷野', needItem:'k_false_dawn', needFlag:'kids_lamp', region:'jincheng', ri:0, lv:18, boss:'ab_fengxi', bg:'jincheng',
+    desc:'孩子们埋下的假日之种，在城外长出一片纸太阳。' },
+  { id:'sec_dream_scale', name:'秘境·梦鳞潮', needItem:'k_scale_dream', needFlag:'xl_bond', region:'beihai', ri:7, lv:36, boss:'ab_xiangliu', bg:'beihai',
+    desc:'梦鳞贴近耳边时，北海会低声叫你的名字。' },
+  { id:'sec_black_scale', name:'秘境·墨鳞夜', needItem:'k_scale_black', needFlag:'path_night', region:'guixu', ri:8, lv:40, boss:'ab_zhulong', bg:'zhulong_eye',
+    desc:'取了墨鳞的人，才能看见归墟底下那一眼不肯醒的夜。' },
+  { id:'sec_gold_scale', name:'秘境·金鳞昼', needItem:'k_scale_gold', needFlag:'path_day', region:'yugu', ri:6, lv:34, boss:'ab_jinwu', bg:'yugu',
+    desc:'金鳞发热之处，禺谷多出一截白昼。' },
+  { id:'sec_xiangliu_tear', name:'秘境·九头退潮', needItem:'k_xiangliu_tear', needFlag:'xiangliu_spared', region:'beihai', ri:7, lv:38, boss:'ab_guixu', bg:'haidi',
+    desc:'相柳之泪落进海里，潮水会暂时替你让路。' },
+  { id:'sec_keepsake_fox', name:'秘境·狐火穗径', needItem:'k_keepsake_baiji', needFlag:'baiji_protected', region:'qingqiu', ri:1, lv:22, boss:'ab_humeng', bg:'qingqiu_palace',
+    desc:'狐火穗一晃，青丘会出现一条只给自己人走的捷径。' },
+];
+function buildSecretArenas(seed, pool, nAr=3){
+  const r = rng(seed); const arenas=[];
+  for (let a=0;a<nAr;a++){
+    const waves=[]; const nW=2+(a>0?1:0);
+    for (let w=0;w<nW;w++){
+      const grp=[]; const n=3+Math.floor(r()*2);
+      for (let k=0;k<n;k++){ const b=pool[Math.floor(r()*pool.length)]; grp.push(r()<0.25?b+'_e':b); }
+      waves.push(grp);
+    }
+    const dreamWaves = waves.map(grp => grp.map(id => id.replace(/_[ev]$/,'')+'_e'));
+    arenas.push({ waves, dreamWaves, plat: Math.floor(r()*6), hazard: a===1?'poison':null });
+  }
+  return arenas;
+}
+for (const ks of KEY_SECRETS) {
+  const pool = POOLS[ks.region] || POOLS.guixu;
+  STAGES[ks.id] = {
+    id: ks.id, region: ks.region, ri: ks.ri, idx: 99, name: ks.name, lv: ks.lv, boss: ks.boss,
+    arenas: buildSecretArenas(ks.id.length*997 + ks.lv, pool, 4),
+    hidden: true, kind: 'keysecret', obj: 'clear', bg: ks.bg, time: 0,
+    needItem: ks.needItem, needFlag: ks.needFlag, desc: ks.desc, story: false,
+  };
+}
+export const KEY_SECRET_IDS = KEY_SECRETS.map(x => x.id);
+
 /** 关卡一句戏文：挂在详情页，突出招牌玩法 */
 export const STAGE_FLAVOR = {
   jincheng_1: '灯芯初燃。夜鬼怕光——把它们逼进光域。',
@@ -102,6 +147,7 @@ for (const [id, d] of Object.entries(STAGE_FLAVOR)) if (STAGES[id]) STAGES[id].d
 for (const st of Object.values(STAGES)) if (!st.desc) {
   const tip = st.obj === 'guard' ? '护灯：人走远灯会暗。'
     : st.obj === 'timed' ? '限时：冲刺穿场，不必全歼。'
+    : st.kind === 'keysecret' ? (st.desc || '关键道具秘境：持对应信物方可进入。')
     : st.hidden ? '秘境：闭目层可能另有首领。'
     : st.boss ? '首领战：烛瞳可预判红圈。'
     : 'S 条件：速通 · 少伤 · 两层皆历 · 共鸣一次。';

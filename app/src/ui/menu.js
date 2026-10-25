@@ -199,7 +199,7 @@ export async function openGallery(){
   };
   const END_HINT = Object.fromEntries(Object.entries(ENDN).map(([k,v])=>[k,v[1]]));
   const view = src => { const v = h('div.viewer', { onclick:()=>v.remove() }, h('img', { src })); document.getElementById('app').append(v); };
-  const cgs = ['cg_dengjin','cg_jingwei','cg_xingtian','cg_xiwangmu','cg_baize','cg_dijiang','cg_kuafu','cg_ba','cg_baiji','cg_xiangliu','cg_fuli','cg_duijue'];
+  const cgs = ['cg_dengjin','cg_jingwei','cg_xingtian','cg_xiwangmu','cg_baize','cg_dijiang','cg_kuafu','cg_ba','cg_baiji','cg_xiangliu','cg_fuli','cg_duijue', 'key_secret_realm','key_false_dawn_premium'];
   const keys = ['key_title_splash','key_dream_layers','key_resonance','key_skill_cutin','key_clearcard','key_reward_popup','key_lamp_radius','key_candle_eye','key_hub_sanctuary'];
   const epis = [
     ['epi_dawn_common','天亮第七日', !!meta.endings.length],
@@ -219,6 +219,14 @@ export async function openGallery(){
     ['hide_gift_qi','无头誓环', (S.aff&&S.aff.qi>=60)||!!(S.inv&&S.inv.k_keepsake_qi)],
     ['hide_gift_ali','女萝结', (S.aff&&S.aff.ali>=60)||!!(S.inv&&S.inv.k_keepsake_ali)],
     ['hide_gift_kualing','日轮羽', (S.aff&&S.aff.kualing>=60)||!!(S.inv&&S.inv.k_keepsake_kualing)],
+    ['sec_epi_cursed_lamp','残灯长廊', !!S.flags.sec_cleared_cursed],
+    ['sec_epi_sealed_letter','密信书渊', !!S.flags.sec_cleared_letter],
+    ['sec_epi_false_dawn','纸日旷野', !!S.flags.sec_cleared_dawn],
+    ['sec_epi_dream_scale','梦鳞潮', !!S.flags.sec_cleared_dream],
+    ['sec_epi_black_scale','墨鳞夜', !!S.flags.sec_cleared_black],
+    ['sec_epi_gold_scale','金鳞昼', !!S.flags.sec_cleared_gold],
+    ['sec_epi_xiangliu_tear','九头退潮', !!S.flags.sec_cleared_tear],
+    ['sec_epi_keepsake_fox','狐火穗径', !!S.flags.sec_cleared_fox],
   ];
   p.body.append(h('h3', {}, `结局 ${meta.endings.length}/15`), h('div.gal', {}, Object.entries(ENDN).map(([k,v]) => {
     const n=v[0], hint=v[1];

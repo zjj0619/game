@@ -1,0 +1,93 @@
+# 信物秘境后日谈 — 通关对应秘境后可在画廊「后日谈」重温；也可由关卡结算首次触发
+# 标签 sec_epi_* 与 KEY_SECRET_IDS 一一对应
+
+*sec_epi_cursed_lamp
+@bg youdu
+@bgm tense
+@sfx secret
+@do flag:sec_cleared_cursed hope+2
+> 残灯长廊尽头，墙上钉着一排熄灭的灯。
+言癸：……每一盏都写着别人的名字。
+言癸：点到自己那一盏时，它自己亮了。
+> 走廊塌回去。手里的诅咒残灯安静许多。
+@note 信物秘境·残灯长廊 已记入回忆
+@return
+
+*sec_epi_sealed_letter
+@bg shuge
+@bgm kunlun
+@sfx page
+@do flag:sec_cleared_letter hope+2 aff:fuli+3
+> 书渊的缝合上。浮黎的字迹还在灯影里晃。
+言癸：师父。你把答案写在密信里——却又把路留给了我。
+> 风翻过一页空白。像在说：去写你自己的。
+@note 信物秘境·密信书渊 已记入回忆
+@return
+
+*sec_epi_false_dawn
+@bg jincheng
+@bgm warm
+@sfx heal
+@do flag:sec_cleared_dawn hope+3
+> 纸太阳落在城外旷野上，孩子们围着它拍手。
+孩童：姐姐！它真的亮了！
+言癸：……亮一会儿就够。夜里还有灯。
+> 假日之种在土里轻轻发热。烬城的灯塔多了一点暖色。
+@note 信物秘境·纸日旷野 已记入回忆
+@return
+
+*sec_epi_dream_scale
+@bg beihai
+@bgm dream
+@sfx dream
+@do flag:sec_cleared_dream hope+2
+> 梦鳞潮退去。北海像在呼吸。
+言癸：你叫我的名字时，我听见了。
+> 潮声里有人轻声说：下次闭目，再来。
+@note 信物秘境·梦鳞潮 已记入回忆
+@return
+
+*sec_epi_black_scale
+@bg zhulong_eye
+@bgm guixu
+@sfx flip
+@do flag:sec_cleared_black hope+1
+> 墨鳞夜深处，有一眼不肯醒。
+言癸：昼与夜不必争。我只想看清你。
+> 鳞片在掌心发冷。像一小块诚实的夜。
+@note 信物秘境·墨鳞夜 已记入回忆
+@return
+
+*sec_epi_gold_scale
+@bg yugu
+@bgm yugu
+@sfx fire
+@do flag:sec_cleared_gold hope+2
+> 金鳞昼里，白日被拉长了一寸。
+言癸：多一寸白昼，够赶一段路。
+> 禺谷的热风吹过。灯芯发热，却不烫手。
+@note 信物秘境·金鳞昼 已记入回忆
+@return
+
+*sec_epi_xiangliu_tear
+@bg haidi
+@bgm beihai
+@sfx heal
+@do flag:sec_cleared_tear hope+3
+> 九头退潮留下的路，正在合拢。
+言癸：谢谢你让路。眼泪我收下了。
+> 海底有光一闪。像有人点了点头。
+@note 信物秘境·九头退潮 已记入回忆
+@return
+
+*sec_epi_keepsake_fox
+@bg qingqiu_palace
+@bgm qingqiu
+@sfx share
+@do flag:sec_cleared_fox hope+2 aff:baiji+5
+> 狐火穗径尽头，白霁等在灯下。
+白霁：捷径只给自己人。你是。
+言癸：……那我走慢一点也没关系。
+> 穗火贴着腕骨，温温的。
+@note 信物秘境·狐火穗径 已记入回忆
+@return

@@ -164,6 +164,13 @@ export function sfx(name){
     case 'eye': tone(880,0.25,'sine',0.08,1760); tone(1320,0.2,'triangle',0.05,660); drum(t,'hat',0.3,sfxBus); break;
     case 'share': [0,4,7,11,14].forEach((s,i)=>setTimeout(()=>tone(523*Math.pow(2,s/12),0.35,'triangle',0.09),i*70)); break;
     case 'secret': tone(740,0.15,'sine',0.1); setTimeout(()=>tone(988,0.25,'triangle',0.1),90); setTimeout(()=>tone(1480,0.3,'sine',0.08),180); break;
+    case 'forge': drum(t,'kick',0.6,sfxBus); tone(90,0.18,'square',0.08,40); setTimeout(()=>{ tone(220,0.12,'triangle',0.06); drum(ctx.currentTime,'snare',0.4,sfxBus); },90); setTimeout(()=>tone(880,0.2,'sine',0.05),180); break;
+    case 'lamp': tone(520,0.35,'sine',0.08,1040); tone(780,0.4,'triangle',0.05,390); [0,4,7].forEach((s,i)=>setTimeout(()=>tone(392*Math.pow(2,s/12),0.45,'sine',0.04),i*70)); break;
+    case 'pet': tone(660,0.12,'triangle',0.08); setTimeout(()=>tone(880,0.18,'sine',0.07),70); setTimeout(()=>tone(1320,0.22,'triangle',0.05),150); break;
+    case 'tower': drum(t,'kick',0.8,sfxBus); tone(110,0.5,'sawtooth',0.08,55); tone(440,0.3,'triangle',0.06,220); break;
+    case 'ui_open': tone(523,0.08,'sine',0.05); tone(784,0.12,'triangle',0.04); break;
+    case 'ui_close': tone(784,0.08,'sine',0.04,392); break;
+    case 'star': [0,4,7,12].forEach((s,i)=>setTimeout(()=>tone(1046*Math.pow(2,s/12),0.25,'sine',0.06),i*55)); break;
     case 'flip': tone(300,0.2,'sawtooth',0.06,900); tone(900,0.25,'triangle',0.05,200); drum(t,'snare',0.35,sfxBus); break;
   }
 }

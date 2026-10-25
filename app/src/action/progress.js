@@ -53,7 +53,15 @@ export function hatch(base){ if ((S.act.souls[base] || 0) < SOUL_NEED || S.act.p
 export function petFeed(base, gold){ const pd = S.act.pets[base]; if (!pd || S.gold < gold || pd.lv >= 50) return false; addGold(-gold); pd.exp += Math.round(gold / 5); while (pd.lv < 50 && pd.exp >= petExpNeed(pd.lv)) { pd.exp -= petExpNeed(pd.lv); pd.lv++; } return true; }
 export function petStar(base){ const pd = S.act.pets[base]; if (!pd || (pd.star || 0) >= 5) return false; const need = SOUL_NEED * (pd.star + 1); if ((S.act.souls[base] || 0) < need) return false; S.act.souls[base] -= need; pd.star++; return true; }
 // —— 关卡解锁 ——
-export function stageUnlocked(id){ const st = STAGES[id]; if (!st) return false; if (st.hidden) return REGION_STAGES[st.region].slice(0, 10).every(x => S.act.cleared[x]);
+export function stageUnlocked(id){ const st = STAGES[id]; if (!st) return false;
+  if (st.kind === 'keysecret') {
+    if (st.needItem && !(S.inv[st.needItem] > 0)) return false;
+    if (st.needFlag && !S.flags[st.needFlag]) return false;
+    // 至少通关该区第 5 关，避免过早闯入
+    const gate = REGION_STAGES[st.region]?.[4];
+    return gate ? !!S.act.cleared[gate] : true;
+  }
+  if (st.hidden) return REGION_STAGES[st.region].slice(0, 10).every(x => S.act.cleared[x]);
   if (st.idx > 0) return !!S.act.cleared[REGION_STAGES[st.region][st.idx - 1]]; if (st.ri === 0) return true; return !!S.act.cleared[REGION_STAGES[REGION_ORDER[st.ri - 1]][9]]; }
 export const regionUnlocked = rid => stageUnlocked(REGION_STAGES[rid][0]);
 export const stars = r => ({ S:3, A:2, B:1, C:1 })[r] || 0;
@@ -77,11 +85,22 @@ export function applyResult(stage, res){
     for (const [hid, sk] of Object.entries(HERO_UNLOCK)) if (sk === k && !S.party[hid]) { addHero(hid); out.unlocks.push('新伙伴 · ' + CHARS[hid].name); }
     if (stage.idx === 9 && stage.region) { const nx = REGION_ORDER[stage.ri + 1]; if (nx && first) out.unlocks.push('新区域开放'); }
     if (first && stage.idx === 9 && REGION_STAGES[stage.region]) out.unlocks.push('秘境关「' + STAGES[REGION_STAGES[stage.region][10]].name + '」需本区十关全通');
+    if (first && stage.kind === 'keysecret') {
+      out.gold += 200 + stage.lv * 15; out.exp += 120 + stage.lv * 8; out._secDust = 8;
+      addItem('m_starmarrow', 2); out.items.push({ id:'m_starmarrow', n:2 });
+      out.unlocks.push('信物秘境踏破 · 回忆已解锁');
+      const n = Object.keys(A.cleared).filter(x => STAGES[x]?.kind === 'keysecret').length;
+      if (n >= 1) ach('keysecret1'); if (n >= 4) ach('keysecret4'); if (n >= 8) ach('keysecret8');
+      const fmap = { sec_cursed_lamp:'sec_cleared_cursed', sec_sealed_letter:'sec_cleared_letter', sec_false_dawn:'sec_cleared_dawn',
+        sec_dream_scale:'sec_cleared_dream', sec_black_scale:'sec_cleared_black', sec_gold_scale:'sec_cleared_gold',
+        sec_xiangliu_tear:'sec_cleared_tear', sec_keepsake_fox:'sec_cleared_fox' };
+      if (fmap[stage.id]) S.flags[fmap[stage.id]] = true;
+    }
     if (res.rating === 'S') ach('rankS'); ach('stage1'); if (res.combo >= 50) ach('combo50'); if (res.combo >= 150) ach('combo150'); if (res.hard) ach('hard1'); if (A.tower >= 10) ach('tower10'); if (A.tower >= 50) ach('tower50'); if (A.tower >= 100) ach('tower100'); if (stage.kind === 'rush') ach('rush'); if (actRoster().length >= 10) ach('hero_all'); if (Object.keys(A.cleared).filter(x => STAGES[x]).length >= 99) ach('allstages'); if (res.hits === 0 && stage.boss) ach('nohitboss');
     dailyProg('clear', 1); if (res.rating === 'S') dailyProg('rankS', 1); if (stage.boss) dailyProg('boss', 1);
   }
   dailyProg('kills', res.kills || 0); dailyProg('ults', res.ults || 0);
-  addGold(out.gold); out.dust = res.dust || 0; if (out.dust) A.dust = (A.dust || 0) + out.dust;
+  addGold(out.gold); out.dust = (res.dust || 0) + (out._secDust || 0); if (out.dust) A.dust = (A.dust || 0) + out.dust;
   for (const id of res.team) { const ups = gainExp(id, out.exp); if (ups.length) out.ups[id] = ups; }
   for (const [id, n] of Object.entries(res.loot || {})) { if (!ITEMS[id]) continue; addItem(id, n); if (ITEMS[id].rar >= 4) ach('forge_god'); out.items.push({ id, n }); }
   for (const [b, n] of Object.entries(res.souls || {})) { A.souls[b] = (A.souls[b] || 0) + n; out.items.push({ soul:b, n }); }

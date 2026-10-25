@@ -1,6 +1,22 @@
 # progress notes (for agent continuity)
 
 
+
+## 信物秘境 + 手感/音乐/美术 · 2026-10-25 12:19 CST
+
+### 里程碑
+1. **信物秘境 8 关**（KEY_SECRETS / hub「信物秘境」）：诅咒残灯、密信、假日、梦/墨/金鳞、相柳泪、狐火穗；需道具+旗帜+区第5关；首次通关额外星砂/经验/星髓/梦屑 + 成就 keysecret1/4/8
+2. **隐藏后日谈** 72_key_quests.txt 8 段 → 画廊后日谈；story 43 files / ~154k 字
+3. **音乐**：Token Plan POST /v1/music_generation → **HTTP 410**（新用户不可用）；保留五声程序化 + theme_*.mp3 免费叠层
+4. **SFX**：新增 forge/lamp/pet/tower/ui_open/ui_close/star；铁坊/烬城/异兽/镇妖塔接入
+5. **系统判定**：异兽/铁坊/烬城/镇妖塔已是完整可玩闭环 → 只抛光 UX，未另起炉灶
+6. **关键美术**：cg/key_secret_realm.webp、cg/key_false_dawn_premium.webp；秘境页用前者作底
+7. **build + boot2**：OK，mode=action errs=[]；无 APK
+
+### 未做/后续
+- 程序化主题可再补区域特色旋律；若日后开放 MiniMax Audio 再试
+- 结局 CG G–O 已齐；可择优重绘个别帧
+
 ## 结局扩展 · 2026-10-25 12:14 CST
 
 - **结局数：15（A–O）** — 原 6 + 同伴专属 G–J、师徒 K、噩梦 L、假日 M、密信 N、相柳 O

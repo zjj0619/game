@@ -1,4 +1,4 @@
-// 43 项成就
+// 46 项成就
 const A=(id,name,desc)=>[id,{name,desc}];
 export const ACHIEVEMENTS = Object.fromEntries([
   A('first_light','初燃','完成序章。'),
@@ -32,4 +32,6 @@ export const ACHIEVEMENTS = Object.fromEntries([
   A('skillmax','登峰造极','将一个技能升到满级。'), A('pet1','驯兽','孵化第一只山海异兽。'), A('pet10','百兽之主','拥有 10 只异兽。'),
   A('daily','日课','完成一天全部的每日委托。'), A('hard1','逆旅','通关一个困难关卡。'), A('city','重建烬城','将任意建筑升到满级。'),
   A('hero_all','众星','集齐全部十名可操作角色。'), A('fish10','钓叟','钓上 10 条鱼。'), A('forge_god','神兵','锻造或获得一件神品装备。'),
+  A('keysecret1','信物共鸣','首次踏破一处信物秘境。'), A('keysecret4','八荒秘径','踏破四处置信物秘境。'),
+  A('keysecret8','信物全开','踏破全部八处置信物秘境。'),
 ]);

@@ -286,3 +286,32 @@
 .screen.hub .hub-hooks{backdrop-filter:blur(6px);background:linear-gradient(180deg,rgba(20,14,8,.55),rgba(8,6,4,.72));border:1px solid rgba(255,200,100,.22);box-shadow:0 8px 28px rgba(0,0,0,.45),inset 0 0 30px rgba(255,180,60,.06)}
 
 .rs-reward{width:100%;max-height:7.5rem;object-fit:cover;border-radius:.4rem;margin-bottom:.55rem;border:1px solid rgba(255,200,100,.3);box-shadow:0 0 20px rgba(255,160,60,.2);animation:rsIn .55s cubic-bezier(.2,1.2,.4,1)}
+
+/* 信物秘境 */
+.sec-intro{padding:.6rem 1rem;opacity:.85;font-size:.85rem;max-width:52rem}
+.sec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(14rem,1fr));gap:.7rem;padding:0 1rem 1.2rem;overflow:auto}
+.sec-c{position:relative;border:1px solid rgba(255,210,140,.25);border-radius:.7rem;overflow:hidden;min-height:9.5rem;background:#12101a;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.sec-c:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.45),0 0 0 1px rgba(255,200,120,.35)}
+.sec-c.lock{opacity:.55;filter:grayscale(.4)}
+.sec-c.done{outline:1px solid rgba(140,220,160,.45)}
+.sec-bg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.35}
+.sec-c>b,.sec-c>small,.sec-c>p,.sec-c>.chip{position:relative;z-index:1;display:block;margin:.35rem .6rem}
+.sec-c>b{margin-top:.7rem;color:#ffe6b0;font-size:1rem}
+.sec-c>p{font-size:.78rem;opacity:.8;line-height:1.35}
+.hub-grid .htile.t-secret{background:linear-gradient(135deg,rgba(80,40,120,.55),rgba(20,16,40,.85));border-color:rgba(200,160,255,.35)}
+.hub-grid .htile.t-secret b{color:#e8d0ff}
+/* 画廊锁定提示 */
+.gcell.locked small{display:block;font-size:.65rem;opacity:.7;margin-top:.25rem;color:#c9b896;max-width:11rem;line-height:1.3}
+/* 异兽/铁坊微抛光 */
+.pt-wrap,.fg-wrap,.ct-wrap{animation:hubIn .35s ease}
+@keyframes hubIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* 招牌钩子条抛光 */
+.hub-hooks{display:flex;gap:.55rem;align-items:center;flex-wrap:wrap;padding:.35rem 1rem .55rem;font-size:.78rem;letter-spacing:.04em}
+.hub-hooks span{padding:.18rem .55rem;border-radius:999px;background:rgba(255,200,120,.08);border:1px solid rgba(255,210,140,.22);color:#f0d9a8}
+.hub-hooks em{margin-left:auto;font-style:normal;color:#9fd6ff;opacity:.9}
+.hub-logo{font-family:serif;letter-spacing:.35em;text-shadow:0 0 18px rgba(255,180,80,.35)}
+.htile{transition:transform .14s ease, box-shadow .14s ease, border-color .14s}
+.htile:active{transform:scale(.98)}
+.adv-map .snode.hidden .sn-c{box-shadow:0 0 12px rgba(180,120,255,.45)}
+.sdetail .sd-wrap{animation:hubIn .28s ease}
