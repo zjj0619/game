@@ -14,12 +14,13 @@ jobs:
     permissions:
       contents: write
     env:
-      ZLJ_KEYSTORE_FILE: ${{ runner.temp }}/zhulongji.jks
       ZLJ_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
       ZLJ_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
       ZLJ_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
     steps:
       - uses: actions/checkout@v4
+      - name: Set signing file path
+        run: echo "ZLJ_KEYSTORE_FILE=$RUNNER_TEMP/zhulongji.jks" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         with:
           node-version: 22
