@@ -69,3 +69,5 @@ d: ice jiao(冰蛟), nightmare mo(梦貘), tubo(土伯), black serpent guard(黑
 - [10:45] git init（/workspace/game，.gitignore 排除 keystore/密钥/node_modules/构建产物/art_raw/大截图），已验证暂存区不含 Key
 - [10:43] ✅ v1.1 检查点 APK：dist/zhulongji-v1.1.apk 22,768,876 字节，versionCode 2/1.1，同证书 273e7cc7…，不含 Key。play2 探索通关机器人仍有挂起问题（待在 v2 测试中修）
 - 2026-10-25 11:07 v2.0: action engine (engine.js), data modules (data/foes/stages/gear/progress), state migrate S.act/city/daily, gear affixes in stats, 3 new heroes, new sfx, 19 achievements. User steering: no APK/testing needed; focus on content+assets.
+- 2026-10-25 11:18 hub.js + hub.css 完成并接入主菜单/山海图；异种敌人 36 张；build OK，headless 启动与进关无报错
+- 2026-10-25 11:31 提交：动画帧(英雄8外观×28帧/敌人与首领16帧/区域异色敌人)、外观系统、技能/状态/装备图标、3名角色立绘
