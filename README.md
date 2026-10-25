@@ -1,64 +1,109 @@
 # 《烛龙纪·长夜山海》
 
-> 烛龙闭目三百年，九州沉入长夜。你是左眼嵌着“烛瞳”碎片的守灯人晏归，提着一盏将熄的灯，走过青丘、东海、常羊、昆仑、混沌、禺谷、幽都，直至归墟——去决定这个世界是重新睁眼，还是永远做梦。
+> 烛龙闭目三百年，九州沉入长夜。你是左眼嵌着「烛瞳」碎片的守灯人晏归，提着一盏将熄的灯，走过青丘、东海、常羊、昆仑、混沌、禺谷、幽都，直至归墟——去决定这个世界是重新睁眼，还是永远做梦。
 
-取材自《山海经》《楚辞》的东方玄幻叙事 RPG：视觉小说式剧情 + 节点探索 + 回合制五行战斗 + 养成。横屏，简体中文，完全离线可玩；可选接入 MiniMax 实时 AI（玩家自填 Key）。
+取材自《山海经》《楚辞》的东方玄幻叙事手游（原创玩法，造梦西游仅作灵感参考）：**视觉小说主线 + 横版动作闯关 + 养成**。横屏 · 简体中文 · 完全离线可玩；可选接入 MiniMax 实时 AI（玩家自填 Key）。
+
+> **不提供预编译 APK。** 请按下方「自己构建 Android APK」在本机打包安装。仓库里若有历史 `dist/*.apk`，仅作参考，不保证与当前源码一致，请以自行构建为准。
 
 ## 目录
 
 | 路径 | 说明 |
 |---|---|
-| `dist/zhulongji-lite.apk` | 精简版安装包（≈20MB，内容完全相同，适合聊天发送）|
-| `dist/lingjing-game.apk` | Android 安装包（release 签名，minSdk 23 / Android 6.0+，横屏） |
-| `dist/web/` | 浏览器版（需通过 HTTP 访问，例如 `npx serve dist/web` 后打开） |
-| `screenshots/` | 手机分辨率（844×390 @2x）实机截图 |
 | `app/` | 源码（Vite + 原生 JS + Capacitor 6） |
-| `app/src/story/*.txt` | 全部剧情脚本（自研 DSL，编译为 `src/gen/story.json`） |
-| `app/src/data/` | 角色、地区、物品、敌人、技能、支线、羁绊、成就数据 |
-| `test/play.mjs` | Playwright 自动通关机器人（真实点击，从标题一路打到结局并截图） |
-| `app/tools/validate.mjs` | 剧情/数据校验器（标签、引用、可达性、六结局可达模拟） |
-| `keystore/` | 签名密钥（**不在 APK 内**，请妥善保存，升级同包名 APK 需要同一把钥匙） |
-| `DESIGN.md` / `PROGRESS.md` | 设计文档 / 开发进度记录 |
+| `app/src/story/*.txt` | 剧情脚本（自研 DSL → `src/gen/story.json`） |
+| `app/src/action/` | 横版动作闯关引擎、关卡、异兽、铁坊、镇妖塔 |
+| `app/public/assets/` | 美术 / 音乐 / 字体（随 Web 包进 APK） |
+| `docs/final_shots/` | 手机视口精选截图（给展示用） |
+| `docs/polish_shots/` | 抛光阶段截图 |
+| `DESIGN.md` / `PROGRESS.md` / `ENDINGS.md` / `CREATIVE_HOOKS.md` / `ASSETS_COUNT.md` | 设计、进度、结局、创意钩子、资产统计 |
+| `ATTRIBUTION.md` | 字体与音乐署名 |
+| `keystore/` | 可选：本机签名用（**勿提交私钥到公开仓库**） |
+| `test/play.mjs` | Playwright 自动通关（可选） |
 
-## 安装
+## 内容规模（当前）
 
-1. 把 `lingjing-game.apk` 传到手机，点击安装（需允许“安装未知来源应用”）。
-2. 打开“烛龙纪”，横屏游玩。存档保存在本机。
+- **主线**：序章 + 12 章 + 终章；**15 个具名结局（A–O）**（见 `ENDINGS.md`）
+- **闯关**：9 大区 × 11 关（含秘境）+ 8 个信物秘境 + 镇妖塔 100 层 + 每日秘境 + 首领连战
+- **招牌玩法**：灯芯半径 · 烛瞳 · 闭目/睁眼叠层 · 灯火共鸣（见 `CREATIVE_HOOKS.md`；前 30 分钟有分关教学）
+- **养成**：伙伴技能/装备/外观 · 山海异兽孵化助战 · 铸灯铁坊 · 烬城建设 · 每日任务
+- **美术**：见 `ASSETS_COUNT.md`（原画 + 程序派生动画/视差/卡面等）
+- **音乐**：15 首可循环主题（mp3 优先，ogg 备选；MIDI+FluidSynth 免费管线，见 `ATTRIBUTION.md`）
+- **AI（可选）**：营火夜谈 / 卜筮 / 梦境异闻 / 画境 / 配音——不填 Key 也可完整通关
 
-## 内容规模
+## 自己构建 Android APK（必读）
 
-- 主线：序章 + 12 章 + 终章（14 个剧情单元），6 个结局（A 长明 / B 长夜 / C 新烛 / D 归墟同眠 / E 狐梦千年 / F 昼夜双瞳·真结局）
-- 16 名立绘角色，6 名可入队同伴，各有 0–100 好感
-- 22 段“羁绊夜话”（营火处，好感与章节解锁）
-- 9 个可回访地区，24 条支线，102 件物品（武器/护甲/饰品/消耗品/材料/关键道具），51 种敌人（含 9 首领），49 组遭遇
-- 五行相生相克回合制战斗：技能、护盾、状态、连携、自动战斗与倍速
-- 炼制、商店、采集、装备、升级；白泽图鉴（人物/异兽/珍物/山川/传说 五类 118 条）；38 项成就；结局画廊与 CG 回想
-- 多存档位 + 自动存档，对话记录、自动播放、快进、文字速度
-- 美术 216 张（标题、立绘、背景、世界地图、敌人、首领、CG、图标）+ 程序化粒子/水墨转场；音乐与音效全部为 WebAudio 程序化生成（无版权问题）
-- 剧情脚本约 2.85 万汉字（另有约 0.7 万字的物品/图鉴/支线文本）
+目标机建议：**横屏约 20:9**（如 OPPO Find X9s Pro）。需本机具备：
 
-## 实时 AI（“灵感”，可选）
+- Node.js 18+、JDK 17、Android SDK（含 `platform-tools`、目标 SDK 与 build-tools）
+- 可选：本仓库 `keystore/` 下的签名配置；没有则用 debug 包试玩
 
-游戏不填 Key 也能完整通关。填写后解锁：
-
-1. **营火夜谈**：与同伴自由对话，他们记得你们一路的抉择；真诚的话会加深羁绊（每次 ±2 以内）。
-2. **白泽卜筮**：每日一签，AI 写签文，并从预设增益池中选择当日增益。
-3. **梦境异闻**：在营火入梦，AI 依据当前地区、同伴、旗标即兴生成一段三选一奇遇，结果映射为奖励/战斗/好感，记入“梦境簿”。
-4. **画境**：描述一幅画面或“我的执灯人画像”，AI 生成插画并收入画廊。
-5. **AI 配音**：为剧情台词/夜谈回复按角色音色实时配音（可选自动配音）。
-
-开启方法：标题或菜单 → **设置 → 灵感（MiniMax AI）** → 打开“启用 AI 功能”→ 填入你自己的 MiniMax Token Plan API Key → “保存 Key” →（可选）“测试连接”/“查询额度”。
-Key 只保存在本机，只发往 MiniMax 官方接口（默认 `https://api.minimax.cn`），不随 APK 分发。使用模型：MiniMax-M3（文本）、image-01（画）、speech-2.8-hd（配音）。
-
-## 从源码构建
+### 1. Web 包
 
 ```bash
 cd app
 npm install
-npm run build          # 编译剧情 + 打包 Web
-npm run validate       # 校验剧情与数据
-npx cap sync android
-cd android && ./gradlew assembleRelease   # 需要 JDK 17 与 Android SDK；签名读取 ../../keystore/keystore.properties
+npm run build          # 编译剧情 + Vite 打包 → app/dist
+# 可选：npm run validate
 ```
 
-自动通关测试：`npx vite preview --port 4173`（在 app/ 下）后运行 `node test/play.mjs`。
+浏览器试玩（无需 APK）：
+
+```bash
+npx vite preview --port 4173
+# 浏览器打开 http://127.0.0.1:4173 ，建议横屏或开发者工具手机横屏尺寸
+```
+
+### 2. Capacitor 同步到 Android 工程
+
+```bash
+# 若尚无 android/ 目录：npx cap add android
+npx cap sync android
+```
+
+### 3. 打 release / debug 包
+
+```bash
+cd android
+./gradlew assembleDebug      # 产出 app/build/outputs/apk/debug/app-debug.apk
+# 或（需配置签名）：
+# ./gradlew assembleRelease  # app/build/outputs/apk/release/app-release.apk
+```
+
+签名（可选）：在 `keystore/keystore.properties` 配置 `storeFile` / `storePassword` / `keyAlias` / `keyPassword`，并由 `android/app/build.gradle` 读取。**切勿把含真实密码的 properties 或 `.jks` 推到公开远端。**
+
+### 4. 安装到手机
+
+1. 打开手机「允许安装未知来源应用」
+2. `adb install -r path/to/app-debug.apk`，或用文件管理器直接点开 APK
+3. 打开「烛龙纪」，**横屏**游玩；存档在本机
+
+minSdk 约 23（Android 6.0+）。横屏方向在 Capacitor / Manifest 中已设为 sensorLandscape。
+
+## 实时 AI（「灵感」，可选）
+
+标题或菜单 → **设置 → 灵感（MiniMax AI）** → 启用 → 填入你自己的 MiniMax API Key → 保存。  
+Key **只存本机**，不随源码分发；不填也能完整通关。
+
+## 招牌操作速查（动作关）
+
+| 触控 | 键 | 作用 |
+|---|---|---|
+| 左摇杆 | WASD/方向 | 移动 / 跳 / 落平台 |
+| 攻 | J | 连击 |
+| 跳 / 冲 | K / L | 二段跳 / 无敌冲刺 |
+| 瞳 | E | 烛瞳（弱点、金线、预警） |
+| 梦 | R | 闭目 ↔ 睁眼叠层 |
+| 灯 | T | 灯火共鸣合击 |
+
+烬城前三关偏教学难度，并会各弹一次招牌说明（灯芯 / 烛瞳 / 闭目）。
+
+## 开发校验
+
+```bash
+cd app && npm run build
+# 无头冒烟（仓库内既有 boot 脚本时）：
+# timeout 90s node ../test/boot2.mjs   # 或 app 内对应脚本
+```
+
+**本仓库维护者不向用户分发 APK；请始终自行 `npm run build` + `gradlew` 打包。**

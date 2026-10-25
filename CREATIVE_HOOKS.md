@@ -60,3 +60,11 @@
 - `cg/key_resonance` — 灯火共鸣合击
 - `cg/key_clearcard` — 通关札
 - `cg/key_hub_sanctuary` — 枢纽夜市圣所
+
+
+## 前三十分钟教学（2026-10-25）
+
+- 烬城第 1–3 关：短波次、无精英、无地形伤害、目标一律清场；敌人数值下调（见 `foes.js` early 系数）。
+- 出战前分关弹窗：`jincheng_1` 灯芯 · `jincheng_2/3` 烛瞳 · `jincheng_3/5` 闭目 · `jincheng_6`/首领 共鸣（`hub.js` `signatureTutorials`，各只一次）。
+- 首通礼物：第 1 关锻造材料 · 第 3 关夜鬼灵魄×3 可孵化 · 第 5 关建设材料与星砂 · 第 10 关提示镇妖塔。
+- 关内 `STAGE_FLAVOR` 字幕强化记忆点；镇妖塔前 5 层教学向。

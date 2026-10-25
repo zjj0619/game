@@ -33,15 +33,22 @@ REGION_ORDER.forEach((rid, ri) => {
     const hidden = i === 10; const r = rng((ri+1)*1000 + i*37 + 11);
     const lv = hidden ? l1 + 2 : Math.round(l0 + (l1 - l0) * i / 9);
     const boss = hidden ? HIDDEN[rid] : i === 9 ? BOSS[rid][1] : i === 4 ? BOSS[rid][0] : null;
-    const nAr = hidden ? 4 : 2 + Math.min(3, Math.floor(i / 3)) + (r() < 0.4 ? 1 : 0);
+    // 前 30 分钟手感：烬城前三关短、少、无精英，教招牌而非压血
+    const early = (rid === 'jincheng' && i < 3);
+    let nAr = hidden ? 4 : 2 + Math.min(3, Math.floor(i / 3)) + (r() < 0.4 ? 1 : 0);
+    if (early) nAr = i === 0 ? 1 : 2;
     const arenas = [];
     for (let a = 0; a < nAr; a++) {
-      const waves = []; const nW = 1 + (a > 0 && r() < 0.5 ? 1 : 0) + (i >= 6 ? 1 : 0);
+      const waves = []; let nW = 1 + (a > 0 && r() < 0.5 ? 1 : 0) + (i >= 6 ? 1 : 0);
+      if (early) nW = 1;
       for (let w = 0; w < nW; w++) {
-        const grp = []; const n = 2 + Math.floor(r() * (2 + i / 3));
+        const grp = []; let n = 2 + Math.floor(r() * (2 + i / 3));
+        if (early) n = i === 0 ? 2 : (2 + (a > 0 ? 1 : 0));
         for (let k = 0; k < n; k++) {
-          const b = pool[Math.floor(r() * Math.min(pool.length, 2 + Math.floor(i / 2)))];
-          const roll = r(); const id = (i >= 3 && roll < 0.08 + i * 0.012) ? b + '_e' : (i >= 5 && roll > 0.9) ? b + '_v' : b;
+          const b = pool[Math.floor(r() * Math.min(pool.length, early ? 2 : 2 + Math.floor(i / 2)))];
+          const roll = r();
+          let id = b;
+          if (!early) id = (i >= 3 && roll < 0.08 + i * 0.012) ? b + '_e' : (i >= 5 && roll > 0.9) ? b + '_v' : b;
           grp.push(id);
         }
         waves.push(grp);
@@ -50,13 +57,16 @@ REGION_ORDER.forEach((rid, ri) => {
       const dreamWaves = waves.map(grp => grp.map(id => {
         const base = id.replace(/_[ev]$/, '');
         const dark = pool.find(x => x !== base && (x.includes('ye') || x.includes('meng') || x.includes('hei') || x.includes('yuan'))) || pool[pool.length - 1];
+        if (early) return r() < 0.5 ? dark : base;
         return r() < 0.55 ? (dark + (r() < 0.3 ? '_e' : '')) : (base + '_e');
       }));
-      arenas.push({ waves, dreamWaves, plat: Math.floor(r() * 6), hazard: i >= 3 && r() < 0.35 ? (['spike','fire','ice','poison'][ri % 4]) : null });
+      arenas.push({ waves, dreamWaves, plat: Math.floor(r() * 6), hazard: (!early && i >= 3 && r() < 0.35) ? (['spike','fire','ice','poison'][ri % 4]) : null });
     }
     const id = `${rid}_${i+1}`;
+    let obj = hidden ? 'clear' : OBJ[i];
+    if (early) obj = 'clear'; // 前三关纯清场，留给招牌教学
     const st = { id, region:rid, ri, idx:i, name: hidden ? '秘境·' + (ABOSSES[boss]?.name||'') : NAMES[rid][i], lv, boss, arenas, hidden,
-      obj: hidden ? 'clear' : OBJ[i], bg: (i % 3 === 2 || hidden) ? ALTBG[rid] : THEME[rid], time: OBJ[i]==='timed' ? 90 + nAr*20 : 0,
+      obj, bg: (i % 3 === 2 || hidden) ? ALTBG[rid] : THEME[rid], time: obj==='timed' ? 90 + nAr*20 : 0,
       kind: hidden ? 'hidden' : boss ? 'boss' : 'normal', story: !hidden && (i === 0 || i === 4 || i === 9) };
     STAGES[id] = st; list.push(id);
   }
@@ -66,10 +76,12 @@ REGION_ORDER.forEach((rid, ri) => {
 const ALLPOOL = Object.values(POOLS).flat();
 const ALLBOSS = Object.keys(ABOSSES);
 export function towerStage(f){
-  const r = rng(f*7919+3); const lv = Math.min(80, 3 + Math.round(f*0.75)); const boss = f % 10 === 0 ? ALLBOSS[(f/10 - 1) % ALLBOSS.length] : null;
+  const r = rng(f*7919+3); const lv = Math.min(80, (f <= 5 ? 2 : 3) + Math.round(f * (f <= 10 ? 0.55 : 0.75))); const boss = f % 10 === 0 ? ALLBOSS[(f/10 - 1) % ALLBOSS.length] : null;
   const ri = Math.min(8, Math.floor(f/12)); const rid = REGION_ORDER[ri];
-  const waves = []; for (let w=0; w<(boss?1:2+(f>30?1:0)); w++){ const g=[]; const n=3+Math.floor(r()*3)+Math.floor(f/25); for (let k=0;k<n;k++){ const b=ALLPOOL[Math.floor(r()*ALLPOOL.length)]; g.push(r()<0.1+f*0.004? b+'_e' : r()<0.15? b+'_v' : b); } waves.push(g); }
-  return { id:'tower_'+f, region:rid, ri, idx:f, name:`镇妖塔·第 ${f} 层`, lv, boss, arenas:[{waves, plat:f%6, hazard: f%7===0?'fire':null}], obj: f%5===3 ? 'timed' : 'clear', time:70, bg: f%2? 'dengta':'buzhou', kind:'tower', floor:f };
+  const waves = []; const nW = boss ? 1 : (f <= 5 ? 1 : 2 + (f > 30 ? 1 : 0));
+  for (let w=0; w<nW; w++){ const g=[]; const n = f <= 5 ? 2 + Math.floor(r()*2) : 3+Math.floor(r()*3)+Math.floor(f/25); for (let k=0;k<n;k++){ const b=ALLPOOL[Math.floor(r()*Math.min(ALLPOOL.length, f<=8?6:ALLPOOL.length))]; g.push(f>8 && r()<0.1+f*0.004? b+'_e' : (f>15 && r()<0.15? b+'_v' : b)); } waves.push(g); }
+  return { id:'tower_'+f, region:rid, ri, idx:f, name:`镇妖塔·第 ${f} 层`, lv, boss, arenas:[{waves, plat:f%6, hazard: f>5 && f%7===0?'fire':null}], obj: f%5===3 && f>5 ? 'timed' : 'clear', time:70, bg: f%2? 'dengta':'buzhou', kind:'tower', floor:f,
+    desc: f===1 ? '塔底第一层：练手。灯芯范围内夜鬼会虚弱。' : (f%10===0 ? '十层一首领。烛瞳可提前看见红圈。' : '') };
 }
 export function rushStage(){ // 首领连战：每段一个首领
   const ids = ['ab_yeguiwang','ab_humeng','ab_duchao','ab_zhanhun','ab_luwu','ab_shuyan','ab_hundun','ab_ba','ab_xiangliu','ab_xuanming'];
@@ -135,12 +147,15 @@ export const KEY_SECRET_IDS = KEY_SECRETS.map(x => x.id);
 
 /** 关卡一句戏文：挂在详情页，突出招牌玩法 */
 export const STAGE_FLAVOR = {
-  jincheng_1: '灯芯初燃。夜鬼怕光——把它们逼进光域。',
-  jincheng_5: '闭目一试：梦层里的平台会换位置。',
+  jincheng_1: '灯芯初燃。夜鬼怕光——把它们逼进你脚下的光域。',
+  jincheng_2: '按「瞳」开烛瞳：弱点浮红点，下一次必暴。',
+  jincheng_3: '按「梦」闭目：切到梦层，掉梦屑与灵魄；再按睁眼。',
+  jincheng_4: '限时关：冲刺穿场即可，不必恋战。',
+  jincheng_5: '护灯：人走远灯会暗。闭目层平台会换位置。',
+  jincheng_6: '试一次共鸣：队伍满共鸣槽后按「灯」合击。',
   qingqiu_1: '狐火与灯芯叠在一起时，共鸣槽涨得飞快。',
   donghai_3: '烛瞳开眼，水下暗线会变成金色。',
   beihai_4: '相柳的影子只在闭目层现身。',
-  youdu_2: '梦中之物灯外近乎隐形——照亮，或用烛瞳。',
   guixu_1: '星海两层：睁眼捡星砂，闭目捡梦屑。',
 };
 for (const [id, d] of Object.entries(STAGE_FLAVOR)) if (STAGES[id]) STAGES[id].desc = d;

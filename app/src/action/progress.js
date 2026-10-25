@@ -13,7 +13,7 @@ export function ensureAct(){
   S.act ??= {}; const A = S.act;
   A.cleared ??= {}; A.skin ??= {}; A.skins ??= {}; A.best ??= {}; A.tower ??= 0; A.team ??= ['yangui']; A.slv ??= {}; A.slots ??= {}; A.spSpent ??= {}; A.spBonus ??= {}; A.dust ??= 0;
   A.pets ??= {}; A.pet ??= null; A.souls ??= {}; A.heroes ??= []; A.hard ??= {}; A.rush ??= 0; A.tut ??= {}; A.runs ??= 0; A.seen ??= {};
-  S.city ??= { lamp:1, forge:1, herb:1, beast:1, market:1, tower:1 };
+  S.city ??= { lamp:1, forge:1, herb:1, beast:1, market:1 };
   S.daily ??= { day:'', done:{}, prog:{}, claimed:{} };
   rollDaily();
   for (const id of A.heroes) if (!S.party[id]) addHero(id);
@@ -44,6 +44,14 @@ export function slotsOf(id){ const un = ACHARS[id].skills.filter(k => skillUnloc
 export function setSlot(id, i, sid){ const sl = slotsOf(id); const j = sl.indexOf(sid); if (j >= 0) sl[j] = sl[i]; sl[i] = sid; S.act.slots[id] = sl.filter(Boolean); }
 // —— 异兽 ——
 export const SOUL_NEED = 3;
+/** 异兽助战一句人话说明，避免图鉴空壳感 */
+export function petTrait(id){
+  const d = AFOES[id]; if (!d) return '击败对应异兽收集灵魄即可孵化。';
+  const byAi = { melee:'近战助攻，贴身补刀。', charger:'冲撞开场，打断敌人读条。', ranged:'远程点射，安全输出。', flyer:'空中支援，追击飞行敌人。', shield:'承伤护卫，降低你受击。', summoner:'召唤小影分摊仇恨。', healer:'战斗中缓慢回血。', bomber:'自爆型爆发，清波快手。' };
+  const byEl = { fire:'火属：灼烧叠层。', water:'水属：减速。', wood:'木属：吸血。', metal:'金属：破甲。', earth:'土属：护盾。', dark:'暗属：梦层更强。', light:'光属：灯芯半径略增。', none:'' };
+  return (byAi[d.ai] || '随队助战。') + ' ' + (byEl[d.el] || '') + ' 升星强化助战威力与队伍加成。';
+}
+
 export const PETS = Object.fromEntries(Object.entries(AFOES).filter(([k, v]) => v.tier === 0).map(([k, v]) => [k, { id:k, name:v.name, img:v.img, el:v.el, ai:v.ai, desc:v.desc }]));
 const PET_BONUS = { fire:'atk', metal:'atk', water:'hp', wood:'mag', earth:'def', light:'mag', dark:'atk', none:'hp' };
 export function petBonus(pd){ const k = PET_BONUS[AFOES[pd.base]?.el] || 'hp'; return { [k]: Math.min(0.3, 0.02 + pd.lv * 0.006 + (pd.star || 0) * 0.02) }; }
@@ -97,9 +105,31 @@ export function applyResult(stage, res){
       if (fmap[stage.id]) S.flags[fmap[stage.id]] = true;
     }
     if (res.rating === 'S') ach('rankS'); ach('stage1'); if (res.combo >= 50) ach('combo50'); if (res.combo >= 150) ach('combo150'); if (res.hard) ach('hard1'); if (A.tower >= 10) ach('tower10'); if (A.tower >= 50) ach('tower50'); if (A.tower >= 100) ach('tower100'); if (stage.kind === 'rush') ach('rush'); if (actRoster().length >= 10) ach('hero_all'); if (Object.keys(A.cleared).filter(x => STAGES[x]).length >= 99) ach('allstages'); if (res.hits === 0 && stage.boss) ach('nohitboss');
+
+    // 前三十分钟「系统变实」：首通送材料/灵魄，让铁坊·异兽·建设立刻可玩
+    if (first && stage.id === 'jincheng_1') {
+      addItem('m_bone', 5); addItem('m_fur', 3); addItem('m_feather', 2);
+      out.items.push({ id:'m_bone', n:5 }, { id:'m_fur', n:3 });
+      out.unlocks.push('铸灯铁坊材料到货 · 可试锻第一件兵器');
+    }
+    if (first && stage.id === 'jincheng_3') {
+      A.souls.yegui = (A.souls.yegui || 0) + 3;
+      out.items.push({ soul:'yegui', n:3 });
+      out.unlocks.push('夜鬼灵魄 ×3 · 去「山海异兽」孵化助战');
+    }
+    if (first && stage.id === 'jincheng_5') {
+      addGold(400); out.gold += 400;
+      addItem('m_ink', 4); addItem('m_bronze', 3);
+      out.unlocks.push('烬城建设开放升级 · 灯塔与铁坊值得点一级');
+    }
+    if (first && stage.id === 'jincheng_10') {
+      out.unlocks.push('试炼·镇妖塔已可挑战（失败可重试）');
+    }
+
     dailyProg('clear', 1); if (res.rating === 'S') dailyProg('rankS', 1); if (stage.boss) dailyProg('boss', 1);
   }
   dailyProg('kills', res.kills || 0); dailyProg('ults', res.ults || 0);
+  if (res.dreamFlips) dailyProg('dream', res.dreamFlips); if (res.eyeMarks) dailyProg('eye', res.eyeMarks);
   addGold(out.gold); out.dust = (res.dust || 0) + (out._secDust || 0); if (out.dust) A.dust = (A.dust || 0) + out.dust;
   for (const id of res.team) { const ups = gainExp(id, out.exp); if (ups.length) out.ups[id] = ups; }
   for (const [id, n] of Object.entries(res.loot || {})) { if (!ITEMS[id]) continue; addItem(id, n); if (ITEMS[id].rar >= 4) ach('forge_god'); out.items.push({ id, n }); }
@@ -111,6 +141,7 @@ export function applyResult(stage, res){
 export const MISSIONS = [
   { id:'clear', name:'闯过 3 个关卡', need:3, gold:300 }, { id:'kills', name:'击败 60 只异兽', need:60, gold:300 },
   { id:'boss', name:'讨伐 1 名首领', need:1, gold:400 }, { id:'ults', name:'变身 3 次', need:3, gold:250 }, { id:'rankS', name:'获得 1 次 S 评价', need:1, gold:500 },
+  { id:'dream', name:'闭目切换 5 次', need:5, gold:280 }, { id:'eye', name:'烛瞳破弱点 8 处', need:8, gold:280 },
 ];
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
 export function rollDaily(){ const t = today(); if (S.daily.day !== t) S.daily = { day:t, done:{}, prog:{}, claimed:{} }; }
@@ -125,7 +156,7 @@ export const CITY = [
   { id:'beast', name:'异兽苑', max:5, desc:lv => `喂养效率 +${(lv - 1) * 20}%`, mats:['m_fur','m_bone'] },
   { id:'market', name:'灯市', max:5, desc:lv => `闯关金钱 +${(lv - 1) * 5}%`, mats:['m_silk','m_scale'] },
 ];
-export const cityCost = lv => ({ gold: 600 * lv * lv, mat: 3 * lv });
+export const cityCost = lv => ({ gold: Math.round((lv <= 1 ? 280 : 520) * lv * lv), mat: Math.max(2, 2 + lv) });
 export function cityUp(id){ const b = CITY.find(x => x.id === id); const lv = S.city[id] || 1; if (lv >= b.max) return '已满级'; const c = cityCost(lv);
   if (S.gold < c.gold) return '星砂不足'; if ((S.inv[b.mats[0]] || 0) < c.mat || (S.inv[b.mats[1]] || 0) < Math.ceil(c.mat * 0.6)) return '材料不足';
   addGold(-c.gold); addItem(b.mats[0], -c.mat); addItem(b.mats[1], -Math.ceil(c.mat * 0.6)); S.city[id] = lv + 1; if (lv + 1 >= b.max) ach('city'); return null; }

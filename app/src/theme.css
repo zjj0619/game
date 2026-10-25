@@ -211,3 +211,8 @@ h3{font-family:var(--title);font-weight:400;font-size:18px;letter-spacing:.12em;
 .pd-main .eslot{min-width:0}
 .title .t-bg2{animation:kenburns 55s ease-in-out infinite alternate-reverse;mix-blend-mode:soft-light;pointer-events:none}
 .t-hook{margin-top:10px;font-size:13px;letter-spacing:.45em;color:#e6d6a0;opacity:.85;text-shadow:0 0 12px rgba(255,180,80,.35)}
+
+/* 异兽助战说明 · 招牌教学 */
+.pt-trait{margin:.35rem 0 .2rem;padding:.45rem .6rem;border-left:2px solid rgba(232,185,92,.55);background:rgba(20,16,10,.35);color:#d9c7a0;font-size:.82rem;line-height:1.45}
+.sig-tut .gd-r{margin:.4rem 0}
+.sig-tut .gd-g{min-width:2rem;font-size:1.1rem}

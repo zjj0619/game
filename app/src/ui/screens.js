@@ -29,7 +29,7 @@ export function titleScreen(){
       btn('回忆 · 画廊', ()=>openGallery(), 'tmenu'),
       btn('成就', ()=>openAchievements(), 'tmenu'),
       btn('设置', ()=>openSettings(), 'tmenu')),
-    h('div.t-foot', {}, `已见证结局 ${meta.endings.length}/6 · v2.0 · 山海经神话原创故事`));
+    h('div.t-foot', {}, `已见证结局 ${meta.endings.length}/15 · v2.0 · 山海经神话原创故事`));
   return root;
 }
 function latestSave(){

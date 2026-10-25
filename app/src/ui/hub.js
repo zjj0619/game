@@ -4,7 +4,7 @@ import { S, save, AUTO, stats, addItem, addGold, expNeed, ach, has } from '../en
 import { CHARS, EL_COLOR } from '../data/characters.js';
 import { ITEMS } from '../data/items.js';
 import { REGIONS, REGION_ORDER } from '../data/regions.js';
-import { h, btn, asset, icon, toast, panel, confirmBox } from '../engine/ui.js';
+import { h, btn, asset, icon, toast, panel, confirmBox, tutorial } from '../engine/ui.js';
 import { playBgm, sfx } from '../engine/audio.js';
 import { setAmbient } from '../engine/fx.js';
 import { ACHARS, ASKILLS, WEAPON, ACTION_ROSTER, SKINS, UNLOCK_LV, ULT_LV, SKILL_MAX, TYPE_NAME, skillPow, skillCd } from '../action/data.js';
@@ -105,6 +105,7 @@ export function stageDetail(stage, opts = {}){
 }
 export async function launch(stage, opts){
   AP.ensureAct(); if (!S.act.tut.controls) { await controlsGuide(); S.act.tut.controls = true; }
+  await signatureTutorials(stage);
   const prev = S.mode; S.mode = 'action'; const res = await runStage(stage, opts); S.mode = 'hub';
   if (res.quit) { opts.back ? opts.back() : show(adventureScreen(stage.region)); return; }
   if (res.retry) return launch(stage, opts);
@@ -112,6 +113,47 @@ export async function launch(stage, opts){
   if (res.win && opts.onWin) opts.onWin();
   const out = AP.applyResult(stage, res); saveNow(); resultScreen(stage, res, out, opts);
 }
+
+/** 前三十分钟招牌教学：灯芯 / 烛瞳 / 闭目，各只弹一次 */
+async function signatureTutorials(stage){
+  const T = S.act.tut; const id = stage.id || '';
+  const tip = async (key, title, rows) => {
+    if (T[key]) return;
+    await new Promise(res => {
+      const p = panel(title, { modal: true, cls: 'guide sig-tut', onclose: () => { T[key] = true; res(); } });
+      p.body.append(
+        h('div.gd', {}, ...rows.map(([g, tt, d]) => h('div.gd-r', {}, h('span.gd-g', {}, g), h('div', {}, h('b', {}, tt), h('p', {}, d))))),
+        h('p.gd-tip', {}, '战斗中也可随时暂停查看操作说明。'),
+        h('div.row.center', {}, btn('明白了，出战', () => p.close(), 'gold'))
+      );
+    });
+  };
+  if ((id === 'jincheng_1' || (stage.region === 'jincheng' && stage.idx === 0)) && !T.lamp) {
+    await tip('lamp', '招牌 · 灯芯', [
+      ['◎', '脚下的光', '你永远带着一圈灯芯光域。夜鬼走进光里会虚弱、变慢，甚至被灼烧。'],
+      ['⚔', '用光作战', '别无脑追砍——把敌人逼进光域，再连击。护灯关里灯本身也要守住。'],
+    ]);
+  }
+  if ((id === 'jincheng_2' || id === 'jincheng_3') && !T.eye) {
+    await tip('eye', '招牌 · 烛瞳', [
+      ['瞳', '看见弱点', '点右下「瞳」（键 E）开启烛瞳：敌人浮出红点弱点，下一击必暴并破甲。'],
+      ['金线', '看见隐藏', '秘匣、秘径与首领大招预警，在烛瞳下会提前显形。耗蓝，可随时关掉。'],
+    ]);
+  }
+  if ((id === 'jincheng_3' || id === 'jincheng_5') && !T.dream) {
+    await tip('dream', '招牌 · 闭目 / 睁眼', [
+      ['梦', '切换叠层', '点「梦」（键 R）在睁眼层与闭目层之间切换。闭目掉梦屑与异兽灵魄，部分平台会换。'],
+      ['S', '两层皆历', '想拿 S 评价：每一层至少清过一波。短 CD，别在红圈里硬切。'],
+    ]);
+  }
+  if ((id === 'jincheng_6' || stage.boss) && !T.reso && (S.act.team || []).length >= 1) {
+    await tip('reso', '招牌 · 灯火共鸣', [
+      ['灯', '同伴合击', '换人积攒共鸣槽，满后点「灯」（键 T）触发合击光爆，并回一点血。'],
+      ['心', '好感加成', '剧情里对同伴好感越高，共鸣字幕与伤害越华丽。'],
+    ]);
+  }
+}
+
 export function controlsGuide(){ return new Promise(res => { const p = panel('操作指南', { modal: true, cls: 'guide', onclose: res });
   const row = (g, t, d) => h('div.gd-r', {}, h('span.gd-g', {}, g), h('div', {}, h('b', {}, t), h('p', {}, d)));
   p.body.append(h('div.gd', {},
@@ -322,6 +364,7 @@ export function petScreen(sel){
   const feedEff = 1 + ((S.city.beast || 1) - 1) * 0.2;
   const detail = h('div.pt-d', {}, h('div.pt-img' + (pd ? '' : '.egg'), {}, h('img', { src: asset(P.img) }), pd ? null : h('img.pt-egg', { src: asset('icon/ex/egg_' + ({ fire: 'bird', water: 'dragon', wood: 'fox', metal: 'beast', earth: 'beast', dark: 'spirit', light: 'spirit' }[P.el] || 'beast')) })), h('div.pt-n', {}, h('b', {}, P.name), elChip(P.el), chip(AI_NAME[P.ai])),
     h('p.pt-desc', {}, P.desc || ''),
+    h('p.pt-trait', {}, AP.petTrait(sel)),
     pd ? h('div.pt-st', {}, h('div', {}, `等级 ${pd.lv}/50`, h('div.hr-exp', {}, h('i', { style: { width: (pd.exp / AP.petExpNeed(pd.lv) * 100) + '%' } }))), h('div', {}, '星级 ' + '★'.repeat(pd.star || 0) + '☆'.repeat(5 - (pd.star || 0))),
       h('div', {}, `助战威力 ${AP.petPower(pd)}`), h('div', {}, '队伍加成 ' + Object.entries(AP.petBonus(pd)).map(([k, v]) => STATN[k] + ' +' + (v * 100).toFixed(1) + '%').join(''))) : h('div.pt-st', {}, `灵魄 ${n}/${AP.SOUL_NEED}：击败该异兽（精英、异种更容易）有几率掉落灵魄。每日「异兽秘境」掉率×4。`),
     h('div.pt-btns', {}, pd ? [
@@ -341,7 +384,7 @@ export function forgeScreen(tab = 'forge', t0){
   if (tab === 'forge') {
     const c = AP.forgeCost(t); const m = AP.TIER_MAT[t];
     body.append(h('div.fg-tiers', {}, ...AP.TIER_NAME.map((n, i) => h('div.fg-t' + (i === t ? '.on' : '') + (i > max ? '.lock' : ''), { onclick: () => { if (i > max) return toast((S.city.forge || 1) * 2 - 1 < i ? '升级「铸灯铁坊」解锁' : '推进闯关区域解锁'); show(forgeScreen(tab, i)); } }, n + '阶'))),
-      h('div.fg-cost', {}, h('img.fg-ham', { src: asset('icon/ex/hammer') }), `每次锻造：✦${c.gold} · ${ITEMS[m].name} ×${c.mat}（持有 ${S.inv[m] || 0}）` + (t >= 4 ? ` · 星髓晶 ×${c.mat2}（持有 ${S.inv.m_starmarrow || 0}）` : ''), h('small', {}, '品质随机：良品 50% · 精品 30% · 珍品 15% · 神品 5%')),
+      h('div.fg-cost', {}, h('img.fg-ham', { src: asset('icon/ex/hammer') }), `每次锻造：✦${c.gold} · ${ITEMS[m].name} ×${c.mat}（持有 ${S.inv[m] || 0}）` + (t >= 4 ? ` · 星髓晶 ×${c.mat2}（持有 ${S.inv.m_starmarrow || 0}）` : ''), h('small', {}, '品质随机：良品 50% · 精品 30% · 珍品 15% · 神品 5%。分解低品装备可回材料；烬城建设「铸灯铁坊」升级可开更高阶。')),
       h('div.fg-grid', {}, ...['weapon', 'armor', 'charm'].flatMap(slot => [0, 1, 2].map(k => { const id = `g_${slot[0]}${t}${k}2`; const it = ITEMS[id];
         return h('div.fg-it', {}, icon(it.icon, 'md'), h('b', {}, it.name.replace(/·.$/, '')), h('small', {}, SLOTN[slot] + ' · ' + itemLine({ ...it, affix: [] })), btn('锻造', () => { sfx('forge'); const r = AP.forge(t, slot, k); if (r.err) return toast(r.err); sfx('fire'); saveNow(); forgeReveal(r.id, () => show(forgeScreen(tab, t))); }, 'sm')); }))));
   } else {
@@ -401,7 +444,8 @@ export function trialScreen(tab = 'tower'){
   const body = h('div.tr-body'); const back = () => show(trialScreen(tab)); const lv = Math.max(...AP.actRoster().map(id => S.party[id].lv));
   if (tab === 'tower') { const f = S.act.tower + 1; const floors = [];
     for (let i = Math.min(100, f + 3); i >= Math.max(1, f - 2); i--) { const s = towerStage(i); floors.push(h('div.tw-f' + (i < f ? '.done' : i === f ? '.cur' : '.lock') + (s.boss ? '.boss' : ''), {}, h('b', {}, s.name), h('small', {}, `Lv ${s.lv}` + (s.boss ? ' · 首领 ' + ABOSSES[s.boss].name : '') + (s.obj === 'timed' ? ' · 限时' : '')), i === f ? btn('挑战', () => { sfx('tower'); stageDetail(s, { back }); }, 'gold sm') : i < f ? chip('已通过') : null)); }
-    body.append(h('div.tw-wrap', {}, h('div.tw-l', {}, h('b', {}, `最高 第 ${S.act.tower} 层`), h('p', {}, '镇妖塔共一百层，层层递进。每十层镇守一名首领。每层只能向上，失败可无限重试。'), h('p', {}, '奖励：首次登顶每层获得星砂与经验，首领层必掉装备。')), h('div.tw-list', {}, ...floors))); }
+    if (!S.act.tut.tower) { S.act.tut.tower = true; toast('镇妖塔：失败可无限重试，适合练招牌与刷材料'); }
+    body.append(h('div.tw-wrap', {}, h('div.tw-l', {}, h('b', {}, `最高 第 ${S.act.tower} 层`), h('p', {}, '镇妖塔共一百层，层层递进。每十层镇守一名首领。每层只能向上，失败可无限重试。前五层偏教学难度。'), h('p', {}, '奖励：首次登顶每层获得星砂与经验，首领层必掉装备。通关外观「塔影袍」需爬到指定层。')), h('div.tw-list', {}, ...floors))); }
   if (tab === 'daily') { body.append(h('div.dl-grid', {}, ...DAILY.map(d => { const used = S.daily.done[d.id] || 0; const left = AP.DAILY_TRIES - used; const s = dailyStage(d, lv);
     return h('div.dl-c' + (left <= 0 ? '.used' : ''), { style: { backgroundImage: `linear-gradient(180deg,rgba(10,10,18,.2),rgba(10,10,18,.92)),url(${asset('stagecard/' + d.id)})` } }, h('b', {}, d.name), h('p', {}, d.desc), h('small', {}, `Lv ${s.lv} · 今日剩余 ${left}/${AP.DAILY_TRIES}`),
       btn(left > 0 ? '进入' : '明日再来', () => { if (left <= 0) return; stageDetail(s, { back, onWin: () => { S.daily.done[d.id] = used + 1; } }); }, left > 0 ? 'gold sm' : 'sm disabled')); }))); }

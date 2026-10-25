@@ -1,5 +1,24 @@
 # progress notes (for agent continuity)
 
+## 完整向实质 Pass · 2026-10-25 ~12:40 Asia/Shanghai
+
+### 做了什么
+1. **Stub 审计**：枢纽异兽/铁坊/烬城/试炼/信物秘境均为完整闭环；去掉 `S.city.tower` 死字段；无「敬请期待」空按钮。
+2. **前 30 分钟手感**：烬城前三关短波次、无精英/无 hazard、目标清场；`foeStats` 低等级系数；招牌教程弹窗（灯芯/烛瞳/闭目/共鸣）；`STAGE_FLAVOR` 关内字幕。
+3. **系统变实**：首通送锻材/夜鬼灵魄×3/建设材料；异兽 `petTrait` 助战说明；铁坊/镇妖塔文案；烬城升级早期更便宜；每日任务 +闭目/烛瞳。
+4. **README**：明确 **不提供 APK**，完整自建 Web → cap sync → gradlew 步骤。
+5. **文档**：ASSETS_COUNT 音乐 15 主题；CREATIVE_HOOKS 教学段；ENDINGS 保持 15；本段 PROGRESS。
+6. **截图**：`docs/final_shots/` 手机视口 844×390@2x ×6：01_title / 02_hub / 03_adventure / 04_secret / 05_pets / 06_clearcard。
+7. **杂项**：标题脚注结局数 0/6 → **/15**。
+
+### 校验
+- `npm run build` + boot 冒烟；**无 APK**
+
+### 诚实缺口（见最终汇报）
+- 中后期关卡仍偏程序生成密度；部分动画为网格形变非手绘；AI 功能需玩家自填 Key；无官方上架包。
+
+---
+
 ## 免费音乐管线 + 混音接线 · 2026-10-25 ~12:30 Asia/Shanghai
 
 ### 音乐（MiniMax 禁止重试）

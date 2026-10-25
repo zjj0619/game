@@ -11,6 +11,7 @@ import { rollGear, RARITY } from './gear.js';
 import { actStats, slotsOf, skillLv, petPower, ultOk } from './progress.js';
 import { ULT_LV } from './data.js';
 import * as HK from './hooks.js';
+import { STAGE_FLAVOR } from './stages.js';
 
 const VH = 270, GY = 232;
 const GRAV = 1500, T = () => window.__ZLJ_TEST || {};
@@ -643,6 +644,7 @@ export function runStage(stage, opts = {}){
     window.__act = { st, P, foes, roster, arenas, stage, get fps(){ return fpsAvg; }, win: () => { for (const f of foes) { f.hp = 0; kill(f); } for (const a of arenas) { a.started = true; a.done = true; a.wave = a.waves.length; } st.over = true; finish(true); }, fail: () => fail('测试失败') };
     playBgm(stage.boss ? 'battle' : 'battle'); refreshHud(true);
     say(stage.name, 1.6); if (stage.obj === 'timed') say(`限时 ${stage.time} 秒内通关！`, 2);
+    if (STAGE_FLAVOR[stage.id]) setTimeout(() => { if (!st.over) say(STAGE_FLAVOR[stage.id], 2.8); }, 1700);
     raf = requestAnimationFrame(loop);
   });
 }

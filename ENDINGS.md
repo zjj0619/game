@@ -46,3 +46,8 @@
 画廊「夜札残页」与营火「未点名的座位」在对应 flag/item 满足后点亮；否则只显示剪影与模糊提示。
 
 详见 `app/src/story/70_hidden_web.txt`、`71_branch_choices.txt`、`13_finale.txt`。
+
+
+## 关联玩法
+
+- 8 个信物秘境（`KEY_SECRETS`）与结局道具/旗帜互通；通关后写 `sec_cleared_*` 旗，画廊后日谈见 `72_key_quests.txt`。
