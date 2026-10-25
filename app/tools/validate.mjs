@@ -1,5 +1,6 @@
 // 数据与剧情校验 + 随机/策略模拟通关（node tools/validate.mjs）
 import { nextBond, BONDS } from '../src/data/bonds.js';
+import { assetPath } from '../src/engine/assets.js';
 import fs from 'fs'; import path from 'path';
 const root = path.resolve('.');
 const story = JSON.parse(fs.readFileSync('src/gen/story.json','utf8'));
@@ -13,12 +14,13 @@ const { LORE } = await imp('lore.js');
 const { ACHIEVEMENTS } = await imp('achievements.js');
 const audioSrc = fs.readFileSync('src/engine/audio.js','utf8');
 const THEMES = new Set([...audioSrc.matchAll(/^\s{2}(\w+):\{root/gm)].map(m=>m[1]));
-const exists = p => fs.existsSync(path.join('public/assets', p+'.webp'));
+for(const match of audioSrc.matchAll(/(?:^|[,\n])\s*(\w+):\s*M\(/gm)) THEMES.add(match[1]);
+const exists = p => fs.existsSync(path.join('public/assets', assetPath(p)+'.webp'));
 const errs = [], warns = [];
 const E = (at,msg)=>errs.push(`${at||''} ${msg}`);
 const { cmds, labels } = story;
 const PLAYABLE = ['yangui','baiji','xianwei','qi','ali','kualing','fuli'];
-const FX = new Set(['embers','snow','stars','petals','blue','none']);
+const FX = new Set(['embers','snow','stars','petals','blue','none','mist','dust']);
 function chkEff(e, at){
   let m;
   if ((m=e.match(/^aff:(\w+)[+-]\d+$/))) { if (!PLAYABLE.includes(m[1])) warns.push(at+' 好感对象非同伴 '+m[1]); return; }

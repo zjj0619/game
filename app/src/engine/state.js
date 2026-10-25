@@ -2,6 +2,7 @@ import { TALENTS, SETS, setOf, AFFIXES } from '../data/progress.js';
 import { CHARS, SKILLS, COMPANIONS } from '../data/characters.js';
 import { ITEMS } from '../data/items.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
+import { readObject, safeWrite, validatedSave } from './storage.js';
 
 export const SAVE_SLOTS = 6;
 const KEY = 'zlj_save_'; const META = 'zlj_meta'; const SET = 'zlj_settings';
@@ -9,10 +10,13 @@ const KEY = 'zlj_save_'; const META = 'zlj_meta'; const SET = 'zlj_settings';
 export const settings = Object.assign({
   master:0.8, music:0.6, sfx:0.8, voice:0.9, textSpeed:40, autoDelay:1600, fx:1,
   aiEnabled:true, haptics:true, aiVoice:false, apiKey:'', aiBase:'https://api.minimax.cn', battleSpeed:1, autoBattle:false,
-}, JSON.parse(localStorage.getItem(SET) || '{}'));
-export function saveSettings(){ localStorage.setItem(SET, JSON.stringify(settings)); }
+  autoUpdate:true, combatLayout:'compact', controlScale:1, controlOpacity:0.85, leftHanded:false, shakeIntensity:0.6, flashes:false,
+}, Object.fromEntries(Object.entries(readObject(SET)).filter(([key]) => !['__proto__','constructor','prototype'].includes(key))));
+export function saveSettings(){ return safeWrite(SET, settings); }
 
-export const meta = Object.assign({ endings:[], cgs:[], ach:{}, readLines:{} }, JSON.parse(localStorage.getItem(META)||'{}'));
+export const meta = readObject(META, { endings:[], cgs:[], ach:{}, readLines:{} });
+if (!Array.isArray(meta.endings)) meta.endings=[]; if (!Array.isArray(meta.cgs)) meta.cgs=[];
+if (!meta.ach || typeof meta.ach!=='object') meta.ach={}; if (!meta.readLines || typeof meta.readLines!=='object') meta.readLines={};
 export function saveMeta(){ try { localStorage.setItem(META, JSON.stringify(meta)); } catch(e){} }
 
 export let S = null;
@@ -32,6 +36,12 @@ export function newGame(){
   return S;
 }
 export function migrate(s){ if (!s) return s; s.lamp ??= 1; s.refine ??= {}; s.chests ??= {}; s.puzzles ??= {}; s.pos ??= {}; for (const m of Object.keys(s.party||{})) { s.party[m].talents ??= []; s.party[m].equip ??= {weapon:null,armor:null,charm:null}; s.party[m].perm ??= {}; }
+  for (const key of ['flags','vars','inv','quests','qsnap','kills','codex','gather','visited','shown']) if (!s[key] || typeof s[key]!=='object' || Array.isArray(s[key])) s[key]={};
+  s.members = Array.isArray(s.members) ? s.members.filter(id=>s.party[id]) : ['yangui'];
+  s.formation = Array.isArray(s.formation) ? s.formation.filter(id=>s.party[id]).slice(0,4) : s.members.slice(0,4);
+  s.lost = Array.isArray(s.lost) ? s.lost : []; s.dreams = Array.isArray(s.dreams) ? s.dreams : [];
+  s.aff ??= {}; for (const id of [...COMPANIONS,'fuli','xuanming']) s.aff[id] = Math.max(0,Math.min(100,Number.isFinite(s.aff[id])?s.aff[id]:(id==='fuli'?20:id==='xuanming'?0:30)));
+  s.hope ??= 50; s.gold ??= 100; s.playtime ??= 0; s.pc ??= 0; s.mode ??= 'vn'; s.region ??= 'jincheng';
   s.act ??= {}; const A = s.act; A.cleared ??= {}; A.best ??= {}; A.tower ??= 0; A.team ??= ['yangui']; A.slv ??= {}; A.slots ??= {}; A.spSpent ??= {}; A.spBonus ??= {}; A.pets ??= {}; A.pet ??= null; A.souls ??= {}; A.heroes ??= []; A.hard ??= {}; A.rush ??= 0; A.tut ??= {}; A.runs ??= 0; A.seen ??= {};
   A.team = A.team.filter(id => s.party?.[id]); if (!A.team.length) A.team = ['yangui'];
   s.city ??= { lamp:1, forge:1, herb:1, beast:1, market:1, tower:1 }; s.daily ??= { day:'', done:{}, prog:{}, claimed:{} }; s.stats ??= {}; s.ver = Math.max(s.ver||0, 3);
@@ -167,9 +177,26 @@ export function applyEffects(list, log){
 }
 
 // —— 存档 ——
-export function slotInfo(i){ try { const d=JSON.parse(localStorage.getItem(KEY+i)||'null'); return d && {time:d.time, chapter:d.s.chapter, lv:d.s.party.yangui.lv, playtime:d.s.playtime, region:d.s.region}; } catch(e){ return null; } }
-export function save(i){ const d={time:Date.now(), s:S}; localStorage.setItem(KEY+i, JSON.stringify(d)); }
-export function load(i){ const d=JSON.parse(localStorage.getItem(KEY+i)||'null'); if (!d) return false; S=migrate(d.s); return true; }
+export function slotInfo(i){
+  for (const key of [KEY+i,KEY+i+'_backup']) {
+    try { const d=JSON.parse(localStorage.getItem(key)||'null'); if(!d)continue; validatedSave(d.s,CHARS); return {time:d.time,chapter:d.s.chapter,lv:d.s.party.yangui.lv,playtime:d.s.playtime,region:d.s.region}; }
+    catch {}
+  }
+  return null;
+}
+export function save(i){
+  if (!S) return;
+  const key=KEY+i, prior=localStorage.getItem(key), next=JSON.stringify({time:Date.now(),s:S});
+  if (prior) { try { const old=JSON.parse(prior); validatedSave(old.s,CHARS); localStorage.setItem(key+'_backup',prior); } catch {} }
+  localStorage.setItem(key,next);
+}
+export function load(i){
+  for (const key of [KEY+i,KEY+i+'_backup']) {
+    try { const d=JSON.parse(localStorage.getItem(key)||'null'); if (!d) continue; const restored=migrate(validatedSave(d.s,CHARS)); S=restored; return true; }
+    catch { /* Try the previous valid save without changing current progress. */ }
+  }
+  return false;
+}
 export function exportCode(){ return btoa(unescape(encodeURIComponent(JSON.stringify(S)))); }
-export function importCode(c){ const s=JSON.parse(decodeURIComponent(escape(atob(c.trim())))); if (!s.party||!s.party.yangui) throw new Error('存档码无效'); S=migrate(s); }
+export function importCode(c){ if (c.length>5000000) throw new Error('存档码过长'); const s=JSON.parse(decodeURIComponent(escape(atob(c.trim())))); S=migrate(validatedSave(s,CHARS)); }
 export const AUTO = 'auto';

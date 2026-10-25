@@ -1,13 +1,21 @@
 {
   "name": "lingjing-game",
   "private": true,
-  "version": "1.1.0",
+  "version": "2.1.0",
   "type": "module",
   "scripts": {
     "story": "node tools/compile_story.mjs",
     "dev": "npm run story && vite",
-    "build": "npm run story && vite build",
-    "validate": "node tools/validate.mjs"
+    "build": "npm run version:check && npm run story && vite build",
+    "validate": "node tools/validate.mjs",
+    "test": "node --test tools/tests/*.test.mjs",
+    "version:check": "node tools/release.mjs check",
+    "release:bump": "node tools/release.mjs bump",
+    "github:setup": "node tools/setup-github.mjs",
+    "signing:init": "node tools/init-signing.mjs",
+    "android:debug": "npm run build && cap sync android && cd android && ./gradlew assembleDebug",
+    "android:release": "npm run build && cap sync android && cd android && ./gradlew assembleRelease",
+    "preview": "vite preview --host 127.0.0.1 --port 4173"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.2.2",

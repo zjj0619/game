@@ -12,11 +12,19 @@ import { actStats, slotsOf, skillLv, petPower, ultOk } from './progress.js';
 import { ULT_LV } from './data.js';
 import * as HK from './hooks.js';
 import { STAGE_FLAVOR } from './stages.js';
+import { StageClock, telegraphDuration, setFoeLayer } from './rules.js';
 
 const VH = 270, GY = 232;
 const GRAV = 1500, T = () => window.__ZLJ_TEST || {};
-const imgC = {};
-function img(p){ if (!imgC[p]) { const i = new Image(); i.src = asset(p); imgC[p] = i; } return imgC[p]; }
+const imgC = new Map();
+function img(p){
+  let image = imgC.get(p);
+  if (!image) { image = new Image(); image.src = asset(p); }
+  else imgC.delete(p);
+  imgC.set(p,image);
+  if (imgC.size > 512) imgC.delete(imgC.keys().next().value);
+  return image;
+}
 const ok = i => i && i.complete && i.naturalWidth > 0;
 const EL_SET = { fire:1, water:1, wood:1, metal:1, earth:1, dark:1, light:1 };
 // 由颜色推断五行配色（色相分桶）
@@ -38,7 +46,8 @@ export function runStage(stage, opts = {}){
   return new Promise(resolve => {
     const team = (opts.team && opts.team.length ? opts.team : [S.act?.team?.[0] || 'yangui']).filter(id => S.party[id]);
     const hard = !!opts.hard; const lvAdj = hard ? 8 : 0;
-    for (const t of ['slash','burst','ring','spark','smoke','rune','pillar','shock','bolt','swirl','heal','shards']) for (const e of Object.keys(EL_SET)) for (let i = 0; i < 12; i++) img('vfx/' + t + '_' + e + '/' + i);
+    const clock = new StageClock();
+    const schedule = (fn, ms, unscaled = false) => clock.schedule(fn, ms, unscaled);
     for (const id of team) preloadAnim('p_' + id + '_s' + (S.act?.skin?.[id] || 0), true);
     const cv = h('canvas.act-cv'); const g = cv.getContext('2d');
     let W = 0, H = 0, U = 1, dpr = 1, VW = 600;
@@ -47,11 +56,15 @@ export function runStage(stage, opts = {}){
     if (stage.boss && !stage.rush && !stage._handBossInArenas) arenas.push({ waves: [], boss: stage.boss, plat: 0, i: arenas.length, done: false, started: false, wave: 0 });
     function layoutArenas(){ let x = 0; for (const a of arenas) { a.x0 = x + 160; a.x1 = a.x0 + W_AR();
       const raw = (a.platsLayout && a.platsLayout.length) ? a.platsLayout : PLATS[a.boss ? 0 : (a.plat || 0) % PLATS.length];
-      a.plats = raw.map(([fx, y, w]) => ({ x: a.x0 + fx * W_AR() - w / 2, y, w })); x = a.x1; } }
+      a._platsBase = raw.map(([fx, y, w]) => ({ x: a.x0 + fx * W_AR() - w / 2, y, w }));
+      const dreamRaw = a.dreamPlatsLayout || raw.map(([fx,y,w],i)=>[Math.min(0.92,Math.max(0.08,1-fx)),Math.max(95,y-(i%2?0:25)),w]);
+      a._dreamPlats = dreamRaw.map(([fx,y,w])=>({x:a.x0+fx*W_AR()-w/2,y,w,dream:true}));
+      a.plats = (st.dream ? a._dreamPlats : a._platsBase).map(p=>({...p})); x = a.x1; } }
     let worldEnd = 0;
     const st = { t: 0, hitstop: 0, shake: 0, combo: 0, comboT: 0, maxCombo: 0, hitsTaken: 0, kills: 0, over: false, paused: false, cur: -1, locked: false, cam: 0,
       gold: 0, loot: {}, souls: {}, exp: 0, slow: 1, lamp: null, bossBar: null, potions: 3 + Math.max(0, (S.city?.herb || 1) - 1), timeLeft: stage.time || 0,
-      dream: 0, dreamCd: 0, eyeOn: false, eyeCd: 0, eyeT: 0, eyeMarks: 0, reso: 0, resoReady: false, resoUsed: 0, dreamSeen: false, awakeSeen: true, dreamFlips: 0, secrets: [], secretChests: 0, secretGates: 0, secretPaths: 0, dust: 0 };
+      dream: 0, dreamCd: 0, eyeOn: false, eyeCd: 0, eyeT: 0, eyeMarks: 0, reso: 0, resoReady: false, resoUsed: 0, dreamSeen: false, awakeSeen: true, dreamFlips: 0, secrets: [], secretChests: 0, secretGates: 0, secretPaths: 0, dust: 0,
+      layerClears:[0,0], perfectDodges:0, dodgeRewardAt:-10, relayWindow:0, relayCd:0 };
     const foes = [], shots = [], fx = [], zones = [], pickups = [], nums = [], allies = [], tele = [];
     const mk = id => { const s = actStats(id); return { id, s, hp: s.hp, mp: s.mp, rage: 0, cds: {}, alive: true }; };
     const roster = team.map(mk);
@@ -67,7 +80,7 @@ export function runStage(stage, opts = {}){
     const hud = {};
     const skBtn = (i) => h('button.ak-sk', { onpointerdown: e => { e.preventDefault(); e.stopPropagation(); useSkill(i); } }, h('img.ak-ic'), h('i.ak-cd'), h('b.ak-mp'));
     hud.sk = [0,1,2,3,4].map(skBtn);
-    const btnA = (cls, glyph, label, fn, hold) => h('button.ak-btn.' + cls, { onpointerdown: e => { e.preventDefault(); e.stopPropagation(); fn(true); }, onpointerup: () => { hold && fn(false); }, onpointerleave: () => { hold && fn(false); } }, h('span.g', {}, glyph), h('span.t', {}, label));
+    const btnA = (cls, glyph, label, fn, hold) => h('button.ak-btn.' + cls, { onpointerdown: e => { e.preventDefault(); e.stopPropagation(); fn(true); }, onpointerup: () => { hold && fn(false); }, onpointercancel: () => { hold && fn(false); }, onpointerleave: () => { hold && fn(false); } }, h('span.g', {}, glyph), h('span.t', {}, label));
     const keys = { l: false, r: false, u: false, d: false, atk: false };
     hud.atk = btnA('ak-atk', '⚔', '攻击', v => { keys.atk = v; if (v) attack(); }, true);
     hud.jump = btnA('ak-jump', '⤒', '跳跃', v => v && jump());
@@ -91,6 +104,10 @@ export function runStage(stage, opts = {}){
       h('div.ak-pad', {}, hud.atk, hud.jump, hud.dash, ...hud.sk, hud.ult, hud.swap, hud.pot, hud.eye, hud.dream, hud.reso),
       hud.goals, h('div.ak-resoBar', {}, h('b', {}, '共鸣'), h('div.ak-rb', {}, hud.resoBar)), h('div.ak-flash'), h('div.ak-phase'), h('div.ak-mile'));
     document.querySelector('#app').append(root);
+    root.classList.toggle('compact', settings.combatLayout !== 'full');
+    root.classList.toggle('left-handed', !!settings.leftHanded);
+    root.style.setProperty('--control-scale', Math.max(0.75,Math.min(1.2,+settings.controlScale||1)));
+    root.style.setProperty('--control-opacity', Math.max(0.35,Math.min(1,+settings.controlOpacity||0.85)));
     let bgImg = img('bg/' + (stage.bg || 'jincheng')); let ridge = null;
     // 视差层（tools/gen/px.py）：远景 / 中景 / 前景，按区域与关卡序号取图
     const pxKey = 'px/' + (stage.region || 'jincheng') + '_' + (((stage.idx ?? 0) % 11 + 11) % 11 + 1); const GRD = img('ground/' + (stage.region || 'jincheng') + '_' + (((stage.idx ?? 0) % 8 + 8) % 8)); const PX = { far: img(pxKey + '_far'), mid: img(pxKey + '_mid'), near: img(pxKey + '_near') };
@@ -129,10 +146,10 @@ export function runStage(stage, opts = {}){
     function crack(x, y, w = 80, life = 0.9){ if (fxLv() < 2) return; fx.push({ k: 'crack', x, y: y || GY, w, t: 0, life }); }
     function speedLines(face, n = 6){ if (fxLv() < 2) return; n = fxMul(n); for (let i = 0; i < n; i++) fx.push({ k: 'speed', x: P.x - face * rnd(10, 70), y: P.y - rnd(8, P.h), face, len: rnd(28, 70), t: 0, life: 0.18 + rnd(0, 0.12), col: 'rgba(255,240,200,.55)' }); }
     function sparks(x, y, col, n = 10, face = 1){ n = fxMul(n); for (let i = 0; i < n; i++) { if (fx.length > fxCap()) fx.shift(); const a = face > 0 ? rnd(-1.1, 1.1) : rnd(Math.PI - 1.1, Math.PI + 1.1); const s = rnd(140, 420); fx.push({ k: 'p', x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - rnd(40, 160), t: 0, life: 0.25 + rnd(0, 0.25), col: i % 3 === 0 ? '#ffffff' : col, sz: rnd(1.5, 3.8) }); } }
-    function flashHit(heavy){ const fl = root.querySelector('.ak-flash'); if (!fl) return; fl.classList.remove('on', 'crit', 'kill'); void fl.offsetWidth; if (heavy === 'crit') fl.classList.add('on', 'crit'); else if (heavy === 'kill') fl.classList.add('on', 'kill'); else fl.classList.add('on'); }
+    function flashHit(heavy){ if (!settings.flashes) return; const fl = root.querySelector('.ak-flash'); if (!fl) return; fl.classList.remove('on', 'crit', 'kill'); void fl.offsetWidth; if (heavy === 'crit') fl.classList.add('on', 'crit'); else if (heavy === 'kill') fl.classList.add('on', 'kill'); else fl.classList.add('on'); }
     function comboMileFx(v){ if (fxLv() <= 0) return; const el = root.querySelector('.ak-mile'); if (el) { el.textContent = v + ' HIT'; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); }
       if (fxLv() >= 2) sparks(P.x + P.face * 20, P.y - P.h / 2, '#ffe08a', 6, P.face); }
-    function shake(v){ st.shake = Math.max(st.shake, v); }
+    function shake(v){ st.shake = Math.max(st.shake, v * Math.max(0, Math.min(1, Number(settings.shakeIntensity) || 0))); }
     const aliveFoes = () => foes.filter(f => !f.dead);
     function nearest(x, y, maxD = 1e9){ let b = null, bd = maxD; for (const f of foes) { if (f.dead) continue; const d = Math.hypot(f.x - x, (f.y - f.h/2) - y); if (d < bd) { bd = d; b = f; } } return b; }
     // —— 伤害：玩家 → 敌人 ——
@@ -148,17 +165,19 @@ export function runStage(stage, opts = {}){
       if (f.def_.boss) base *= 1 + (s.bossDmg || 0); if (f.def_.tier === 1) base *= 1 + (s.eliteDmg || 0);
       if (f.brk > 0) base *= 1.3;
       if (f.def_.ai === 'shield' && !o.skill && !o.launch && Math.sign(P.x - f.x) === f.face && f.guard > 0 && f.state !== 'hurt' && !f.air) { f.guard -= 1; num(f.x, f.y - f.h, '格挡', 'blk'); part(f.x + f.face * 14, f.y - f.h / 2, '#ffffff', 6, 120, 0.25, 2); sfx('hit'); if (f.guard <= 0) { f.stun = 1.4; num(f.x, f.y - f.h - 14, '破盾!', 'crit'); } return 0; }
-      let crit = Math.random() < (s.crit || 0.06) + (ps.critPct || 0) + (ps.critBurn && f.burn > 0 ? ps.critBurn : 0); if (HK.consumeWeak(f)) { crit = true; st.eyeMarks = (st.eyeMarks||0)+1; }
+      let crit = Math.random() < (s.crit || 0.06) + (ps.critPct || 0) + (ps.critBurn && f.burn > 0 ? ps.critBurn : 0); if (HK.consumeWeak(f)) { crit = true; st.eyeMarks = (st.eyeMarks||0)+1; st.relayWindow=2; HK.gainReso(hk(),12); }
       let d = base * 100 / (100 + f.def * 2 * HK.lampDefMul(f)) * rnd(0.92, 1.08); if (crit) d *= 1.6 + (s.critDmg || 0);
       d = Math.max(1, Math.round(d));
       f.hp -= d; f.hitT = 0.12; st.combo++; st.comboT = 2.2; st.maxCombo = Math.max(st.maxCombo, st.combo);
+      if (st.t > (st.nextResoHit || 0)) { HK.gainReso(hk(),1.5); st.nextResoHit=st.t+0.2; }
+      if (o.heavy || o.launch) st.relayWindow=2;
       c.rage = Math.min(100, c.rage + (o.skill ? 1.5 : 3) * (1 + (s.rageGain || 0)));
       if (ps.mpOnHit) c.mp = Math.min(c.s.mp, c.mp + ps.mpOnHit);
       const ls = buffV('lifesteal') + (s.lifesteal || 0); if (ls) heal(d * ls, true);
       { let nk = crit ? 'crit' : o.skill ? 'sk' : (o.el === 'fire' || o.col === '#ff9a4a' || o.col === '#ff7a3a') ? 'fire' : (o.el === 'ice') ? 'ice' : (o.brk || o.lamp) ? 'brk' : 'atk';
       num(f.x + rnd(-8, 8), f.y - f.h - 6, d, nk); }
       part(f.x, f.y - f.h / 2, o.col || '#ffd890', crit ? 10 : 5, crit ? 220 : 140, 0.28, crit ? 2.6 : 2); sparks(f.x + (o.dir || 1) * 8, f.y - f.h / 2, o.col || '#ffd890', crit ? 8 : 4, o.dir || Math.sign(f.x - P.x) || 1); if (fxLv() >= 2) vfx(crit ? 'shards' : 'spark', colEl(o.col || '#ffd890'), f.x, f.y - f.h / 2, crit ? 64 : 40, { life: 0.22, rot: rnd(0, 6) }); if (crit) { shock(f.x, f.y - f.h / 2, 36, '#ffd24a', 0.2); if (fxLv() >= 2) flashHit('crit'); } else if (o.heavy) { shock(f.x, f.y - f.h * 0.4, 24, o.col || '#ffd890', 0.16); }
-      st.hitstop = Math.max(st.hitstop, crit ? 0.1 : o.heavy ? 0.09 : 0.055); if (crit || o.heavy) shake(crit ? 6 : 4.5); else if (st.combo >= 10 && st.combo % 5 === 0) shake(2);
+      st.hitstop = Math.max(st.hitstop, crit ? 0.065 : o.heavy ? 0.08 : 0.025); if (crit || o.heavy) shake(crit ? 6 : 4.5); else if (st.combo >= 10 && st.combo % 5 === 0) shake(2);
       if (o.st) { const [k2, ch] = o.st; if (Math.random() < ch) applyStatus(f, k2, s); }
       if (P.ultT > 0 && ultDef().freezeAll && Math.random() < 0.15) applyStatus(f, 'freeze', s);
       const armor = f.def_.boss ? (f.armorT > 0 || !!f.pat) : (f.def_.tier === 1 && f.state === 'atk');
@@ -195,6 +214,9 @@ export function runStage(stage, opts = {}){
     }
     function kill(f){
       if (f.dead) return; f.dead = true; f.deadT = 0; st.kills++; const kid = f.def_.base || f.def_.id; S.kills[kid] = (S.kills[kid] || 0) + 1;
+      if (arenas[st.cur]?.waveLayerKills) arenas[st.cur].waveLayerKills[st.dream]++;
+      HK.gainReso(hk(),3);
+      if (st.dream && S.act.lampPath==='dreamer') st.dust++;
       { const elc = elTint[f.def_.el] || '#ffffff'; const big = !!f.def_.boss;
         part(f.x, f.y - f.h / 2, elc, big ? 18 : 10, big ? 260 : 180, 0.45, big ? 2.8 : 2.2);
         sparks(f.x, f.y - f.h / 2, elc, big ? 10 : 6, 1);
@@ -204,7 +226,7 @@ export function runStage(stage, opts = {}){
         // 击杀碎裂：残影上飘消散
         if (fxLv() >= 2) for (let gi = 0; gi < (big ? 4 : 2); gi++) fx.push({ k: 'ghostF', x: f.x + rnd(-10, 10), y: f.y - gi * 8, face: f.face, f, t: 0, life: 0.35 + gi * 0.08 });
       }
-      if (f.def_.boss) { shake(16); st.hitstop = 0.32; st.slow = 0.22; setTimeout(() => st.slow = 1, 1100); } else if (f.def_.elite || f.max > 400) { st.hitstop = Math.max(st.hitstop, 0.14); st.slow = 0.5; setTimeout(() => { if (st.slow < 0.9) st.slow = 1; }, 320); } else { st.hitstop = Math.max(st.hitstop, 0.06); }
+      if (f.def_.boss) { shake(16); st.hitstop = 0.32; st.slow = 0.22; schedule(() => st.slow = 1, 1100, true); } else if (f.def_.elite || f.max > 400) { st.hitstop = Math.max(st.hitstop, 0.14); st.slow = 0.5; schedule(() => { if (st.slow < 0.9) st.slow = 1; }, 320, true); } else { st.hitstop = Math.max(st.hitstop, 0.035); }
       const lv = stage.lv + lvAdj; const tier = f.def_.boss ? 3 : f.def_.tier || 0;
       const nc = f.def_.boss ? 24 : tier === 1 ? 8 : 2 + Math.floor(Math.random() * 3);
       const gmul = 1 + (C().s.goldBonus || 0) + (stage.reward === 'gold' ? 2 : 0);
@@ -232,12 +254,13 @@ export function runStage(stage, opts = {}){
       const fs = foeStats(def_, stage.lv + lvAdj, hard); const sz = def_.boss ? 1.9 : def_.size || 1;
       const f = { id, def_, x, y: y ?? GY, vx: 0, vy: 0, w: 30 * sz, h: 52 * sz, face: -1, hp: fs.hp, max: fs.hp, atk: fs.atk, def: fs.def, state: 'idle', stT: 0.5 + Math.random() * 0.6, cd: 1 + Math.random(),
         air: false, fly: def_.ai === 'flyer' || def_.ai === 'healer', baseY: GY - 110 - Math.random() * 30, ph: Math.random() * 6, guard: def_.ai === 'shield' ? 5 : 0, inv: 0.4, burn: 0, poison: 0, frozen: 0, stun: 0, slow: 0, brk: 0, weak: 0, charm: 0, phase: 0, armorT: 0, pat: null };
-      f.im = !def_.boss && !def_.tier ? regionImg(def_.img, stage.ri || 0) : def_.img; preloadAnim(animKey(f.im)); if (!def_.boss && (def_.el === 'dark' || def_.ai === 'assassin') && Math.random() < 0.35) { f.stealth = true; f.reveal = false; } if (st.dream && !def_.boss) { f.dream = true; f.max = Math.round(f.max * 1.35); f.hp = f.max; f.atk = Math.round(f.atk * 1.15); f.stealth = true; }
+      f.im = !def_.boss && !def_.tier ? regionImg(def_.img, stage.ri || 0) : def_.img; preloadAnim(animKey(f.im)); if (!def_.boss && (def_.el === 'dark' || def_.ai === 'assassin') && Math.random() < 0.35) { f.stealth = true; f.reveal = false; } if (st.dream && !def_.boss) setFoeLayer(f, true);
       if (f.fly) f.y = f.baseY; if (def_.boss) { st.bossBar = f; hud.boss.classList.add('on'); hud.boss.querySelector('b').textContent = def_.name; }
       foes.push(f); part(x, f.y - f.h / 2, '#222222', 14, 120, 0.6, 5); return f;
     }
     function startArena(a){
       a.started = true; st.locked = true; st.cur = a.i; hud.go.classList.remove('on');
+      a.waveLayerKills=[0,0]; a.waveRecorded=false;
       if (stage.obj === 'guard' && !st.lamp) { st.lamp = { x: a.x0 + 60, hp: 100, max: 100 }; say('守住灯火！'); }
       if (a.boss) { const b = spawn(a.boss, a.x1 - 120); if (b) { say('首领 · ' + b.def_.name, 2.2); playBgm('boss'); shake(10); haptic('heavy'); } }
       else nextWave(a);
@@ -246,8 +269,9 @@ export function runStage(stage, opts = {}){
       const pool = (st.dream && a.dreamWaves && a.dreamWaves.length) ? a.dreamWaves : a.waves;
       const wi = a.wave;
       const wv = pool[wi]; if (!wv) return false; a.wave++;
-      wv.forEach((id, k) => { const side = k % 3 === 2 ? -1 : 1; const x = side > 0 ? a.x1 - 40 - k * 36 : a.x0 + 30 + k * 10; setTimeout(() => !st.over && spawn(id, clamp(x, a.x0 + 20, a.x1 - 20)), k * 160); });
-      a.pend = performance.now() + wv.length * 160 + 50;
+      a.waveLayerKills=[0,0];
+      wv.forEach((id, k) => { const side = k % 3 === 2 ? -1 : 1; const x = side > 0 ? a.x1 - 40 - k * 36 : a.x0 + 30 + k * 10; schedule(() => !st.over && spawn(id, clamp(x, a.x0 + 20, a.x1 - 20)), k * 160); });
+      a.pend = clock.now + (wv.length * 160 + 50) / 1000; a.waveLayer = st.dream; a.waveRecorded = false;
       if (pool.length > 1) say((st.dream ? '梦层 ' : '') + `第 ${a.wave} / ${pool.length} 波`, 1);
       return true;
     }
@@ -265,6 +289,16 @@ export function runStage(stage, opts = {}){
       } else P.jumpBuf = 0.14;
     }
     function dash(){ if (busy() || P.dashCd > 0) { P.dashBuf = 0.12; return; }
+      const nearHit = tele.some(tl=>!tl.fired && !tl.dodged && tl.warn-tl.t>0 && tl.warn-tl.t<=0.2 && telHitsP(tl));
+      const nearShot = shots.some(s=>s.owner==='e' && !s.dodged && Math.hypot(s.x-P.x,s.y-(P.y-26))<55 && (P.x-s.x)*s.vx+((P.y-26)-s.y)*s.vy>0);
+      if ((nearHit || nearShot) && st.t-st.dodgeRewardAt>1) {
+        st.dodgeRewardAt=st.t; st.perfectDodges++; st.relayWindow=2;
+        for(const tl of tele) if(!tl.fired && telHitsP(tl)) tl.dodged=true;
+        for(const s of shots) if(s.owner==='e' && Math.hypot(s.x-P.x,s.y-(P.y-26))<55) s.dodged=true;
+        HK.gainReso(hk(),18); C().mp=Math.min(C().s.mp,C().mp+3);
+        if (S.act.lampPath==='keeper' || !S.act.lampPath) heal(C().s.hp*0.05,true);
+        say('精准闪避 · 接力时机',0.8); ring(P.x,P.y-26,42,'#9fe8ff',0.3);
+      }
       P.dashT = 0.18; P.dashCd = 0.62; P.vx = P.face * 640; P.vy = 0; P.iT = Math.max(P.iT, 0.28); P.dashBuf = 0;
       sfx('dash'); haptic('light'); ring(P.x, P.y - P.h / 2, 18, AC().col, 0.18);
     }
@@ -281,9 +315,13 @@ export function runStage(stage, opts = {}){
       if (w.shot || (u && u.wave)) {
         const n = u && u.multi ? u.multi : 1;
         for (let i = 0; i < n; i++) shot({ x: P.x + P.face * 14, y: P.y - P.h * 0.6 - i * 6, vx: P.face * 640, vy: (i - (n - 1) / 2) * 80, r: fin ? 9 : 6, mult: mult * (w.shot ? 1 : 0.7), col: u ? u.aura : AC().col, life: 0.8, pierce: fin, kb: kbx * 10 + 40 });
-        if (!w.shot) meleeHit(mult, launch, kbx, fin);
-      } else meleeHit(mult, launch, kbx, fin);
+        if (!w.shot) timedMelee(mult, launch, kbx, fin, sp);
+      } else timedMelee(mult, launch, kbx, fin, sp);
       if (u && u.homing) shot({ x: P.x, y: P.y - P.h * 0.7, vx: P.face * 200, vy: -200, r: 6, mult: 0.4, col: '#9cf0b8', life: 1.6, home: true });
+    }
+    function timedMelee(mult, launch, kb, fin, speed) {
+      const character=C().id;
+      schedule(()=>{ if(!st.over && P.hurtT<=0 && C().id===character) meleeHit(mult,launch,kb,fin); },(fin?90:55)/speed);
     }
     function meleeHit(mult, launch, kb, fin){
       const w = WP(); const reach = w.reach * (P.ultT > 0 && ultDef().scale ? ultDef().scale : 1);
@@ -317,12 +355,12 @@ export function runStage(stage, opts = {}){
       switch (k.type) {
         case 'dash': { if (k.dist < 0) { P.vx = -F * 600; P.vy = -300; P.ground = false; P.iT = 0.35; shot({ x: P.x, y: P.y - 30, vx: F * 700, vy: 0, r: 8, mult: pw * 1.4, col: o.col, life: 0.8, pierce: true, sk: o }); break; }
           P.dashT = Math.abs(k.dist) / 900; P.vx = F * 900; if (k.air) P.vy = 0; P.iT = P.dashT + 0.1; const x0 = P.x; speedLines(F, 10);
-          setTimeout(() => { if (st.over) return; const x1 = P.x; hitBox((x0 + x1) / 2, P.y - P.h / 2, Math.abs(x1 - x0) + 40, P.h + 20, pw, { ...o, kb: 160, heavy: true, dir: F }); fx.push({ k: 'line', x0, x1, y: P.y - P.h / 2, col: o.col, t: 0, life: 0.3 }); }, P.dashT * 1000); break; }
+          schedule(() => { if (st.over) return; const x1 = P.x; hitBox((x0 + x1) / 2, P.y - P.h / 2, Math.abs(x1 - x0) + 40, P.h + 20, pw, { ...o, kb: 160, heavy: true, dir: F }); fx.push({ k: 'line', x0, x1, y: P.y - P.h / 2, col: o.col, t: 0, life: 0.3 }); }, P.dashT * 1000); break; }
         case 'proj': { const n = k.n || 1; for (let j = 0; j < n; j++) { const a = n > 1 ? (j / (n - 1) - 0.5) * (k.spread || 0.3) : 0; shot({ x: P.x + F * 16, y: P.y - P.h * 0.6, vx: Math.cos(a) * F * k.spd, vy: Math.sin(a) * k.spd, r: k.big ? 13 : 7, mult: pw, col: o.col, life: 1.4, pierce: k.pierce, home: k.home, boom: k.boom, sk: o }); } break; }
         case 'nova': { hitCircle(P.x, P.y - P.h / 2, k.r, pw, { ...o, kb: 220, heavy: true }); shock(P.x, P.y - P.h / 2, Math.min(k.r * 0.7, 70), o.col, 0.28); part(P.x, P.y - 30, o.col, 14, 220, 0.4, 2.6); shake(5); break; }
-        case 'rain': { const px = P.x; for (let j = 0; j < k.n; j++) setTimeout(() => { if (st.over) return; const x = px + F * (30 + Math.random() * k.area); shot({ x, y: -20, vx: rnd(-30, 30), vy: 620, r: 8, mult: pw, col: o.col, life: 1.2, boom: k.boom || 0, rain: true, sk: o }); }, j * 70); break; }
+        case 'rain': { const px = P.x; for (let j = 0; j < k.n; j++) schedule(() => { if (st.over) return; const x = px + F * (30 + Math.random() * k.area); shot({ x, y: -20, vx: rnd(-30, 30), vy: 620, r: 8, mult: pw, col: o.col, life: 1.2, boom: k.boom || 0, rain: true, sk: o }); }, j * 70); break; }
         case 'beam': { P.beam = { t: 0, dur: k.dur, tick: 0, k, o, pw }; P.lock = k.dur; break; }
-        case 'quake': { const dirs = k.dir === 2 ? [1, -1] : [F]; const px = P.x; for (const d of dirs) for (let j = 0; j < k.n; j++) setTimeout(() => { if (st.over) return; const x = px + d * (40 + j * 52); hitBox(x, GY - 26, 50, 60, pw, { ...o, kb: 120 * (k.kb || 1), launch: 260, dir: d }); fx.push({ k: 'spike', x, y: GY, col: o.col, t: 0, life: 0.45 }); shock(x, GY - 4, 36, o.col, 0.28); crack(x, GY, 48, 0.7); shake(3); }, j * 110); break; }
+        case 'quake': { const dirs = k.dir === 2 ? [1, -1] : [F]; const px = P.x; for (const d of dirs) for (let j = 0; j < k.n; j++) schedule(() => { if (st.over) return; const x = px + d * (40 + j * 52); hitBox(x, GY - 26, 50, 60, pw, { ...o, kb: 120 * (k.kb || 1), launch: 260, dir: d }); fx.push({ k: 'spike', x, y: GY, col: o.col, t: 0, life: 0.45 }); shock(x, GY - 4, 36, o.col, 0.28); crack(x, GY, 48, 0.7); shake(3); }, j * 110); break; }
         case 'buff': { const b = { t: k.dur, name: k.name, ...k.buff }; if (k.buff.shield) b.shieldHp = c.s.hp * k.buff.shield; P.buffs = P.buffs.filter(x => x.name !== k.name); P.buffs.push(b); ring(P.x, P.y - P.h / 2, 40, o.col, 0.5); part(P.x, P.y - 30, o.col, 16, 140, 0.7); break; }
         case 'heal': { heal(c.s.hp * k.heal); if (k.team) for (const r of roster) if (r !== c && r.alive) r.hp = Math.min(r.s.hp, r.hp + r.s.hp * k.heal); if (k.mp) c.mp = Math.min(c.s.mp, c.mp + c.s.mp * k.mp); part(P.x, P.y - 30, '#8fe0a0', 20, 120, 0.8); break; }
         case 'summon': { allies.push({ what: k.what, x: P.x - F * 20, t: k.dur, cd: 0.3, pw, o, face: F }); ring(P.x, GY - 10, 30, o.col, 0.5); break; }
@@ -435,7 +473,7 @@ export function runStage(stage, opts = {}){
           const want = ai === 'ranged' ? 200 : ai === 'summoner' || ai === 'healer' ? 240 : ai === 'charger' ? 180 : 34 + f.w / 2;
           if (ai === 'flyer' || ai === 'healer') { const hx = tx - f.face * (ai === 'healer' ? 200 : 90); f.x += clamp(hx - f.x, -1, 1) * sp * dt; }
           else if (Math.abs(tdx) > want + 8) f.x += Math.sign(tdx) * sp * dt; else if ((ai === 'ranged' || ai === 'summoner') && Math.abs(tdx) < want - 60) f.x -= Math.sign(tdx) * sp * 0.8 * dt;
-          if (f.cd <= 0 && (Math.abs(tdx) < want + 30 || ai === 'ranged' || ai === 'summoner' || ai === 'healer' || ai === 'flyer')) { f.state = 'wind'; f.stT = (ai === 'charger' ? 0.65 : ai === 'bomber' ? 0.55 : 0.45) * (hard ? 0.8 : 1); f.face = Math.sign(tdx) || f.face; }
+          if (f.cd <= 0 && foes.filter(other=>!other.dead && other!==f && (other.pat || ['wind','atk','charge','dive'].includes(other.state))).length < (hard ? 3 : 2) && (Math.abs(tdx) < want + 30 || ai === 'ranged' || ai === 'summoner' || ai === 'healer' || ai === 'flyer')) { f.state = 'wind'; f.stT = (ai === 'charger' ? 0.65 : ai === 'bomber' ? 0.55 : 0.45) * (hard ? 0.8 : 1); f.face = Math.sign(tdx) || f.face; }
           if (st.lamp && Math.abs(st.lamp.x - f.x) < 36) { st.lamp.hp -= dt * (f.def_.tier ? 7 : 4); f.lampT = (f.lampT || 0) - dt; }
           break; }
         case 'wind': if (f.stT <= 0) { f.state = 'atk'; f.stT = 0.3;
@@ -456,7 +494,7 @@ export function runStage(stage, opts = {}){
       if (ai === 'shield' && f.guard < 5 && f.state === 'idle') f.guardT = (f.guardT || 0) + dt, f.guardT > 3 && (f.guard++, f.guardT = 0);
     }
     // —— 首领：多阶段 + 预警 ——
-    function tel(o){ const w = o.warn != null ? o.warn : 0.7; tele.push({ t: 0, fired: false, col: '#ff4040', ...o, warn: st.eyeOn ? Math.max(0.25, w * 0.55) : w, eyeEarly: !!st.eyeOn }); }
+    function tel(o){ const w = o.warn != null ? o.warn : 0.7; tele.push({ t: 0, fired: false, col: '#ff4040', ...o, warn: telegraphDuration(w), eyeEarly: !!st.eyeOn }); }
     function telHitsP(tl){ const px = P.x, py = P.y - P.h / 2; if (tl.shape === 'rect') return Math.abs(px - tl.x) < tl.w / 2 + P.w / 2 && Math.abs(py - tl.y) < tl.h / 2 + P.h / 2; return Math.hypot(px - tl.x, py - tl.y) < tl.r + P.w / 2; }
     function updTele(dt){ for (const tl of tele) { tl.t += dt; if (!tl.fired && tl.t >= tl.warn) { tl.fired = true; if (telHitsP(tl)) hurtP(tl.dmg, tl.x); tl.fx ? tl.fx(tl) : (tl.shape === 'rect' ? fx.push({ k: 'slab', x: tl.x, y: tl.y, w: tl.w, h: tl.h, col: tl.col, t: 0, life: 0.25 }) : ring(tl.x, tl.y, tl.r, tl.col, 0.3)); shake(tl.big ? 8 : 4); } }
       for (let i = tele.length - 1; i >= 0; i--) if (tele[i].t > tele[i].warn + 0.2) tele.splice(i, 1); }
@@ -505,14 +543,37 @@ export function runStage(stage, opts = {}){
         if (d < mag) { const sp = 380 + (mag - d) * 3 + p.t * 200; p.x += dx / d * sp * dt; p.y += dy / d * sp * dt; } if (d < 20) { p.got = true; collect(p); } }
       for (let i = pickups.length - 1; i >= 0; i--) if (pickups[i].got) pickups.splice(i, 1); }
     function updFlow(dt){ const sec = HK.trySecretPickup(hk()); if (sec && sec.kind === 'chest') { st.gold += sec.gold || 0; if (sec.dust) st.dust = (st.dust || 0) + sec.dust; }
+      if (sec?.kind==='path') {
+        const a=arenas[sec.arena];
+        if(a) {
+          const bridge=[{x:sec.x+40,y:180,w:80},{x:sec.x+130,y:145,w:80}];
+          a.plats.push(...bridge); a._platsBase.push(...bridge); a._dreamPlats.push(...bridge);
+          st.secrets.push({kind:'chest',x:sec.x+170,y:145,w:20,h:14,taken:false,revealed:true});
+          say('秘径升起 · 跃上高台寻找秘匣',1.5);
+        }
+      }
+      if (sec?.kind==='gate') {
+        const a=arenas[sec.arena]; a.done=false; a.secretChallenge=true; a.waveRecorded=false; a.waveLayerKills=[0,0];
+        st.cur=a.i; st.locked=true; hud.go.classList.remove('on');
+        const pool=(a.dreamWaves?.flat() || a.waves.flat()).filter(id=>AFOES[id]);
+        for(let i=0;i<3;i++) spawn(pool[i%Math.max(1,pool.length)]||'yegui',a.x0+180+i*110);
+        a.pend=clock.now+0.5;
+      }
       if (stage.obj === 'timed' && st.timeLeft > 0) { st.timeLeft -= dt; if (st.timeLeft <= 0) return fail('时间耗尽'); }
       if (st.lamp && st.lamp.hp <= 0) return fail('灯火熄灭');
       if (st.cur < 0 || arenas[st.cur].done) { const nx = arenas.find(a => !a.started); if (nx && P.x > nx.x0 + 50) { if (st.lamp) st.lamp.x = nx.x0 + 70; startArena(nx); } return; }
       const a = arenas[st.cur];
-      if (aliveFoes().length === 0 && performance.now() > (a.pend || 0) && !st.bossDying) {
+      if (aliveFoes().length === 0 && clock.now > (a.pend || 0) && !st.bossDying) {
+        if(!a.waveRecorded && a.waveLayerKills?.[st.dream]>0) { st.layerClears[st.dream]++; a.waveRecorded=true; }
+        if(a.secretChallenge) {
+          a.secretChallenge=false; a.done=true; st.locked=false; st.dust+=6; st.gold+=100;
+          const base=(a.dreamWaves?.flat()||a.waves.flat()).map(id=>AFOES[id]?.base).find(Boolean)||'yegui';
+          st.souls[base]=(st.souls[base]||0)+1;
+          say('梦门试炼完成 · 灵魄 +1 · 梦屑 +6',2); sfx('secret'); hud.go.classList.add('on'); return;
+        }
         if (!a.boss && nextWave(a)) return;
         a.done = true; st.locked = false; st.bossBar = null; hud.boss.classList.remove('on');
-        if (a.i === arenas.length - 1) { st.over = true; setTimeout(() => finish(true), a.boss ? 1600 : 900); say(a.boss ? '首领伏诛！' : '关卡完成！', 2); sfx('win'); if (a.boss) playBgm('dawn'); }
+        if (a.i === arenas.length - 1) { st.over = true; schedule(() => finish(true), a.boss ? 1600 : 900); say(a.boss ? '首领伏诛！' : '关卡完成！', 2); sfx('win'); if (a.boss) playBgm('dawn'); }
         else { hud.go.classList.add('on'); say('区域肃清', 1); if (st.lamp) st.lamp.hp = Math.min(100, st.lamp.hp + 25); }
       }
     }
@@ -636,9 +697,10 @@ export function runStage(stage, opts = {}){
       set('mp', Math.round(c.mp), v => hud.mp.style.width = (100 * v / s.mp) + '%');
       set('rg', Math.round(c.rage), v => { hud.rg.style.width = v + '%'; hud.ult.classList.toggle('ready', v >= 100); });
       set('ultOn', P.ultT > 0, v => hud.ult.classList.toggle('on', v));
+      hud.ult.hidden = !ultOk(c.id); hud.reso.hidden = roster.length < 2;
       const sl = slotsOf(c.id);
       for (let i = 0; i < 5; i++) { const sid = sl[i]; const k = ASKILLS[sid]; const b = hud.sk[i];
-        set('sk' + i, sid || '-', v => { b.style.display = k ? '' : 'none'; if (k) { b.querySelector('img').src = asset('icon/sk/' + sid); b.querySelector('b').textContent = k.mp; b.title = k.name; } });
+        set('sk' + i, sid || '-', v => { b.style.display = k && (settings.combatLayout==='full' || i<2) ? '' : 'none'; b.dataset.slot=i; if (k) { b.querySelector('img').src = asset('icon/sk/' + sid); b.querySelector('b').textContent = k.mp; b.title = k.name; b.setAttribute('aria-label',k.name); } });
         if (k) { const cd = c.cds[sid] || 0; const tot = k.cd * skillCd(skillLv(c.id, sid)) * (1 - (s.cdr || 0)); set('cd' + i, Math.ceil(cd * 10), () => { b.style.setProperty('--cd', (cd > 0 ? cd / tot : 0).toFixed(3)); b.querySelector('i').textContent = cd > 0 ? Math.ceil(cd) : ''; b.classList.toggle('ready-pulse', cd <= 0 && c.mp >= k.mp); }); set('nomp' + i, c.mp < k.mp, v => { b.classList.toggle('nomp', v); b.classList.toggle('ready-pulse', !v && (c.cds[sid]||0) <= 0); }); } }
       set('team', roster.map(r => r.id + (r.alive ? Math.round(r.hp / r.s.hp * 10) : 'x') + (r === c)).join(), () => { hud.team.replaceChildren(...roster.map((r, j) => h('div.ak-tm' + (j === ri ? '.cur' : '') + (r.alive ? '' : '.dead'), { onpointerdown: e => { e.stopPropagation(); if (j !== ri && r.alive && P.swapCd <= 0) { ri = (j - 1 + roster.length) % roster.length; swap(); } } }, h('img', { src: asset('por/' + r.id) }), h('i', { style: `width:${100 * r.hp / r.s.hp}%` })))); });
       hud.swap.style.display = roster.length > 1 ? '' : 'none';
@@ -653,7 +715,7 @@ export function runStage(stage, opts = {}){
       set('reso', Math.round(st.reso||0), v => { hud.resoBar.style.width = (v) + '%'; hud.reso.classList.toggle('ready', !!st.resoReady || v >= 100); });
       set('dream', st.dream, v => { hud.dream.classList.toggle('on', !!v); hud.dream.querySelector('.t').textContent = v ? '睁眼' : '闭目'; });
       set('eye', st.eyeOn, v => hud.eye.classList.toggle('on', !!v));
-      set('goals', (st.dreamSeen?1:0)+':'+(st.awakeSeen?1:0)+':'+(st.resoUsed||0)+':'+st.hitsTaken+':'+Math.floor(st.t), () => {
+      set('goals', st.layerClears.join(':')+':'+st.eyeMarks+':'+st.perfectDodges+':'+st.hitsTaken+':'+Math.floor(st.t), () => {
         const gs = HK.sGoals(stage, st); hud.goals.replaceChildren(...gs.map(g => h('span' + (g.ok ? '.ok' : ''), {}, g.label))); });
       const b = st.bossBar; if (b) set('boss', Math.round(b.hp / b.max * 400), v => { hud.boss.querySelector('.ak-bb i').style.width = (v / 4) + '%'; hud.boss.querySelector('.ak-bb em').textContent = Math.max(0, Math.round(b.hp)) + ' / ' + b.max; });
     }
@@ -662,18 +724,26 @@ export function runStage(stage, opts = {}){
     function pause(){ if (st.over) return; st.paused = !st.paused; if (!st.paused) { pbox && pbox.remove(); pbox = null; return; }
       const sl = slotsOf(C().id).map(id => ASKILLS[id]).filter(Boolean);
       pbox = h('div.ak-pausebox', {}, h('div.ak-pin', {}, h('h3', {}, '暂停 · ' + stage.name),
-        h('div.ak-keys', {}, h('p', {}, '左摇杆移动，上推跳跃，下推穿过平台。⚔ 连按出连击，空中可追击；➤ 冲刺带无敌帧，可穿过预警。'), h('p', {}, '招牌：瞳(E)烛瞳见弱点 · 梦(R)闭目/睁眼切换梦层 · 灯(T)灯火共鸣合击。怒气满「龍」变身；⇄ 换人积攒共鸣。'),
+        h('div.ak-keys', {}, h('p', {}, '左摇杆移动，上推跳跃，下推穿过平台。⚔ 连按出连击，空中可追击；➤ 冲刺带无敌帧，可穿过预警。'), h('p', {}, '招牌：瞳(E)烛瞳见弱点 · 梦(R)闭目/睁眼切换梦层 · 灯(T)灯火共鸣合击。怒气满「龍」变身；终结或破弱点后换人可获得接力共鸣。'),
           h('div.ak-sklist', {}, ...sl.map(k => h('div', {}, h('img', { src: asset('icon/sk/' + k.id) }), h('b', {}, k.name), h('span', {}, k.desc))))),
         h('div.ak-row', {}, h('button.btn', { onclick: () => pause() }, '继续'), h('button.btn.ghost', { onclick: () => { st.paused = false; end({ win: false, retry: true }); } }, '重来'), h('button.btn.ghost', { onclick: () => { st.paused = false; end({ win: false, quit: true, why: '撤退' }); } }, '撤退'))));
       root.append(pbox); }
-    function fail(why){ if (st.over) return; st.over = true; say(why, 2); sfx('lose'); setTimeout(() => end({ win: false, why }), 1400); }
+    function fail(why){ if (st.over) return; st.over = true; say(why, 2); sfx('lose'); schedule(() => end({ win: false, why }), 1400); }
     function rating(){ const par = 50 + arenas.length * 35 + (stage.boss ? 60 : 0); let sc = 0; if (st.t < par) sc += 2; else if (st.t < par * 1.5) sc += 1; if (st.hitsTaken <= 3) sc += 2; else if (st.hitsTaken <= 10) sc += 1; if (st.maxCombo >= 30) sc += 2; else if (st.maxCombo >= 12) sc += 1; if (st.lamp && st.lamp.hp >= 70) sc += 1; sc += HK.ratingBonus(st); return sc >= 6 ? 'S' : sc >= 4 ? 'A' : sc >= 2 ? 'B' : 'C'; }
-    function finish(win){ const rt = rating(); if (win && rt === 'S') { st.gold = Math.round(st.gold * 1.35); st.exp = Math.round(st.exp * 1.25); st.dust = (st.dust || 0) + 3; say('S 评价 · 丰厚赏赐', 1.6); sfx('ach'); } end({ win, rating: rt }); }
+    function finish(win){
+      if(win) { for(const pickup of pickups) if(!pickup.got) collect(pickup); pickups.length=0; }
+      const rt = rating(); if (win && rt === 'S') { st.gold = Math.round(st.gold * 1.35); st.exp = Math.round(st.exp * 1.25); st.dust = (st.dust || 0) + 3; say('S 评价 · 丰厚赏赐', 1.6); sfx('ach'); } end({ win, rating: rt });
+    }
     let ended = false;
-    function end(r){ if (ended) return; ended = true; st.over = true; cancelAnimationFrame(raf); removeEventListener('keydown', kd); removeEventListener('keyup', ku); ro.disconnect(); document.removeEventListener('visibilitychange', vis);
+    function end(r){ if (ended) return; ended = true; st.over = true; clock.clear(); cancelAnimationFrame(raf); removeEventListener('keydown', kd); removeEventListener('keyup', ku); removeEventListener('blur', blur); ro.disconnect(); document.removeEventListener('visibilitychange', vis); imgC.clear();
       const res = { win: false, ...r, time: Math.round(st.t), combo: st.maxCombo, hits: st.hitsTaken, kills: st.kills, dreamFlips: st.dreamFlips||0, resoUsed: st.resoUsed||0, eyeMarks: st.eyeMarks||0, dreamSeen: !!st.dreamSeen, awakeSeen: !!st.awakeSeen, secrets: st.secretChests||0, dust: st.dust||0, gold: r.win ? st.gold : Math.floor(st.gold * 0.3), loot: r.win ? st.loot : {}, souls: r.win ? st.souls : {}, exp: r.win ? st.exp : Math.floor(st.exp * 0.3), team, hard, fps: Math.round(fpsAvg), skills: st.skillUsed || 0, ults: st.ults || 0 };
+      res.perfectDodges=st.perfectDodges; res.layerClears=st.layerClears.slice();
+      const times=frameTimes.slice().sort((a,b)=>a-b); res.p95FrameMs=Math.round(times[Math.floor(times.length*0.95)]||0);
       if (window.__act) window.__act.result = res; root.remove(); resolve(res); }
-    const vis = () => { if (document.hidden && !st.paused && !st.over) pause(); }; document.addEventListener('visibilitychange', vis);
+    root.dispose = () => end({quit:true,abandoned:true});
+    const releaseKeys = () => { keys.l=keys.r=keys.u=keys.d=keys.atk=false; joyEnd(); };
+    const vis = () => { if (document.hidden) { releaseKeys(); if(!st.paused && !st.over) pause(); } }; document.addEventListener('visibilitychange', vis);
+    const blur = () => { releaseKeys(); if(!st.paused && !st.over) pause(); }; addEventListener('blur',blur);
     // —— 自动战斗机器人（测试 / 托管） ——
     function bot(dt){
       const B = T().actBot; if (!B || st.over || st.paused) return; keys.l = keys.r = keys.d = false; keys.atk = false;
@@ -696,6 +766,7 @@ export function runStage(stage, opts = {}){
     }
     // —— 主循环 ——
     let last = performance.now(), raf = 0, fpsAvg = 60, acc = 0;
+    const frameTimes=[];
     function updFx(dt){ for (const e of fx) { e.t += dt; if (e.k === 'p') { e.vy += 500 * dt; e.x += e.vx * dt; e.y += e.vy * dt; e.vx *= 0.96; } else if (e.k === 'speed') { e.x -= e.face * 420 * dt; } } for (let i = fx.length - 1; i >= 0; i--) if (fx[i].t >= fx[i].life) fx.splice(i, 1); for (const n of nums) n.t += dt; while (nums.length && nums[0].t > 0.9) nums.shift(); }
     function step(dt){
       st.t += dt; st.comboT -= dt; if (st.comboT <= 0) st.combo = 0; st.shake = Math.max(0, st.shake - dt * 30);
@@ -716,18 +787,21 @@ export function runStage(stage, opts = {}){
       let cam = tgt; if (lk) cam = clamp(cam, lk.x0 - 10, Math.max(lk.x0 - 10, lk.x1 - VW + 10)); st.cam += (cam - st.cam) * Math.min(1, dt * 6);
     }
     function loop(now){
-      raf = requestAnimationFrame(loop); let dt = Math.min(0.05, (now - last) / 1000); last = now; if (dt > 0) fpsAvg += (1 / dt - fpsAvg) * 0.05;
+      if (!root.isConnected) { end({quit:true,abandoned:true}); return; }
+      raf = requestAnimationFrame(loop); const rawDt=(now-last)/1000; let dt = Math.min(0.05, rawDt); last = now; if (dt > 0) fpsAvg += (1 / dt - fpsAvg) * 0.05;
       if (st.paused) return;
       if (ended) return;
+      frameTimes.push(rawDt*1000); if(frameTimes.length>600) frameTimes.shift();
       const ts = (T().actSpeed || 1) * st.slow;
       if (st.hitstop > 0) { st.hitstop -= dt; updFx(dt * 0.3); draw(); refreshHud(); return; }
-      if (!st.over || true) { const n = ts > 1 ? Math.ceil(ts) : 1; for (let i = 0; i < n; i++) { step(dt * ts / n); if (ended) return; } }
+      if (st.over) { clock.advance(dt,ts); if(ended) return; }
+      else { const n = ts > 1 ? Math.ceil(ts) : 1; for (let i = 0; i < n; i++) { clock.advance(dt/n,ts); if(ended) return; if(!st.over) step(dt * ts / n); } }
       updFx(dt); draw(); refreshHud();
     }
     window.__act = { st, P, foes, roster, arenas, stage, fx, get fps(){ return fpsAvg; }, win: () => { for (const f of foes) { f.hp = 0; kill(f); } for (const a of arenas) { a.started = true; a.done = true; a.wave = a.waves.length; } st.over = true; finish(true); }, fail: () => fail('测试失败') };
     playBgm(stage.boss ? 'battle' : 'battle'); refreshHud(true);
     say(stage.name, 1.6); if (stage.obj === 'timed') say(`限时 ${stage.time} 秒内通关！`, 2);
-    if (STAGE_FLAVOR[stage.id]) setTimeout(() => { if (!st.over) say(STAGE_FLAVOR[stage.id], 2.8); }, 1700);
+    if (STAGE_FLAVOR[stage.id]) schedule(() => { if (!st.over) say(STAGE_FLAVOR[stage.id], 2.8); }, 1700);
     raf = requestAnimationFrame(loop);
   });
 }

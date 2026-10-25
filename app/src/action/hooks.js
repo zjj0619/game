@@ -2,6 +2,8 @@
 // 被 engine.js 调用；保持无状态依赖，全部经 ctx 传入。
 import { S } from '../engine/state.js';
 import { CHARS } from '../data/characters.js';
+import { LAMP_PATHS, setFoeLayer } from './rules.js';
+export const lampPath = () => LAMP_PATHS[S?.act?.lampPath] || LAMP_PATHS.keeper;
 
 export const EYE_COST = 8;      // 每秒耗蓝
 export const EYE_CD = 0.6;
@@ -14,7 +16,7 @@ const DARK_EL = new Set(['dark', 'water']);
 
 export function lampRadius(ctx){
   const { C, P, st } = ctx;
-  let r = LAMP_BASE + (S.city?.lamp || 1) * 8;
+  let r = LAMP_BASE + (S.city?.lamp || 1) * 8 + lampPath().radius;
   if (P.buffs.some(b => b.shield || b.def)) r += 30;
   if (P.ultT > 0) r += 40;
   if (st.lamp) r += 20;
@@ -56,7 +58,7 @@ export function tickEye(ctx, dt){
   if (st.eyeCd > 0) st.eyeCd -= dt;
   if (!st.eyeOn) return;
   const c = C();
-  const cost = EYE_COST * dt;
+  const cost = EYE_COST * dt * lampPath().eyeCost;
   if (c.mp < cost) { st.eyeOn = false; say('烛瞳黯淡', 0.8); return; }
   c.mp -= cost;
   st.eyeT = (st.eyeT || 0) + dt;
@@ -64,7 +66,7 @@ export function tickEye(ctx, dt){
     if (f.dead) continue;
     const d = Math.hypot(f.x - P.x, (f.y - f.h / 2) - (P.y - 26));
     if (d < 320) {
-      f.weakMark = Math.min(1, (f.weakMark || 0) + dt * 1.4);
+      f.weakMark = Math.min(1, (f.weakMark || 0) + dt * (S.act?.lampPath === 'seer' ? 1.9 : 1.4));
       if (f.weakMark >= 1 && !f._marked) { f._marked = true; f.brk = Math.max(f.brk || 0, 4); }
     }
   }
@@ -102,21 +104,14 @@ export function toggleDream(ctx){
   // 梦层：现有敌人转为梦魇形态；睁眼层恢复
   for (const f of foes) {
     if (f.dead || f.def_.boss) continue;
-    if (st.dream) {
-      if (!f._awakeHp) { f._awakeHp = f.hp; f._awakeMax = f.max; f._awakeAtk = f.atk; }
-      f.dream = true; f.max = Math.round(f._awakeMax * 1.35); f.hp = Math.min(f.max, Math.round(f.hp * 1.35)); f.atk = Math.round(f._awakeAtk * 1.15);
-      f.stealth = true; f.reveal = false;
-    } else if (f._awakeHp != null) {
-      f.dream = false; f.stealth = false; f.reveal = true;
-      const ratio = f.hp / f.max; f.max = f._awakeMax; f.hp = Math.max(1, Math.round(f.max * ratio)); f.atk = f._awakeAtk;
-    }
+    setFoeLayer(f, st.dream);
   }
   // 梦层平台：隐藏偶数平台，露出「梦桥」
   for (const a of arenas) {
     if (!a.plats) continue;
     if (!a._platsBase) a._platsBase = a.plats.map(p => ({ ...p }));
     if (st.dream) {
-      a.plats = a._platsBase.filter((_, i) => i % 2 === 1).concat(
+      a.plats = a._dreamPlats ? a._dreamPlats.map(p=>({...p})) : a._platsBase.filter((_, i) => i % 2 === 1).concat(
         a._platsBase.filter((_, i) => i % 2 === 0).map(p => ({ x: p.x + 40, y: Math.max(90, p.y - 40), w: p.w * 0.7, dream: true }))
       );
     } else a.plats = a._platsBase.map(p => ({ ...p }));
@@ -127,15 +122,24 @@ export function toggleDream(ctx){
 export function tickReso(ctx, dt){
   const { roster, ri, P, st, foes, say, sfx, shake, ring, part, heal, hitCircle, num } = ctx;
   if (roster.length < 2) return;
-  const near = roster.filter((r, i) => i !== ri && r.alive);
-  // 简化：队伍里有存活同伴即缓慢积攒；换人瞬间猛涨
-  const rate = 6 + near.length * 4 + (st._resoBoost || 0);
-  st.reso = Math.min(RESO_NEED, (st.reso || 0) + rate * dt);
-  st._resoBoost = Math.max(0, (st._resoBoost || 0) - dt * 20);
+  // Active play earns most of the gauge; waiting and repeated swaps cannot fill it.
+  if (foes.some(f => !f.dead) && st.reso < 20) st.reso = Math.min(20, st.reso + dt);
+  st.relayWindow = Math.max(0, (st.relayWindow || 0) - dt);
+  st.relayCd = Math.max(0, (st.relayCd || 0) - dt);
   if (st.reso >= RESO_NEED && !st.resoReady) { st.resoReady = true; say('灯火共鸣就绪', 1); sfx && sfx('bell'); }
 }
 
-export function onSwapReso(ctx){ ctx.st._resoBoost = 40; ctx.st.reso = Math.min(RESO_NEED, (ctx.st.reso || 0) + 18); }
+export function gainReso(ctx, amount){
+  if (ctx.roster.filter(r=>r.alive).length < 2) return;
+  const bonus = ctx.st.dream ? lampPath().resonance : 1;
+  ctx.st.reso = Math.min(RESO_NEED, (ctx.st.reso || 0) + amount * bonus);
+}
+export function onSwapReso(ctx){
+  if (ctx.st.relayWindow > 0 && !(ctx.st.relayCd > 0)) {
+    gainReso(ctx, 16); ctx.st.relayWindow = 0; ctx.st.relayCd = 5;
+    ctx.say('接力成功 · 共鸣 +16', 0.8);
+  }
+}
 
 export function fireReso(ctx){
   const { st, P, C, roster, ri, say, sfx, shake, ring, part, heal, hitCircle, num, GY } = ctx;
@@ -154,13 +158,16 @@ export function fireReso(ctx){
       ctx.h('em', {}, '灯火共鸣'), ctx.h('b', {}, title + fancy));
     ctx.root.append(cut); setTimeout(() => cut.remove(), 700);
   }
-  const rad = 200 * bondMul;
+  const support = mate.id === me ? me : mate.id;
+  const profile = support === 'qi' ? {rad:170,pow:4,st:['stun',1]} : support === 'xianwei' ? {rad:240,pow:3.2,launch:400}
+    : support === 'baiji' ? {rad:220,pow:3.4,st:['poison',1]} : support === 'tushanjiao' ? {rad:200,pow:3,st:['freeze',1]}
+    : support === 'ali' ? {rad:180,pow:2.2,heal:0.2} : {rad:200,pow:3.6,st:['brk',1]};
+  const rad = profile.rad * bondMul;
   ctx.shock && ctx.shock(P.x, P.y - 26, Math.min(rad * 0.4, 50), '#ffcf6a', 0.28);
   part && part(P.x, P.y - 30, '#ffe7a0', 12, 180, 0.4, 2.4);
   ctx.sparks && ctx.sparks(P.x, P.y - 30, '#ffffff', 8, 1);
-  hitCircle && hitCircle(P.x, P.y - P.h / 2, rad, 3.2 * bondMul, { skill: true, heavy: true, kb: 280, col: '#ffcf6a', st: ['brk', 0.8] });
-  for (const r of roster) if (r.alive) { const n = Math.round(r.s.hp * 0.12 * bondMul); r.hp = Math.min(r.s.hp, r.hp + n); }
-  heal && heal(C().s.hp * 0.08 * bondMul, true);
+  hitCircle && hitCircle(P.x, P.y - P.h / 2, rad, profile.pow * bondMul, { skill: true, heavy: true, kb: 180, launch:profile.launch, col: '#ffcf6a', st: profile.st });
+  for (const r of roster) if (r.alive) { const n = Math.round(r.s.hp * (profile.heal || 0.06) * bondMul); r.hp = Math.min(r.s.hp, r.hp + n); }
   st.resoUsed = (st.resoUsed || 0) + 1;
 }
 
@@ -178,9 +185,10 @@ const RESO_TITLE = {
 /** 评级：加入双层与共鸣 */
 export function ratingBonus(st){
   let sc = 0;
-  if (st.dreamSeen && st.awakeSeen) sc += 1;
+  if ((st.layerClears?.[0] || 0) > 0 && (st.layerClears?.[1] || 0) > 0) sc += 1;
   if ((st.resoUsed || 0) >= 1) sc += 1;
   if ((st.eyeMarks || 0) >= 5) sc += 1;
+  if ((st.perfectDodges || 0) >= 2) sc += 1;
   return sc;
 }
 
@@ -282,8 +290,8 @@ export function sGoals(stage, st){
   return [
     { k: 'time',  label: `速通 < ${Math.ceil(par)}s`, ok: st.t > 0 && st.t < par },
     { k: 'hits',  label: '受伤 ≤ 3', ok: st.hitsTaken <= 3 },
-    { k: 'dream', label: '两层皆历', ok: !!(st.dreamSeen && st.awakeSeen) },
-    { k: 'reso',  label: '共鸣 ≥ 1', ok: (st.resoUsed || 0) >= 1 },
+    { k: 'technique', label: '巧战：破弱点或精准闪避', ok: (st.eyeMarks || 0) >= 3 || (st.perfectDodges || 0) >= 2 },
+    { k: 'dream', label: '双层清波（额外加分）', ok: (st.layerClears?.[0] || 0) > 0 && (st.layerClears?.[1] || 0) > 0 },
   ];
 }
 
@@ -295,7 +303,7 @@ export function seedSecrets(arenas, stage){
     const mid = (a.x0 + a.x1) / 2;
     out.push({ kind: 'chest', x: mid + 80, y: 232, w: 20, h: 14, taken: false, reward: a.i });
     out.push({ kind: 'path', x: a.x0 + 40, y: 180, w: 48, h: 6, taken: false, arena: a.i });
-    if (stage.dream || a.i % 2 === 1) out.push({ kind: 'gate', x: a.x1 - 60, y: 232, w: 24, h: 40, taken: false, arena: a.i });
+    if (!a.boss && a.i < arenas.length - 1 && (stage.dream || a.i % 2 === 0)) out.push({ kind: 'gate', x: a.x1 - 70, y: 232, w: 24, h: 40, taken: false, arena: a.i });
   }
   return out;
 }
@@ -307,6 +315,10 @@ export function trySecretPickup(ctx){
   for (const s of st.secrets) {
     if (s.taken || !s.revealed) continue;
     if (Math.abs(s.x - P.x) > 22 || Math.abs(s.y - P.y) > 40) continue;
+    if (s.kind === 'gate' && (!st.dream || !ctx.arenas[s.arena]?.done)) {
+      if (st.t > (s.hintAt || 0)) { say(!st.dream ? '梦门微亮 · 清场后闭目走入，可挑战额外灵魄' : '先肃清此地，再进入梦门', 1); s.hintAt=st.t+4; }
+      continue;
+    }
     s.taken = true;
     if (s.kind === 'chest') {
       say('秘匣 · 灯下现形', 1.2); sfx && sfx('secret');
@@ -315,15 +327,14 @@ export function trySecretPickup(ctx){
       return { kind: 'chest', gold: 40 + Math.round(Math.random() * 60), dust: st.dream ? 2 : 0 };
     }
     if (s.kind === 'gate') {
-      say(st.dream ? '梦门共鸣' : '梦门微亮 · 闭目可入', 1.4); sfx && sfx('portal');
-      if (!st.dream) { /* 提示玩家可切换 */ }
+      say('梦门开启 · 击退梦魇，赢取灵魄', 1.4); sfx && sfx('portal');
       st.secretGates = (st.secretGates || 0) + 1;
-      return { kind: 'gate' };
+      return { kind: 'gate', arena:s.arena };
     }
     if (s.kind === 'path') {
       say('秘径显形', 1); sfx && sfx('bell');
       st.secretPaths = (st.secretPaths || 0) + 1;
-      return { kind: 'path' };
+      return { kind: 'path', x:s.x, arena:s.arena };
     }
   }
   return null;

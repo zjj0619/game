@@ -94,7 +94,7 @@ const M = id => ({ mp3: `assets/music/${id}.mp3`, ogg: `assets/music/${id}.ogg` 
 const THEME_BANK = {
   title: M('theme_title'), warm: M('theme_hub'), hub: M('theme_hub'),
   battle: M('theme_battle'), boss: M('theme_boss'), final: M('theme_final'), epic: M('theme_final'),
-  dream: M('theme_dream'), soft: M('theme_dream'),
+  dream: M('theme_dream'), soft: M('theme_dream'), mystery: M('theme_dream'), town: M('theme_hub'),
   dawn: M('theme_win'), win: M('theme_win'), ending: M('theme_ending'),
   sad: M('theme_sad'), tense: M('theme_boss'),
   jincheng: M('theme_jincheng'), qingqiu: M('theme_qingqiu'), donghai: M('theme_donghai'),

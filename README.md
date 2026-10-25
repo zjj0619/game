@@ -4,7 +4,15 @@
 
 取材自《山海经》《楚辞》的东方玄幻叙事手游（原创玩法，造梦西游仅作灵感参考）：**视觉小说主线 + 横版动作闯关 + 养成**。横屏 · 简体中文 · 完全离线可玩；可选接入 MiniMax 实时 AI（玩家自填 Key）。
 
-> **不提供预编译 APK。** 请按下方「自己构建 Android APK」在本机打包安装。仓库里若有历史 `dist/*.apk`，仅作参考，不保证与当前源码一致，请以自行构建为准。
+> **2.1 起支持手机检查更新。** 正式安装包发布在 [GitHub Releases](https://github.com/zjj0619/game/releases/latest)。首次下载安装后，可通过标题右上「更」或设置中的「检查 GitHub 更新」获取后续版本；启动时也会自动检查。尚无正式 Release 时，请先完成下方发布配置。
+
+## 手机更新与当前改进
+
+- 默认简洁双技能布局，支持左右手、按键大小、透明度、震屏和闪光设置。
+- 烬城前六关采用手写节奏；生成关卡限制刷怪预算。新增精准闪避、动作接力共鸣，以及三种可选择的灯道。
+- 梦门可触发额外挑战获得灵魄，秘径可生成高台宝箱；修复预警、重复奖励、背景引用与存档恢复问题。
+- 更新器支持正式版本检查、发布说明、暂停续传、安装包大小与 SHA-256 校验、应用包名和签名验证，再由 Android 系统确认覆盖安装。
+- 版本信息统一维护在 `app/version.json`。签名与 GitHub Actions 配置见 [手机更新发布说明](docs/UPDATES.md)，开发回归见 [开发说明](docs/DEVELOPMENT.md)。
 
 ## 目录
 
@@ -31,7 +39,7 @@
 - **音乐**：15 首可循环主题（mp3 优先，ogg 备选；MIDI+FluidSynth 免费管线，见 `ATTRIBUTION.md`）
 - **AI（可选）**：营火夜谈 / 卜筮 / 梦境异闻 / 画境 / 配音——不填 Key 也可完整通关
 
-## 自己构建 Android APK（必读）
+## 开发者自行构建 Android APK
 
 目标机建议：**横屏约 20:9**（如 OPPO Find X9s Pro）。需本机具备：
 
@@ -44,7 +52,8 @@
 cd app
 npm install
 npm run build          # 编译剧情 + Vite 打包 → app/dist
-# 可选：npm run validate
+npm test
+npm run validate
 ```
 
 浏览器试玩（无需 APK）：
@@ -70,7 +79,7 @@ cd android
 # ./gradlew assembleRelease  # app/build/outputs/apk/release/app-release.apk
 ```
 
-签名（可选）：在 `keystore/keystore.properties` 配置 `storeFile` / `storePassword` / `keyAlias` / `keyPassword`，并由 `android/app/build.gradle` 读取。**切勿把含真实密码的 properties 或 `.jks` 推到公开远端。**
+正式签名：首次在 `app/` 运行 `npm run signing:init`，会在根目录 `keystore/` 生成本机签名配置。之后每次正式构建沿用它，并私下备份整个文件夹。`assembleRelease` 缺少签名时会明确失败。**切勿把 properties 或 `.jks` 推到公开远端；GitHub Actions 使用加密 secrets，配置方法见 `docs/UPDATES.md`。**
 
 ### 4. 安装到手机
 
@@ -106,4 +115,4 @@ cd app && npm run build
 # timeout 90s node ../test/boot2.mjs   # 或 app 内对应脚本
 ```
 
-**本仓库维护者不向用户分发 APK；请始终自行 `npm run build` + `gradlew` 打包。**
+正式 APK、更新清单与校验文件由 `.github/workflows/android-release.yml` 构建发布；手机通过同一签名覆盖升级保留本机存档。请勿卸载旧版后再安装。

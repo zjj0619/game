@@ -8,12 +8,20 @@ import { STAGES, REGION_STAGES } from './stages.js';
 import { companionReactions, rollSideEvent, midClearGifts } from './midEvents.js';
 import { REGION_ORDER } from '../data/regions.js';
 import './gear.js';
+import { LAMP_PATHS } from './rules.js';
+export { LAMP_PATHS };
+export function chooseLampPath(id) {
+  ensureAct();
+  if (!LAMP_PATHS[id] || (id!=='keeper' && !S.act.cleared.jincheng_3)) return false;
+  S.act.lampPath=id; return true;
+}
 
 export function ensureAct(){
   if (!S) return null;
   S.act ??= {}; const A = S.act;
   A.cleared ??= {}; A.skin ??= {}; A.skins ??= {}; A.best ??= {}; A.tower ??= 0; A.team ??= ['yangui']; A.slv ??= {}; A.slots ??= {}; A.spSpent ??= {}; A.spBonus ??= {}; A.dust ??= 0;
   A.pets ??= {}; A.pet ??= null; A.souls ??= {}; A.heroes ??= []; A.hard ??= {}; A.rush ??= 0; A.tut ??= {}; A.runs ??= 0; A.seen ??= {};
+  if (!LAMP_PATHS[A.lampPath]) A.lampPath='keeper';
   S.city ??= { lamp:1, forge:1, herb:1, beast:1, market:1 };
   S.daily ??= { day:'', done:{}, prog:{}, claimed:{} };
   rollDaily();
@@ -21,7 +29,7 @@ export function ensureAct(){
   return A;
 }
 // —— 角色 ——
-const HERO_UNLOCK = { tushanjiao:'qingqiu_10', luwu:'kunlun_10', ba:'yugu_10' };
+const HERO_UNLOCK = { baiji:'jincheng_3', xianwei:'qingqiu_3', qi:'changyang_1', ali:'kunlun_1', kualing:'yugu_1', fuli:'guixu_8', tushanjiao:'qingqiu_10', luwu:'kunlun_10', ba:'yugu_10' };
 export const heroUnlockHint = id => HERO_UNLOCK[id] ? `通关「${STAGES[HERO_UNLOCK[id]].name}」后加入` : '随主线剧情加入';
 export function addHero(id){
   if (!S.party[id]) { const lvs = Object.values(S.party).map(p => p.lv); const L = Math.max(1, Math.round(lvs.reduce((a, b) => a + b, 0) / Math.max(1, lvs.length)));
@@ -91,7 +99,7 @@ export function applyResult(stage, res){
     if (res.hard) A.hard[k] = true;
     if (stage.kind === 'tower') A.tower = Math.max(A.tower, stage.floor);
     if (stage.kind === 'rush') A.rush = (A.rush || 0) + 1;
-    for (const [hid, sk] of Object.entries(HERO_UNLOCK)) if (sk === k && !S.party[hid]) { addHero(hid); out.unlocks.push('新伙伴 · ' + CHARS[hid].name); }
+    for (const [hid, sk] of Object.entries(HERO_UNLOCK)) if (sk === k && !S.party[hid]) { addHero(hid); if(A.team.length<3) A.team.push(hid); out.unlocks.push('新伙伴 · ' + CHARS[hid].name+' · 可点击头像换人'); }
     if (stage.idx === 9 && stage.region) { const nx = REGION_ORDER[stage.ri + 1]; if (nx && first) out.unlocks.push('新区域开放'); }
     if (first && stage.idx === 9 && REGION_STAGES[stage.region]) out.unlocks.push('秘境关「' + STAGES[REGION_STAGES[stage.region][10]].name + '」需本区十关全通');
     if (first && stage.kind === 'keysecret') {
@@ -114,12 +122,13 @@ export function applyResult(stage, res){
       out.unlocks.push('铸灯铁坊材料到货 · 可试锻第一件兵器');
     }
     if (first && stage.id === 'jincheng_3') {
+      out.unlocks.push('提灯之道已解锁 · 伙伴 → 灯道，可自由选择三种打法');
       A.souls.yegui = (A.souls.yegui || 0) + 3;
       out.items.push({ soul:'yegui', n:3 });
       out.unlocks.push('夜鬼灵魄 ×3 · 去「山海异兽」孵化助战');
     }
     if (first && stage.id === 'jincheng_5') {
-      addGold(400); out.gold += 400;
+      out.gold += 400;
       addItem('m_ink', 4); addItem('m_bronze', 3);
       out.unlocks.push('烬城建设开放升级 · 灯塔与铁坊值得点一级');
     }
