@@ -4,6 +4,7 @@ import './battle.css';
 import './explore.css';
 import './action.css';
 import './hub.css';
+import './premium.css';
 import { addMember, healAll, S, settings, meta, saveMeta, newGame, setToast, load, save, AUTO, ach, slotInfo, SAVE_SLOTS } from './engine/state.js';
 import { initAudio, playBgm, stopBgm } from './engine/audio.js';
 import { h, toast, asset } from './engine/ui.js';
@@ -16,7 +17,7 @@ import { hubScreen, launch, adventureScreen } from './ui/hub.js';
 import { STAGES, SIGNATURE_IDS } from './action/stages.js';
 import { ensureAct } from './action/progress.js';
 import { endingScreen } from './ui/ending.js';
-import { setAmbient } from './engine/fx.js';
+import { setAmbient, ensureDust } from './engine/fx.js';
 import { nextBond } from './data/bonds.js';
 import { ITEMS } from './data/items.js';
 
@@ -26,7 +27,14 @@ let firstGesture = false;
 document.addEventListener('pointerdown', () => { if (!firstGesture) { firstGesture = true; initAudio(); } }, { capture:true });
 
 export function clearScreens(){ for (const s of [...app.querySelectorAll('.screen')]) s.remove(); for (const p of [...app.querySelectorAll('.panel-wrap')]) p.remove(); }
-export function show(el){ clearScreens(); app.append(el); if (!window.__ZLJ_TEST?.auto) { const w=document.createElement('div'); w.className='ink-wipe'; document.body.append(w); setTimeout(()=>w.remove(), 600); } }
+const TRANS = { title:'fade', hub:'gold', action:'ink', result:'gold', vn:'fade', world:'slide', region:'slide', explore:'slide', adventure:'gold' };
+export function show(el, kind){
+  clearScreens(); app.append(el);
+  if (window.__ZLJ_TEST?.auto) return;
+  const cls = kind || TRANS[[...el.classList].find(c => TRANS[c])] || 'ink';
+  const w = document.createElement('div'); w.className = 'zlj-trans ' + cls;
+  document.body.append(w); setTimeout(()=>w.remove(), 650);
+}
 
 export const game = {
   title(){ stopVN(); S && (S.mode='title'); show(titleScreen()); playBgm('title'); setAmbient('embers'); },
@@ -71,4 +79,5 @@ async function boot(){
   let n=0; await Promise.all(imgs.map(p=>new Promise(r=>{ const im=new Image(); im.onload=im.onerror=()=>{ n++; loader.querySelector('i').style.width=(n/imgs.length*100)+'%'; r(); }; im.src=asset(p); })));
   setTimeout(()=>game.title(), 200);
 }
+ensureDust();
 boot();

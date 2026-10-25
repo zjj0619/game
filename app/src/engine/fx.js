@@ -53,3 +53,28 @@ export function shake(el=document.getElementById('app'), cls='shake'){ el.classL
 export function flash(color='#fff'){
   const f=document.createElement('div'); f.className='flash'; f.style.background=color; document.body.append(f); setTimeout(()=>f.remove(), 600);
 }
+
+// DOM 烬粒层（轻量，可关）
+let dustEl = null;
+export function ensureDust(){
+  if (dustEl) return dustEl;
+  dustEl = document.createElement('div'); dustEl.id = 'zlj-dust'; dustEl.className = 'embers';
+  document.body.append(dustEl);
+  const n = settings.fx === 1 ? 10 : settings.fx === 0 ? 0 : 18;
+  if (!n) { dustEl.classList.add('off'); return dustEl; }
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement('span');
+    const sz = 2 + Math.random() * 4;
+    Object.assign(s.style, {
+      left: (Math.random()*100)+'%', bottom: (-5-Math.random()*20)+'%',
+      width: sz+'px', height: sz+'px',
+      animationDuration: (8+Math.random()*14)+'s',
+      animationDelay: (-Math.random()*12)+'s',
+    });
+    dustEl.append(s);
+  }
+  const sync = () => dustEl.classList.toggle('off', !settings.fx);
+  sync();
+  return dustEl;
+}
+export function setDust(on){ ensureDust(); dustEl.classList.toggle('off', !on || !settings.fx); }

@@ -4,7 +4,7 @@ import { S, save, AUTO, stats, addItem, addGold, expNeed, ach, has } from '../en
 import { CHARS, EL_COLOR } from '../data/characters.js';
 import { ITEMS } from '../data/items.js';
 import { REGIONS, REGION_ORDER } from '../data/regions.js';
-import { h, btn, asset, icon, toast, panel, confirmBox, tutorial } from '../engine/ui.js';
+import { h, btn, asset, icon, toast, panel, confirmBox, tutorial, haptic } from '../engine/ui.js';
 import { playBgm, sfx } from '../engine/audio.js';
 import { setAmbient } from '../engine/fx.js';
 import { ACHARS, ASKILLS, WEAPON, ACTION_ROSTER, SKINS, UNLOCK_LV, ULT_LV, SKILL_MAX, TYPE_NAME, skillPow, skillCd } from '../action/data.js';
@@ -25,8 +25,33 @@ const fmt = n => n >= 10000 ? (n / 10000).toFixed(1) + '万' : String(n);
 function power(id){ const s = AP.actStats(id); return Math.round(s.hp * 0.25 + (s.atk + s.mag) * 2.2 + s.def * 2 + (s.crit || 0) * 300); }
 const teamPower = team => team.reduce((a, id) => a + power(id), 0);
 function rec(stage){ return Math.round((stage.lv || 1) * 40 + 120); }
-function bar(){ return h('div.hb-top', {},
-  h('span.hb-gold', {}, '✦ ' + fmt(S.gold)), h('span.hb-star', {}, '★ ' + AP.totalStars()), h('span.hb-tw', {}, '塔 ' + S.act.tower)); }
+function bar(){
+  const el = h('div.hb-top', {},
+    h('span.hb-gold', {'data-v': String(S.gold)}, '✦ ' + fmt(S.gold)),
+    h('span.hb-star', {'data-v': String(AP.totalStars())}, '★ ' + AP.totalStars()),
+    h('span.hb-tw', {'data-v': String(S.act.tower)}, '塔 ' + S.act.tower));
+  return el;
+}
+function bumpRes(sel, next, fmtFn){
+  const n = document.querySelector(sel); if (!n) return;
+  const prev = +n.getAttribute('data-v') || 0;
+  if (next === prev) return;
+  n.setAttribute('data-v', String(next));
+  n.classList.remove('pop'); void n.offsetWidth; n.classList.add('pop');
+  const t0 = performance.now(), dur = 420;
+  const tick = now => {
+    const k = Math.min(1, (now - t0) / dur);
+    const v = Math.round(prev + (next - prev) * (1 - Math.pow(1 - k, 3)));
+    n.textContent = fmtFn(v);
+    if (k < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+export function refreshHubBar(){
+  bumpRes('.hb-gold', S.gold, v => '✦ ' + fmt(v));
+  bumpRes('.hb-star', AP.totalStars(), v => '★ ' + v);
+  bumpRes('.hb-tw', S.act.tower, v => '塔 ' + v);
+}
 function header(title, back, extra){ return h('div.hub-head', {}, btn('‹ 返回', back || (() => game.hub()), 'sm hb-back'), h('div.hub-title', {}, title), h('div.hub-hr', {}, extra || null, bar())); }
 function screen(cls, bg, ...kids){ return h('div.screen.hubs.' + cls, {}, h('div.hub-bg', { style:{ backgroundImage:`url(${asset(bg)})` } }), h('div.hub-shade'), ...kids); }
 function chip(text, cls = ''){ return h('span.chip' + (cls ? '.' + cls : ''), {}, text); }
@@ -168,7 +193,7 @@ export function controlsGuide(){ return new Promise(res => { const p = panel('�
 }); }
 function resultScreen(stage, res, out, opts){
   const win = res.win; const lvl = Object.entries(out.ups);
-  sfx(win ? 'win' : 'lose'); playBgm(win ? 'warm' : 'sad');
+  sfx(win ? 'win' : 'lose'); playBgm(win ? 'warm' : 'sad'); haptic(win ? 'success' : 'warn');
   const items = out.items.map(it => it.soul ? h('div.rs-it.soul', {}, h('img', { src: asset(AFOES[it.soul]?.img || 'enemy/a0') }), h('span', {}, (AFOES[it.soul]?.name || '') + '灵魄 ×' + it.n))
     : h('div.rs-it', { style: { borderColor: RCOL(rarOf(it.id)) } }, icon(ITEMS[it.id]?.icon || 'item', 'sm'), h('span', { style: { color: RCOL(rarOf(it.id)) } }, gearName(it.id) + (it.n > 1 ? ' ×' + it.n : ''))));
   const next = (() => { if (stage.kind === 'tower') return towerStage(stage.floor + 1); if (!REGION_STAGES[stage.region] || stage.kind !== 'normal' && stage.kind !== 'boss') return null; const ids = REGION_STAGES[stage.region]; const nx = ids[stage.idx + 1] || REGION_STAGES[REGION_ORDER[stage.ri + 1]]?.[0]; return nx && AP.stageUnlocked(nx) && !STAGES[nx].hidden ? STAGES[nx] : null; })();
@@ -177,6 +202,7 @@ function resultScreen(stage, res, out, opts){
     h('div.rs-box', {},
       h('div.rs-l', {}, h('div.rs-title', {}, win ? '闯 关 成 功' : res.why === '时间耗尽' ? '时 间 耗 尽' : res.why === '灯火熄灭' ? '长 明 灯 灭' : '败 退'),
         win ? h('div.rs-rank.r' + res.rating, {}, res.rating) : h('div.rs-rank.rF', {}, '败'),
+        win ? h('div.rs-stars', {}, ...[0,1,2].map(i => h('i' + (i < AP.stars(res.rating) ? '.on' : ''), { style: 'animation-delay:' + (0.15 + i * 0.12) + 's' }, '★'))) : null,
         h('div.rs-name', {}, stage.name + (res.hard ? ' · 困难' : '')),
         h('div.rs-stats', {}, h('span', {}, '用时 ' + Math.floor(res.time / 60) + ':' + String(res.time % 60).padStart(2, '0')), h('span', {}, '最高连击 ' + res.combo), h('span', {}, '击败 ' + res.kills), h('span', {}, '受击 ' + res.hits)),
         win ? h('div.rs-card', { id: 'clear-card' },

@@ -1,5 +1,42 @@
 # progress notes (for agent continuity)
 
+## Premium Juice Pass · 2026-10-25 ~13:10 Asia/Shanghai
+
+对标正式横屏手游观感，做了一轮 **Premium Juice Pass**（不推翻玩法、不删 17 手摆关、不 APK、不 push）。
+
+### A. 全局视觉与转场
+- 新增 `app/src/premium.css`；`main.js` `show()` 统一 **fade / gold 金纹擦除 / ink / slide**（按 screen 类），禁止硬切
+- `#zlj-dust` DOM 烬粒层（`fx.ensureDust`，随 `settings.fx` 可关）+ 既有 canvas ambient
+- 标题：漆金主按钮、次级入口收成 **档/忆/成/设** 图标行、灯芯呼吸点、标题呼吸光；触控 ≥44px
+
+### B. 枢纽 / 菜单 / 卡片
+- hub 磁贴圆角/内阴影/按下光边；`t-adv` 流光；红点脉冲
+- 资源条 `bumpRes` count-up + `.pop`
+- 结算：称号砸入、★ 星级弹出、`.rs-react` 入场；奖励弹窗物品飞出 + `ui_reward` 音效
+
+### C. 战斗手感与 HUD
+- 伤害数字分色：普攻/暴击/火/冰/技能/治疗/破灯；暴击更大 + 闪白 + 震屏
+- 技能 CD 扫光 + `ready-pulse`；摇杆/键位手游皮肤描边
+- 受击闪白、精英/Boss 击杀慢镜、Boss 阶段 **砸屏字幕** `.ak-phase`
+
+### D. VN
+- 对话框材质/金线、名牌左边线、◆ 呼吸、立绘微呼吸；选项按压与 `.picked`
+
+### E. 音效与反馈
+- `ui_open` / `ui_close` / `ui_reward` / `clear`；面板打开 haptic light；结算 success/warn；Capacitor 失败静默
+
+### 验收
+- `npm run build` OK；冒烟 hub `errs:[]`
+- 截图 `docs/premium_polish/`：01_title / 02_hub / 03_action / 04_result / 05_vn（844×390@2x）
+- 本地 commit；**未 push**；**无 APK**；未消耗 MiniMax
+
+### 仍存诚实缺口
+- 动作场景仍叠在 hub DOM 上（launch 未先 clearScreens），观感依赖 z-index；可再统一挂 `show()`
+- 非手摆关视觉密度、部分 VFX 仍网格形变；无真机触控/震动实机验收
+- 结算/VN 截图为编排态以保证可读（星级与对白框样式与实机 CSS 一致）
+
+---
+
 ## 中后期关卡 / 手感 / 进度抛光 · 2026-10-25 ~12:45 Asia/Shanghai
 
 ### 1. 手写招牌关（青丘→归墟）

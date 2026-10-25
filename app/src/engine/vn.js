@@ -125,7 +125,7 @@ function choose(c){
   const opts = c.opts.filter(o => cond(o.cond));
   mode.skip=false; updTools();
   return new Promise(res => {
-    D.choices.replaceChildren(...opts.map((o,i) => h('button.choice'+(o.cond?'.special':''), { onclick:(e)=>{ e.stopPropagation(); sfx('choice'); D.choices.classList.remove('on'); res(o); } }, o.text)));
+    D.choices.replaceChildren(...opts.map((o,i) => h('button.choice'+(o.cond?'.special':''), { onclick:(e)=>{ e.stopPropagation(); e.currentTarget.classList.add('picked'); sfx('choice'); setTimeout(()=>{ D.choices.classList.remove('on'); res(o); }, 90); } }, o.text)));
     D.choices.classList.add('on');
     if (window.__ZLJ_TEST) { const pickFn = window.__ZLJ_TEST.choose; const o = pickFn ? pickFn(c, opts) : opts[0]; setTimeout(()=>{ D.choices.classList.remove('on'); res(o); }, 5); }
   });

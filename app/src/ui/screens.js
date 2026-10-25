@@ -16,19 +16,27 @@ import { openCamp } from './camp.js';
 // —— 标题 ——
 export function titleScreen(){
   const latest = latestSave();
+  const primary = latest!=null
+    ? btn('继续旅程', ()=>game.loadSlot(latest), 'tmenu primary gold-lacquer')
+    : btn('新的旅程', async ()=>{ if (latest!=null && !(await confirmBox('开始新的旅程？已有存档不会被删除。'))) return; game.newGame(); }, 'tmenu primary gold-lacquer');
+  const secondary = latest!=null
+    ? btn('新的旅程', async ()=>{ if (!(await confirmBox('开始新的旅程？已有存档不会被删除。'))) return; game.newGame(); }, 'tmenu secondary')
+    : null;
   const root = h('div.screen.title', {},
     h('div.t-bg', { style:{backgroundImage:`url(${asset('cg/key_title_splash')})`} }),
     h('div.t-bg.t-bg2', { style:{backgroundImage:`url(${asset('cg/key_dream_layers')})`, opacity:'0.28'} }),
     h('div.t-shade'),
+    h('div.t-wick'),
     h('div.t-logo', {}, h('div.t-main', {}, '烛龙纪'), h('div.t-sub', {}, '长 夜 山 海'), h('div.t-en', {}, 'CHRONICLE OF THE TORCH DRAGON'), h('div.t-hook', {}, '灯芯 · 烛瞳 · 梦层 · 共鸣')),
     h('div.t-menu', {},
-      latest!=null ? btn('继续旅程', ()=>game.loadSlot(latest), 'tmenu') : null,
-      btn('新的旅程', async ()=>{ if (latest!=null && !(await confirmBox('开始新的旅程？已有存档不会被删除。'))) return; game.newGame(); }, 'tmenu'),
-      btn('山海闯关', ()=>{ if (latest!=null) { if (!load(latest)) return; } else newGame(); game.hub(); }, 'tmenu'),
-      btn('读取存档', ()=>openSaves('load'), 'tmenu'),
-      btn('回忆 · 画廊', ()=>openGallery(), 'tmenu'),
-      btn('成就', ()=>openAchievements(), 'tmenu'),
-      btn('设置', ()=>openSettings(), 'tmenu')),
+      primary,
+      btn('山海闯关', ()=>{ if (latest!=null) { if (!load(latest)) return; } else newGame(); game.hub(); }, 'tmenu secondary'),
+      secondary,
+      h('div.t-sec', {},
+        btn('档', ()=>openSaves('load'), 'tmenu ticon'),
+        btn('忆', ()=>openGallery(), 'tmenu ticon'),
+        btn('成', ()=>openAchievements(), 'tmenu ticon'),
+        btn('设', ()=>openSettings(), 'tmenu ticon'))),
     h('div.t-foot', {}, `已见证结局 ${meta.endings.length}/15 · v2.0 · 山海经神话原创故事`));
   return root;
 }

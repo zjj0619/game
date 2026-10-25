@@ -16,7 +16,7 @@ export function h(tag, attrs={}, ...kids){
   for (const k of kids.flat(9)) if (k!=null && k!==false) e.append(k.nodeType ? k : document.createTextNode(String(k)));
   return e;
 }
-export function btn(label, on, cls=''){ return h('button.btn'+(cls?'.'+cls.split(' ').join('.'):''), { onclick:(e)=>{ e.stopPropagation(); sfx('click'); on&&on(e); } }, label); }
+export function btn(label, on, cls=''){ return h('button.btn'+(cls?'.'+cls.split(' ').join('.'):''), { onclick:(e)=>{ e.stopPropagation(); sfx('click'); haptic('light'); on&&on(e); } }, label); }
 export const asset = p => `assets/${p}.webp`;
 export const icon = (key, cls='') => h('img.icon'+(cls?'.'+cls:''), { src: asset('icon/'+key), alt:'', draggable:'false' });
 
@@ -31,11 +31,13 @@ export function toast(msg, kind=''){
 export function panel(title, opts={}){
   const root = h('div.panel-wrap'+(opts.cls?'.'+opts.cls:''));
   const body = h('div.panel-body');
-  const close = () => { root.classList.add('closing'); setTimeout(()=>root.remove(), 180); opts.onclose && opts.onclose(); };
+  const close = () => { sfx('ui_close'); root.classList.add('closing'); setTimeout(()=>root.remove(), 180); opts.onclose && opts.onclose(); };
   const head = h('div.panel-head', {}, h('div.panel-title', {}, title), opts.tabs||null, btn('✕', close, 'close'));
-  root.append(h('div.panel', {}, head, body));
+  const pan = h('div.panel.glow-on', {}, head, body);
+  root.append(pan);
   root.addEventListener('click', e => { if (e.target===root && !opts.modal) close(); });
   document.getElementById('app').append(root);
+  sfx('ui_open'); haptic('light');
   return { root, body, close, head };
 }
 export function confirmBox(text, okText='确定', cancelText='取消'){
@@ -95,11 +97,21 @@ export function tutorial(key, steps, flags){
 // —— v1.1：奖励弹窗（逐项飞入）——
 export function rewardPop(title, items){
   return new Promise(res => {
-    const ov = h('div.reward', { onclick:()=>{ ov.classList.add('out'); setTimeout(()=>{ ov.remove(); res(); }, 220); } },
+    const ov = h('div.reward', { onclick:()=>{
+      // 物品飞向资源条
+      ov.querySelectorAll('.rw-item').forEach((el, i) => {
+        const r = el.getBoundingClientRect();
+        const fly = el.cloneNode(true); fly.className = 'rw-fly';
+        Object.assign(fly.style, { left: r.left + 'px', top: r.top + 'px', '--fx': (80 + i * 40) + 'px', '--fy': (-120 - i * 20) + 'px' });
+        document.body.append(fly); setTimeout(() => fly.remove(), 720);
+      });
+      sfx('coin'); haptic('light');
+      ov.classList.add('out'); setTimeout(()=>{ ov.remove(); res(); }, 220);
+    } },
       h('div.rw-box', {}, h('div.rw-title', {}, title),
         h('div.rw-items', {}, items.map((it,i)=>h('div.rw-item', { style:{animationDelay:(0.12+i*0.08)+'s'} }, it.icon ? icon(it.icon) : h('span.rw-glyph', {}, it.glyph||'✦'), h('div.rw-n', {}, it.name), it.n!=null ? h('div.rw-c', {}, '×'+it.n) : null))),
         h('div.rw-tap', {}, '点击任意处继续')));
-    document.getElementById('app').append(ov); sfx('item'); haptic('success');
+    document.getElementById('app').append(ov); sfx('ui_reward'); haptic('success');
     if (window.__ZLJ_TEST && !window.__ZLJ_TEST.holdPop) setTimeout(()=>ov.click(), 20);
   });
 }

@@ -212,6 +212,9 @@ export function sfx(name){
     case 'pet': tone(660,0.12,'triangle',0.08); setTimeout(()=>tone(880,0.18,'sine',0.07),70); setTimeout(()=>tone(1320,0.22,'triangle',0.05),150); break;
     case 'tower': drum(t,'kick',0.8,sfxBus); tone(110,0.5,'sawtooth',0.08,55); tone(440,0.3,'triangle',0.06,220); break;
     case 'ui_open': tone(523,0.08,'sine',0.05); tone(784,0.12,'triangle',0.04); break;
+    case 'ui_close': tone(660,0.06,'sine',0.035,220); break;
+    case 'ui_reward': tone(523,0.1,'triangle',0.07); tone(784,0.14,'sine',0.05); tone(1046,0.2,'triangle',0.04); drum(t,'hat',0.3,sfxBus); break;
+    case 'clear': drum(t,'kick',0.9,sfxBus); [0,4,7,12].forEach((s,i)=>setTimeout(()=>tone(523*Math.pow(2,s/12),0.35,'triangle',0.08),i*70)); break;
     case 'ui_close': tone(784,0.08,'sine',0.04,392); break;
     case 'star': [0,4,7,12].forEach((s,i)=>setTimeout(()=>tone(1046*Math.pow(2,s/12),0.25,'sine',0.06),i*55)); break;
     case 'flip': tone(300,0.2,'sawtooth',0.06,900); tone(900,0.25,'triangle',0.05,200); drum(t,'snare',0.35,sfxBus); break;
