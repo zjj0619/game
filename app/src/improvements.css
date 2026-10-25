@@ -41,6 +41,7 @@
 .screen.action.compact .ak-pad>.ak-atk .g{font-size:30px}
 .screen.action.left-handed .ak-pad{left:calc(var(--sl) + 12px);right:auto;transform-origin:left bottom}
 .screen.action.left-handed .ak-joy{right:calc(var(--sr) + 18px);left:auto;transform-origin:right bottom}
+.screen.action.compact.left-handed .ak-pot{left:242px!important;right:auto!important}
 .screen.action .ak-goals{pointer-events:none;max-width:50vw;flex-wrap:wrap;justify-content:center}
 .screen.action .ak-goals span{background:rgba(7,10,17,.85);font-size:11px}
 .screen.action .ak-mid{max-width:42vw}
