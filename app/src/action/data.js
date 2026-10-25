@@ -36,7 +36,7 @@ export const ACHARS = {
     skills:['lw_a','lw_b','lw_c','lw_d','lw_e','lw_f','lw_g','lw_h'], dash:'虎跃'},
 };
 export const ACTION_ROSTER = Object.keys(ACHARS);
-export const UNLOCK_LV = [1,1,3,5,8,12,16,20]; // 8 个主动技能的解锁等级
+export const UNLOCK_LV = [1,1,3,5,7,10,14,18]; // 8 个主动技能的解锁等级
 export const ULT_LV = 6;
 // 技能定义辅助：K(id,名称,类型,元素,mp,cd,参数,描述)
 const K = (id,name,type,el,mp,cd,o,desc) => [id,{id,name,type,el,mp,cd,...o,desc}];
@@ -161,11 +161,11 @@ export const TYPE_NAME = {slash:'斩击',dash:'突进',proj:'飞射',nova:'爆�
 // need: 解锁条件；gold: 金铢花费；每拥有一套非初始外观，该伙伴气血/攻击/法术 +1%
 export const SKINS = [
   { n:'本相', d:'初入山海时的模样。', need:null, gold:0 },
-  { n:'霜月', d:'冰晶覆衣，寒光自生。烬城北塔的守夜人说，月最冷的那一夜，灯也是蓝的。', need:{ cleared:10 }, gold:2000 },
-  { n:'幽昙', d:'紫昙夜开，只在梦与醒之间存在一刻。', need:{ cleared:25 }, gold:4000 },
-  { n:'青冥', d:'借林间翠色织成的衣裳，走过之处会落下细碎的叶。', need:{ cleared:40 }, gold:6000 },
-  { n:'鎏金', d:'以金乌残羽的颜色镀边，旧王族礼服的样式。', need:{ tower:20 }, gold:9000 },
-  { n:'素缟', d:'白衣如雪。为不能回来的人守一夜灯。', need:{ cleared:60 }, gold:12000 },
-  { n:'夜航', d:'深海的颜色。传说归墟以下，有一条从不点灯的航路。', need:{ tower:50 }, gold:16000 },
+  { n:'霜月', d:'冰晶覆衣，寒光自生。烬城北塔的守夜人说，月最冷的那一夜，灯也是蓝的。', need:{ cleared:8 }, gold:1800 },
+  { n:'幽昙', d:'紫昙夜开，只在梦与醒之间存在一刻。', need:{ cleared:18 }, gold:3500 },
+  { n:'青冥', d:'借林间翠色织成的衣裳，走过之处会落下细碎的叶。', need:{ cleared:30 }, gold:5500 },
+  { n:'鎏金', d:'以金乌残羽的颜色镀边，旧王族礼服的样式。', need:{ tower:15 }, gold:8000 },
+  { n:'素缟', d:'白衣如雪。为不能回来的人守一夜灯。', need:{ cleared:48 }, gold:11000 },
+  { n:'夜航', d:'深海的颜色。传说归墟以下，有一条从不点灯的航路。', need:{ tower:40 }, gold:15000 },
   { n:'赤霄', d:'赤色战袍，只赠予连破十殿首领的人。', need:{ rush:1 }, gold:20000 },
 ];

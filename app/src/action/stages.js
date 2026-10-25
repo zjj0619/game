@@ -1,6 +1,7 @@
 // v2.0 关卡：九大区域 × 10 主线关 + 每区 1 隐藏关；镇妖塔 100 层；首领连战；每日秘境
 import { REGIONS, REGION_ORDER } from '../data/regions.js';
 import { AFOES, ABOSSES } from './foes.js';
+import { applyHandStages, HAND } from './handStages.js';
 export const POOLS = {
   jincheng:['yegui','dengyan','yuanqin'], qingqiu:['humei','dengyan','gudiao','yegui'], donghai:['chiru','jellyfish','jiaoren','haiyuan','yuanqin'],
   changyang:['wushou','gugukui','toulou','kui','zheng'], kunlun:['qinyuan','yingzhao','suanni','yuchan','kui'], hundun:['hundunyy','huan','fei','mengmo','qinyuan'],
@@ -38,29 +39,39 @@ REGION_ORDER.forEach((rid, ri) => {
     let nAr = hidden ? 4 : 2 + Math.min(3, Math.floor(i / 3)) + (r() < 0.4 ? 1 : 0);
     if (early) nAr = i === 0 ? 1 : 2;
     const arenas = [];
+    // 中后期（青丘起）加厚：更多场次/波次/精英，平台布局更密
+    const mid = ri >= 1;
+    if (mid && !early && !hidden) nAr = Math.max(nAr, 2 + Math.min(3, Math.floor(i / 2) + (i >= 6 ? 1 : 0)));
     for (let a = 0; a < nAr; a++) {
       const waves = []; let nW = 1 + (a > 0 && r() < 0.5 ? 1 : 0) + (i >= 6 ? 1 : 0);
       if (early) nW = 1;
+      if (mid && i >= 3) nW = Math.max(nW, 2 + (a > 0 ? 1 : 0) + (i >= 7 ? 1 : 0));
       for (let w = 0; w < nW; w++) {
         const grp = []; let n = 2 + Math.floor(r() * (2 + i / 3));
         if (early) n = i === 0 ? 2 : (2 + (a > 0 ? 1 : 0));
+        if (mid) n = Math.max(n, 3 + Math.floor(i / 4) + (a === nAr - 1 ? 1 : 0));
         for (let k = 0; k < n; k++) {
           const b = pool[Math.floor(r() * Math.min(pool.length, early ? 2 : 2 + Math.floor(i / 2)))];
           const roll = r();
           let id = b;
-          if (!early) id = (i >= 3 && roll < 0.08 + i * 0.012) ? b + '_e' : (i >= 5 && roll > 0.9) ? b + '_v' : b;
+          if (!early) {
+            const eChance = (mid ? 0.12 : 0.08) + i * (mid ? 0.018 : 0.012) + (ri >= 4 ? 0.04 : 0);
+            id = (i >= 3 && roll < eChance) ? b + '_e' : (i >= 5 && roll > 0.88) ? b + '_v' : b;
+          }
           grp.push(id);
         }
         waves.push(grp);
       }
-      // 梦层波次：同结构但偏暗属/精英，闭目叠层时使用
       const dreamWaves = waves.map(grp => grp.map(id => {
         const base = id.replace(/_[ev]$/, '');
         const dark = pool.find(x => x !== base && (x.includes('ye') || x.includes('meng') || x.includes('hei') || x.includes('yuan'))) || pool[pool.length - 1];
         if (early) return r() < 0.5 ? dark : base;
-        return r() < 0.55 ? (dark + (r() < 0.3 ? '_e' : '')) : (base + '_e');
+        return r() < 0.55 ? (dark + (r() < 0.35 ? '_e' : '')) : (base + '_e');
       }));
-      arenas.push({ waves, dreamWaves, plat: Math.floor(r() * 6), hazard: (!early && i >= 3 && r() < 0.35) ? (['spike','fire','ice','poison'][ri % 4]) : null });
+      // 中后期平台：偏多层 / 高低错落；危险区更常见
+      const platPick = mid ? (1 + Math.floor(r() * 5) + (i >= 6 && r() < 0.4 ? 0 : 0)) : Math.floor(r() * 6);
+      const hazChance = early ? 0 : (mid ? (0.28 + i * 0.04 + ri * 0.02) : (i >= 3 ? 0.35 : 0));
+      arenas.push({ waves, dreamWaves, plat: platPick % 6, hazard: (r() < hazChance) ? (['spike','fire','ice','poison'][(ri + i) % 4]) : null });
     }
     const id = `${rid}_${i+1}`;
     let obj = hidden ? 'clear' : OBJ[i];
@@ -76,16 +87,51 @@ REGION_ORDER.forEach((rid, ri) => {
 const ALLPOOL = Object.values(POOLS).flat();
 const ALLBOSS = Object.keys(ABOSSES);
 export function towerStage(f){
-  const r = rng(f*7919+3); const lv = Math.min(80, (f <= 5 ? 2 : 3) + Math.round(f * (f <= 10 ? 0.55 : 0.75))); const boss = f % 10 === 0 ? ALLBOSS[(f/10 - 1) % ALLBOSS.length] : null;
+  const r = rng(f*7919+3); const lv = Math.min(80, (f <= 5 ? 2 : 3) + Math.round(f * (f <= 10 ? 0.55 : 0.78))); const boss = f % 10 === 0 ? ALLBOSS[(f/10 - 1) % ALLBOSS.length] : null;
   const ri = Math.min(8, Math.floor(f/12)); const rid = REGION_ORDER[ri];
-  const waves = []; const nW = boss ? 1 : (f <= 5 ? 1 : 2 + (f > 30 ? 1 : 0));
-  for (let w=0; w<nW; w++){ const g=[]; const n = f <= 5 ? 2 + Math.floor(r()*2) : 3+Math.floor(r()*3)+Math.floor(f/25); for (let k=0;k<n;k++){ const b=ALLPOOL[Math.floor(r()*Math.min(ALLPOOL.length, f<=8?6:ALLPOOL.length))]; g.push(f>8 && r()<0.1+f*0.004? b+'_e' : (f>15 && r()<0.15? b+'_v' : b)); } waves.push(g); }
-  return { id:'tower_'+f, region:rid, ri, idx:f, name:`镇妖塔·第 ${f} 层`, lv, boss, arenas:[{waves, plat:f%6, hazard: f>5 && f%7===0?'fire':null}], obj: f%5===3 && f>5 ? 'timed' : 'clear', time:70, bg: f%2? 'dengta':'buzhou', kind:'tower', floor:f,
-    desc: f===1 ? '塔底第一层：练手。灯芯范围内夜鬼会虚弱。' : (f%10===0 ? '十层一首领。烛瞳可提前看见红圈。' : '') };
+  // 有意义的楼层：5 护灯 / 15·35·55·75 精英房 / 25·45·65·85 梦层必切 / 每 10 首领
+  const eliteFloor = [15, 35, 55, 75].includes(f);
+  const dreamFloor = [25, 45, 65, 85].includes(f);
+  const guardFloor = f === 5 || f === 40 || f === 70;
+  const nAr = boss ? 1 : (f <= 5 ? 1 : (eliteFloor || dreamFloor || f > 40 ? 2 : 1));
+  const arenas = [];
+  for (let a = 0; a < nAr; a++) {
+    const waves = []; const nW = boss ? 1 : (f <= 5 ? 1 : 2 + (f > 30 ? 1 : 0) + (eliteFloor ? 1 : 0));
+    for (let w = 0; w < nW; w++) {
+      const g = []; const n = f <= 5 ? 2 + Math.floor(r() * 2) : 3 + Math.floor(r() * 3) + Math.floor(f / 22) + (eliteFloor ? 1 : 0);
+      for (let k = 0; k < n; k++) {
+        const b = ALLPOOL[Math.floor(r() * Math.min(ALLPOOL.length, f <= 8 ? 6 : ALLPOOL.length))];
+        const eChance = (eliteFloor ? 0.45 : 0.1) + f * 0.004;
+        g.push(f > 8 && r() < eChance ? b + '_e' : (f > 15 && r() < 0.18 ? b + '_v' : b));
+      }
+      waves.push(g);
+    }
+    const dreamWaves = waves.map(grp => grp.map(id => id.replace(/_[ev]$/, '') + '_e'));
+    const haz = f > 5 && (f % 7 === 0 || dreamFloor) ? (['fire', 'ice', 'poison', 'spike'][f % 4]) : null;
+    arenas.push({ waves, dreamWaves, plat: (eliteFloor ? 2 : f % 6), hazard: haz, note: eliteFloor ? '精英房' : dreamFloor ? '梦层关' : '' });
+  }
+  if (boss) arenas[0].boss = boss;
+  const obj = guardFloor ? 'guard' : (f % 5 === 3 && f > 5 ? 'timed' : 'clear');
+  const flavor = f === 1 ? '塔底第一层：练手。灯芯范围内夜鬼会虚弱。'
+    : f % 10 === 0 ? '十层一首领。烛瞳可提前看见红圈。'
+    : eliteFloor ? '精英房：掉落与经验加厚，平台压迫感更强。'
+    : dreamFloor ? '梦层关：闭目才能看见真正的敌人。'
+    : guardFloor ? '护灯层：人走远灯会暗。'
+    : '';
+  return { id: 'tower_' + f, region: rid, ri, idx: f, name: `镇妖塔·第 ${f} 层`, lv, boss, arenas, obj, time: obj === 'timed' ? 80 : 70, bg: f % 2 ? 'dengta' : 'buzhou', kind: 'tower', floor: f, desc: flavor, _handBossInArenas: !!boss };
 }
-export function rushStage(){ // 首领连战：每段一个首领
+export function rushStage(){ // 首领连战：十殿；第 3/6/9 殿前夹清场喘息波，节奏更可读
   const ids = ['ab_yeguiwang','ab_humeng','ab_duchao','ab_zhanhun','ab_luwu','ab_shuyan','ab_hundun','ab_ba','ab_xiangliu','ab_xuanming'];
-  return { id:'rush', region:'guixu', ri:8, name:'首领连战·十殿', lv:0, rush:ids, arenas: ids.map(b=>({waves:[], boss:b, plat:0})), obj:'clear', bg:'zhulong_eye', kind:'rush' };
+  const arenas = [];
+  ids.forEach((b, i) => {
+    if (i === 3 || i === 6 || i === 9) {
+      const pool = POOLS[['jincheng','qingqiu','donghai','changyang','kunlun','hundun','yugu','beihai','guixu'][Math.min(8, i)]] || POOLS.guixu;
+      arenas.push({ waves: [[pool[0], pool[1] || pool[0]], [pool[0] + '_e']], dreamWaves: [[pool[0] + '_e']], plat: 2, note: '喘息·清场', hazard: null });
+    }
+    arenas.push({ waves: [], boss: b, plat: 0, note: `第 ${i + 1} 殿` });
+  });
+  return { id: 'rush', region: 'guixu', ri: 8, name: '首领连战·十殿', lv: 42, rush: ids, arenas, obj: 'clear', bg: 'zhulong_eye', kind: 'rush',
+    desc: '十殿连战。第 3/6/9 殿前有喘息清场；烛瞳看清红圈，共鸣留给破韧。' };
 }
 export const DAILY = [
   { id:'d_gold', name:'聚宝秘境', desc:'金钱大量掉落', reward:'gold', bg:'jincheng' },
@@ -123,14 +169,20 @@ export const KEY_SECRETS = [
 function buildSecretArenas(seed, pool, nAr=3){
   const r = rng(seed); const arenas=[];
   for (let a=0;a<nAr;a++){
-    const waves=[]; const nW=2+(a>0?1:0);
+    const waves=[]; const nW=2+(a>0?1:0)+(a===nAr-1?1:0);
     for (let w=0;w<nW;w++){
-      const grp=[]; const n=3+Math.floor(r()*2);
-      for (let k=0;k<n;k++){ const b=pool[Math.floor(r()*pool.length)]; grp.push(r()<0.25?b+'_e':b); }
+      const grp=[]; const n=3+Math.floor(r()*3)+(a>1?1:0);
+      for (let k=0;k<n;k++){ const b=pool[Math.floor(r()*pool.length)]; grp.push(r()<(0.32+a*0.08)?b+'_e':(r()<0.12?b+'_v':b)); }
       waves.push(grp);
     }
     const dreamWaves = waves.map(grp => grp.map(id => id.replace(/_[ev]$/,'')+'_e'));
-    arenas.push({ waves, dreamWaves, plat: Math.floor(r()*6), hazard: a===1?'poison':null });
+    const platsLayouts = [
+      [[0.2,170,90],[0.5,140,110],[0.8,170,90]],
+      [[0.3,155,160],[0.7,130,100]],
+      [[0.15,175,70],[0.4,145,90],[0.65,120,90],[0.88,160,60]],
+      [[0.25,165,100],[0.6,145,130]],
+    ];
+    arenas.push({ waves, dreamWaves, plat: Math.floor(r()*6), platsLayout: platsLayouts[a % platsLayouts.length], hazard: a===1?'poison':(a===2?'spike':null), note: a===1?'梦毒廊':'' });
   }
   return arenas;
 }
@@ -169,4 +221,13 @@ for (const st of Object.values(STAGES)) if (!st.desc) {
   st.desc = tip;
 }
 
+// 手写招牌关覆盖（青丘→归墟）
+applyHandStages(STAGES);
+for (const [id, h] of Object.entries(HAND)) {
+  if (STAGES[id] && h.desc) STAGES[id].desc = h.desc;
+  if (STAGES[id] && h.signature) STAGE_FLAVOR[id] = h.desc;
+}
+
 export const STAGE_COUNT = Object.keys(STAGES).length;
+export const SIGNATURE_IDS = Object.keys(HAND).filter(id => HAND[id].signature);
+

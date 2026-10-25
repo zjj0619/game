@@ -12,7 +12,8 @@ import { battle } from './engine/battle.js';
 import { titleScreen, worldScreen, regionScreen } from './ui/screens.js';
 import { exploreScreen } from './engine/explore.js';
 import { openMenu } from './ui/menu.js';
-import { hubScreen } from './ui/hub.js';
+import { hubScreen, launch, adventureScreen } from './ui/hub.js';
+import { STAGES, SIGNATURE_IDS } from './action/stages.js';
 import { ensureAct } from './action/progress.js';
 import { endingScreen } from './ui/ending.js';
 import { setAmbient } from './engine/fx.js';
@@ -45,7 +46,7 @@ export const game = {
   battle(enc, opts){ return battle(enc, opts); },
 };
 window.__game = game;
-window.__zlj = { get S(){ return S; }, game, STORY, meta, settings, openMenu, nextBond, ach, add:addMember, ITEMS, healAll };
+window.__zlj = { get S(){ return S; }, game, STORY, meta, settings, openMenu, nextBond, ach, add:addMember, ITEMS, healAll, launch, adventureScreen, STAGES, SIGNATURE_IDS };
 
 hooks.battle = (enc, opts) => battle(enc, opts);
 hooks.toRegion = (id) => game.region(id);

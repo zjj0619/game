@@ -50,8 +50,11 @@ export function fxName(k, v){ const N = {atkPct:'攻击',magPct:'法术',hpPct:'
   return (N[k]||k) + ' +' + (v<1 && k!=='mpRegen' ? Math.round(v*100)+'%' : v); }
 // 掉落：按关卡等级决定阶，按运气决定品质
 export function rollGear(lv, luck=0, rand=Math.random){
-  const t = Math.max(0, Math.min(8, Math.floor((lv-1)/4.5) + (rand()<0.15?1:0) - (rand()<0.2?1:0)));
-  const x = rand() - luck; const rk = x < 0.02 ? 4 : x < 0.09 ? 3 : x < 0.26 ? 2 : x < 0.55 ? 1 : 0;
+  // 中后期（ch.3+ / lv≥14）：阶位与品质上抬，让锻造外的掉落也有期待
+  const midBoost = lv >= 28 ? 0.22 : lv >= 18 ? 0.15 : lv >= 14 ? 0.1 : 0;
+  const t = Math.max(0, Math.min(8, Math.floor((lv-1)/4.5) + (rand()<0.15+midBoost?1:0) - (rand()<0.2-midBoost*0.5?1:0)));
+  const x = rand() - luck - midBoost * 0.35;
+  const rk = x < 0.018 ? 4 : x < 0.08 ? 3 : x < 0.24 ? 2 : x < 0.52 ? 1 : 0;
   const slot = SLOTS[Math.floor(rand()*3)]; const k = Math.floor(rand()*3);
   return `g_${slot[0]}${t}${k}${rk}`;
 }

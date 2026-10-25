@@ -200,6 +200,7 @@ function resultScreen(stage, res, out, opts){
         h('div.rs-gain', {}, h('b', {}, '✦ ' + out.gold), h('b', {}, '经验 +' + out.exp), (res.dust||out.dust) ? h('b.dust', {}, '梦屑 +' + (out.dust || res.dust || 0)) : null, out.sp ? h('b.sp', {}, '技能点 +1') : null, res.rating === 'S' && win ? h('em.sbonus', {}, 'S · 丰厚赏赐') : null, out.first ? h('em', {}, '首次通关') : null, out.newBest && win ? h('em', {}, '新纪录') : null),
         lvl.length ? h('div.rs-ups', {}, ...lvl.map(([id, l]) => h('div', {}, h('img', { src: portrait(id) }), `${CHARS[id].name} 升至 Lv ${l[l.length - 1]}`))) : null,
         out.unlocks.length ? h('div.rs-unl', {}, ...out.unlocks.map(u => h('div', {}, '✧ ' + u))) : null,
+        (out.reactions && out.reactions.length) ? h('div.rs-react', {}, ...out.reactions.map(r => h('div.rs-rline', {}, h('b', {}, r.name + '：'), r.line))) : null,
         win ? h('div.rs-next', {}, nextUnlockTeaser(stage, out)) : null,
         h('div.rs-items', {}, ...(items.length ? items : [h('div.rs-none', {}, win ? '本关没有掉落' : '失败时不保留掉落，仅获得部分星砂与经验')])),
         h('div.rs-btns', {}, btn('返回', back, ''), btn(win ? '再战一次' : '重新挑战', () => launch(stage, opts), ''), next && win ? btn('下一关 ▶', () => stageDetail(next, opts), 'gold') : null))));

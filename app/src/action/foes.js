@@ -57,10 +57,12 @@ export const elTint = EL_TINT;
 // 数值：按关卡等级缩放
 export function foeStats(def, lv, hard){
   const m = hard ? 1.6 : 1;
-  // 前 30 分钟：低等级怪明显更脆，让招牌教学不被压血打断
+  // 前 30 分钟偏脆；中后期（lv≥18）稳步加压，首领再抬一档
   const early = lv <= 3 ? 0.68 : lv <= 6 ? 0.82 : lv <= 10 ? 0.92 : 1;
-  const hp = Math.round((60 + lv*30 + lv*lv*1.2) * (def.hp||1) * (def.boss ? 14 : 1) * m * early);
-  const atk = Math.round((6 + lv*2.4) * (def.atk||1) * (def.boss ? 1.25 : 1) * (hard?1.35:1) * (lv <= 4 ? 0.75 : early));
-  const def_ = Math.round((2 + lv*1.1) * (lv <= 4 ? 0.7 : 1));
+  const late = lv >= 36 ? 1.18 : lv >= 28 ? 1.12 : lv >= 18 ? 1.06 : 1;
+  const bossLate = def.boss ? (lv >= 28 ? 1.1 : lv >= 18 ? 1.05 : 1) : 1;
+  const hp = Math.round((60 + lv*30 + lv*lv*1.25) * (def.hp||1) * (def.boss ? 14 : 1) * m * early * late * bossLate);
+  const atk = Math.round((6 + lv*2.45) * (def.atk||1) * (def.boss ? 1.28 : 1) * (hard?1.35:1) * (lv <= 4 ? 0.75 : early) * late);
+  const def_ = Math.round((2 + lv*1.15) * (lv <= 4 ? 0.7 : 1) * (lv >= 22 ? 1.08 : 1));
   return { hp, atk, def:def_ };
 }

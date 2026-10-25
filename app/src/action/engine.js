@@ -32,7 +32,7 @@ export function regionImg(base, ri){ return ri > 0 && /^enemy\/[a-d]\d$/.test(ba
 const clamp = (v,a,b) => v<a?a:v>b?b:v;
 const rnd = (a,b) => a + Math.random()*(b-a);
 function hexA(hex, a){ if (!hex || hex[0] !== '#') return `rgba(255,255,255,${a})`; const n = parseInt(hex.slice(1, 7), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${Math.max(0, Math.min(1, a))})`; }
-const PLATS = [ [], [[0.3,170,110],[0.65,150,110]], [[0.18,165,90],[0.5,120,120],[0.8,165,90]], [[0.4,160,180]], [[0.15,150,80],[0.45,175,80],[0.75,140,100]], [[0.25,130,90],[0.6,170,140]] ];
+const PLATS = [ [], [[0.3,170,110],[0.65,150,110]], [[0.18,165,90],[0.5,120,120],[0.8,165,90]], [[0.4,160,180]], [[0.15,150,80],[0.45,175,80],[0.75,140,100]], [[0.25,130,90],[0.6,170,140]], [[0.2,175,70],[0.45,145,70],[0.7,115,90],[0.88,155,60]], [[0.15,170,80],[0.85,170,80]], [[0.3,155,200]], [[0.18,170,80],[0.4,140,90],[0.65,160,90],[0.88,130,70]] ];
 
 export function runStage(stage, opts = {}){
   return new Promise(resolve => {
@@ -44,8 +44,10 @@ export function runStage(stage, opts = {}){
     let W = 0, H = 0, U = 1, dpr = 1, VW = 600;
     const W_AR = () => Math.max(620, VW * 1.08);
     const arenas = stage.arenas.map((a, i) => ({ ...a, i, x0: 0, x1: 0, done: false, started: false, wave: 0 }));
-    if (stage.boss && !stage.rush) arenas.push({ waves: [], boss: stage.boss, plat: 0, i: arenas.length, done: false, started: false, wave: 0 });
-    function layoutArenas(){ let x = 0; for (const a of arenas) { a.x0 = x + 160; a.x1 = a.x0 + W_AR(); a.plats = (PLATS[a.boss ? 0 : (a.plat||0) % PLATS.length]).map(([fx, y, w]) => ({ x: a.x0 + fx * W_AR() - w/2, y, w })); x = a.x1; } }
+    if (stage.boss && !stage.rush && !stage._handBossInArenas) arenas.push({ waves: [], boss: stage.boss, plat: 0, i: arenas.length, done: false, started: false, wave: 0 });
+    function layoutArenas(){ let x = 0; for (const a of arenas) { a.x0 = x + 160; a.x1 = a.x0 + W_AR();
+      const raw = (a.platsLayout && a.platsLayout.length) ? a.platsLayout : PLATS[a.boss ? 0 : (a.plat || 0) % PLATS.length];
+      a.plats = raw.map(([fx, y, w]) => ({ x: a.x0 + fx * W_AR() - w / 2, y, w })); x = a.x1; } }
     let worldEnd = 0;
     const st = { t: 0, hitstop: 0, shake: 0, combo: 0, comboT: 0, maxCombo: 0, hitsTaken: 0, kills: 0, over: false, paused: false, cur: -1, locked: false, cam: 0,
       gold: 0, loot: {}, souls: {}, exp: 0, slow: 1, lamp: null, bossBar: null, potions: 3 + Math.max(0, (S.city?.herb || 1) - 1), timeLeft: stage.time || 0,
@@ -54,7 +56,8 @@ export function runStage(stage, opts = {}){
     const mk = id => { const s = actStats(id); return { id, s, hp: s.hp, mp: s.mp, rage: 0, cds: {}, alive: true }; };
     const roster = team.map(mk);
     let ri = 0; const P = { x: 60, y: GY, vx: 0, vy: 0, w: 22, h: 52, face: 1, ground: true, jumps: 0, dashT: 0, dashCd: 0, iT: 0, atkT: 0, atkCd: 0, combo: 0, comboT: 0,
-      hurtT: 0, lock: 0, ultT: 0, buffs: [], swapCd: 0, slamming: null, whirl: null, beam: null };
+      hurtT: 0, lock: 0, ultT: 0, buffs: [], swapCd: 0, slamming: null, whirl: null, beam: null,
+      coyote: 0, jumpBuf: 0, dashBuf: 0, atkBuf: 0 };
     const C = () => roster[ri]; const AC = () => ACHARS[C().id]; const WP = () => WEAPON[AC().wpn];
     const pas = () => ASKILLS[AC().passive] || {}; const ultDef = () => ASKILLS[AC().ult];
     function buffV(k){ let v = 0; for (const b of P.buffs) if (typeof b[k] === 'number') v += b[k]; if (P.ultT > 0) { const u = ultDef(); if (typeof u[k] === 'number' && k !== 'dur') v += u[k]; } return v; }
@@ -142,7 +145,7 @@ export function runStage(stage, opts = {}){
       const ls = buffV('lifesteal') + (s.lifesteal || 0); if (ls) heal(d * ls, true);
       num(f.x + rnd(-8, 8), f.y - f.h - 6, d, crit ? 'crit' : o.skill ? 'sk' : '');
       part(f.x, f.y - f.h / 2, o.col || '#ffd890', crit ? 12 : 6, crit ? 260 : 170, 0.35, crit ? 3.5 : 2.5); vfx(crit ? 'shards' : 'spark', colEl(o.col || '#ffd890'), f.x + rnd(-6, 6), f.y - f.h / 2 + rnd(-8, 8), crit ? 70 : 46, { life: 0.22, rot: rnd(0, 6) });
-      st.hitstop = Math.max(st.hitstop, crit || o.heavy ? 0.085 : 0.045); if (crit || o.heavy) shake(crit ? 5 : 4);
+      st.hitstop = Math.max(st.hitstop, crit ? 0.1 : o.heavy ? 0.09 : 0.055); if (crit || o.heavy) shake(crit ? 6 : 4.5); else if (st.combo >= 10 && st.combo % 5 === 0) shake(2);
       if (o.st) { const [k2, ch] = o.st; if (Math.random() < ch) applyStatus(f, k2, s); }
       if (P.ultT > 0 && ultDef().freezeAll && Math.random() < 0.15) applyStatus(f, 'freeze', s);
       const armor = f.def_.boss ? (f.armorT > 0 || !!f.pat) : (f.def_.tier === 1 && f.state === 'atk');
@@ -187,7 +190,8 @@ export function runStage(stage, opts = {}){
       for (let i = 0; i < nc; i++) drop(f, 'gold', Math.max(1, Math.round((2 + lv * 0.9) * gmul)));
       if (Math.random() < (f.def_.boss ? 1 : 0.12)) drop(f, 'orb', 'hp'); if (Math.random() < 0.12) drop(f, 'orb', 'mp');
       for (const [mid, ch] of f.def_.drops || []) if (ITEMS[mid] && Math.random() < ch * (stage.reward === 'mat' ? 2 : 1)) drop(f, 'item', mid);
-      const gch = f.def_.boss ? 1 : (tier === 1 ? 0.35 : tier === 2 ? 0.12 : 0.04) * (stage.reward === 'gear' ? 3 : 1);
+      const midG = stage.lv >= 28 ? 1.55 : stage.lv >= 18 ? 1.35 : stage.lv >= 14 ? 1.2 : 1;
+      const gch = f.def_.boss ? 1 : (tier === 1 ? 0.38 : tier === 2 ? 0.14 : 0.05) * midG * (stage.reward === 'gear' ? 3 : 1);
       if (Math.random() < gch) for (let i = 0; i < (f.def_.boss ? (hard ? 3 : 2) : 1); i++) drop(f, 'item', rollGear(lv, (hard ? 0.08 : 0) + (f.def_.boss ? 0.1 : 0) + (stage.reward === 'gear' ? 0.08 : 0)));
       if (!f.def_.boss && f.def_.base && Math.random() < (0.025 + tier * 0.05) * (stage.reward === 'pet' ? 4 : 1)) drop(f, 'soul', f.def_.base);
       if (st.dream) { st.dust = (st.dust || 0) + (f.def_.boss ? 5 : tier === 1 ? 2 : 1); if (Math.random() < (f.def_.boss ? 0.6 : 0.08 + tier * 0.1)) drop(f, 'soul', f.def_.base || kid); drop(f, 'dust', f.def_.boss ? 3 : 1); }
@@ -228,10 +232,24 @@ export function runStage(stage, opts = {}){
     }
     // —— 玩家动作 ——
     const busy = () => st.over || st.paused || P.hurtT > 0 || P.lock > 0;
-    function jump(){ if (busy()) return; const max = 2 + (pas().jumps || 0) + (P.ultT > 0 && ultDef().fly ? 9 : 0); if (P.ground || P.jumps < max) { if (P.ground) P.jumps = 0; P.vy = P.ground ? -560 : -500; P.ground = false; P.jumps++; part(P.x, P.y, '#ffffff', 5, 80, 0.3, 2); sfx('jump'); if (P.jumps > 1) ring(P.x, P.y, 16, AC().col, 0.25); } }
-    function dash(){ if (busy() || P.dashCd > 0) return; P.dashT = 0.2; P.dashCd = 0.7; P.vx = P.face * 620; P.vy = 0; P.iT = Math.max(P.iT, 0.25); sfx('dash'); haptic('light'); }
+    function jump(){ if (busy()) { P.jumpBuf = 0.14; return; }
+      const max = 2 + (pas().jumps || 0) + (P.ultT > 0 && ultDef().fly ? 9 : 0);
+      const canCoyote = P.coyote > 0 && P.jumps === 0;
+      if (P.ground || canCoyote || P.jumps < max) {
+        const fromGround = P.ground || canCoyote;
+        if (fromGround) P.jumps = 0;
+        P.vy = fromGround ? -560 : -500; P.ground = false; P.coyote = 0; P.jumpBuf = 0; P.jumps++;
+        part(P.x, P.y, '#ffffff', 5, 80, 0.3, 2); sfx('jump');
+        if (P.jumps > 1) ring(P.x, P.y, 16, AC().col, 0.25);
+      } else P.jumpBuf = 0.14;
+    }
+    function dash(){ if (busy() || P.dashCd > 0) { P.dashBuf = 0.12; return; }
+      P.dashT = 0.18; P.dashCd = 0.62; P.vx = P.face * 640; P.vy = 0; P.iT = Math.max(P.iT, 0.28); P.dashBuf = 0;
+      sfx('dash'); haptic('light'); ring(P.x, P.y - P.h / 2, 18, AC().col, 0.18);
+    }
     function attack(){
-      if (busy() || P.atkCd > 0 || P.whirl || P.beam) return;
+      if (busy() || P.atkCd > 0 || P.whirl || P.beam) { P.atkBuf = 0.12; return; }
+      P.atkBuf = 0;
       const w = WP(); const seq = w.combo; if (P.comboT <= 0) P.combo = 0;
       const step = P.ground ? seq[P.combo % seq.length] : w.air; const [mult, launch, kbx] = step; const fin = P.ground && P.combo % seq.length === seq.length - 1;
       const sp = w.spd * (1 + buffV('spd') * 0.5);
@@ -311,11 +329,16 @@ export function runStage(stage, opts = {}){
       const minX = st.locked && st.cur >= 0 ? arenas[st.cur].x0 + 12 : 12; const maxX = st.locked && st.cur >= 0 ? arenas[st.cur].x1 - 12 : worldEnd;
       P.x = clamp(P.x, minX, maxX);
       let land = null; if (P.y >= GY) land = GY; else if (P.vy > 0 && !keys.d) land = onPlat(P.x, yPrev, P.y);
-      if (land != null) { if (!P.ground && P.vy > 300) part(P.x, land, '#d8cfb8', 6, 90, 0.3, 2); P.y = land; P.vy = 0; if (!P.ground) P.jumps = 0; P.ground = true;
+      if (land != null) { if (!P.ground && P.vy > 300) part(P.x, land, '#d8cfb8', 6, 90, 0.3, 2); P.y = land; P.vy = 0; if (!P.ground) P.jumps = 0; P.ground = true; P.coyote = 0.1;
         if (P.slamming) { const s = P.slamming; P.slamming = null; hitCircle(P.x, P.y - 20, s.k.r || 110, s.pw, { ...s.o, kb: 220, launch: 300, heavy: true }); ring(P.x, P.y - 4, s.k.r || 110, s.o.col, 0.4); fx.push({ k: 'spike', x: P.x, y: GY, col: s.o.col, t: 0, life: 0.4 }); shake(9); sfx('boom'); } }
       else if (P.y < GY) { if (P.ground && !onPlat(P.x, P.y - 2, P.y + 2) && P.y < GY - 1) P.ground = false; }
-      if (P.ground && P.y < GY && !onPlat(P.x, P.y - 2, P.y + 3)) P.ground = false;
-      if (keys.atk && P.atkCd <= 0) attack();
+      if (P.ground && P.y < GY && !onPlat(P.x, P.y - 2, P.y + 3)) { P.ground = false; P.coyote = 0.1; }
+      // 落地缓冲 / 输入缓冲：跳跃·冲刺·攻击
+      P.coyote = P.ground ? 0.1 : Math.max(0, P.coyote - dt);
+      P.jumpBuf = Math.max(0, P.jumpBuf - dt); P.dashBuf = Math.max(0, P.dashBuf - dt); P.atkBuf = Math.max(0, P.atkBuf - dt);
+      if (P.jumpBuf > 0 && (P.ground || P.coyote > 0)) jump();
+      if (P.dashBuf > 0 && P.dashCd <= 0 && !busy()) dash();
+      if ((keys.atk || P.atkBuf > 0) && P.atkCd <= 0) attack();
       // 召唤物、宠物
       for (const a of allies) { a.t -= dt; a.cd -= dt; const tg = nearest(a.x, GY - 30, 420); if (tg) { a.face = Math.sign(tg.x - a.x) || a.face; const melee = a.what === 'leopard'; if (melee) { if (Math.abs(tg.x - a.x) > 34) a.x += a.face * 230 * dt; else if (a.cd <= 0) { a.cd = 0.6; dmgTo(tg, a.pw, { ...a.o, kb: 80 }); arc(a.x, GY - 24, a.face, 30, a.o.col, 0.15); } }
         else { a.x += (P.x - P.face * 34 - a.x) * dt * 3; if (a.cd <= 0) { a.cd = a.what === 'clone' ? 0.5 : 0.9; shots.push({ owner: 'p', x: a.x, y: GY - 34, vx: a.face * 520, vy: 0, r: 6, mult: a.pw, col: a.o.col, life: 1, hit: new Set(), t: 0, sk: a.o, st: a.what === 'icefox' ? ['freeze', 0.2] : null }); } } }
@@ -419,21 +442,21 @@ export function runStage(stage, opts = {}){
       const p = f.pat; p.t += dt; const atk = f.atk; const cy = f.y - f.h / 2; const col = elTint[f.def_.el] || '#ff4040';
       const end = (cd = 1.6) => { f.pat = null; f.cd = cd / spdM * rnd(0.85, 1.15); };
       switch (p.k) {
-        case 'slash': if (p.step < 3 && p.t > p.step * 0.45 / spdM) { if (p.step === 0) f.x += clamp(dx - f.face * 60, -120, 120); f.face = Math.sign(P.x - f.x) || f.face; tel({ shape: 'rect', x: f.x + f.face * 70, y: GY - 40, w: 130, h: 80, warn: 0.42 / spdM, dmg: atk, col }); p.step++; } if (p.t > 1.8 / spdM) end(); break;
-        case 'charge': if (p.step === 0) { f.face = Math.sign(dx) || 1; const w = f.face > 0 ? a.x1 - f.x : f.x - a.x0; tel({ shape: 'rect', x: f.x + f.face * w / 2, y: GY - 34, w, h: 68, warn: 0.75 / spdM, dmg: 0, col }); p.step = 1; }
+        case 'slash': if (p.step < 3 && p.t > p.step * 0.45 / spdM) { if (p.step === 0) f.x += clamp(dx - f.face * 60, -120, 120); f.face = Math.sign(P.x - f.x) || f.face; tel({ shape: 'rect', x: f.x + f.face * 70, y: GY - 40, w: 130, h: 80, warn: 0.55 / spdM, dmg: atk, col }); p.step++; } if (p.t > 1.8 / spdM) end(); break;
+        case 'charge': if (p.step === 0) { f.face = Math.sign(dx) || 1; const w = f.face > 0 ? a.x1 - f.x : f.x - a.x0; tel({ shape: 'rect', x: f.x + f.face * w / 2, y: GY - 34, w, h: 68, warn: 0.95 / spdM, dmg: 0, col }); p.step = 1; }
           else if (p.step === 1 && p.t > 0.75 / spdM) { p.step = 2; }
           else if (p.step === 2) { f.x += f.face * 700 * spdM * dt; if (st.t % 0.04 < dt) fx.push({ k: 'ghostF', x: f.x, y: f.y, face: f.face, f, t: 0, life: 0.25 }); if (Math.abs(P.x - f.x) < f.w / 2 + 14 && Math.abs((P.y - 26) - cy) < f.h / 2 + 10) hurtP(atk * 1.4, f.x); if (f.x <= a.x0 + 14 || f.x >= a.x1 - 14) { shake(9); f.stagger = 0.6 / spdM; part(f.x, cy, '#ffffff', 14, 200, 0.4); end(1.2); } } break;
-        case 'slam': if (p.step === 0) { p.tx = clamp(P.x, a.x0 + 40, a.x1 - 40); tel({ shape: 'circle', x: p.tx, y: GY - 20, r: 90, warn: 0.95 / spdM, dmg: atk * 1.5, col, big: true, fx: tl => { ring(tl.x, GY - 6, 110, col, 0.4); fx.push({ k: 'spike', x: tl.x, y: GY, col, t: 0, life: 0.4 }); } }); p.step = 1; p.x0 = f.x; }
+        case 'slam': if (p.step === 0) { p.tx = clamp(P.x, a.x0 + 40, a.x1 - 40); tel({ shape: 'circle', x: p.tx, y: GY - 20, r: 90, warn: 1.15 / spdM, dmg: atk * 1.5, col, big: true, fx: tl => { ring(tl.x, GY - 6, 110, col, 0.4); fx.push({ k: 'spike', x: tl.x, y: GY, col, t: 0, life: 0.4 }); } }); p.step = 1; p.x0 = f.x; }
           else if (p.step === 1) { const k = Math.min(1, p.t / (0.95 / spdM)); f.x = p.x0 + (p.tx - p.x0) * k; f.y = GY - Math.sin(k * Math.PI) * 160; if (k >= 1) { f.y = GY; p.step = 2; sfx('boom'); for (const d of [-1, 1]) eShot(f, f.x, GY - 12, d > 0 ? 0 : Math.PI, 300 * spdM, 0.8, 10, { ground: true, life: 1.4 }); } }
           else if (p.t > 1.5 / spdM) end(); break;
         case 'fan': if (p.step < 1 + f.phase && p.t > p.step * 0.55) { const n = 5 + f.phase * 2 + (hard ? 2 : 0); const base = Math.atan2((P.y - 30) - cy, dx); for (let i = 0; i < n; i++) eShot(f, f.x, cy, base + (i / (n - 1) - 0.5) * 1.1, 230 * spdM, 0.7, 8); p.step++; sfx('skill'); } if (p.t > 0.6 + f.phase * 0.55) end(); break;
-        case 'rain': if (p.step === 0) { const n = 5 + f.phase * 2 + (hard ? 2 : 0); for (let i = 0; i < n; i++) { const x = i === 0 ? P.x : rnd(a.x0 + 30, a.x1 - 30); tel({ shape: 'circle', x, y: GY - 24, r: 38, warn: (0.9 + i * 0.12) / spdM, dmg: atk * 1.1, col, fx: tl => { fx.push({ k: 'bolt', x: tl.x, col, t: 0, life: 0.3 }); part(tl.x, GY - 4, col, 8, 140, 0.4); } }); } p.step = 1; } if (p.t > 1.8 / spdM) end(1.3); break;
+        case 'rain': if (p.step === 0) { const n = 5 + f.phase * 2 + (hard ? 2 : 0); for (let i = 0; i < n; i++) { const x = i === 0 ? P.x : rnd(a.x0 + 30, a.x1 - 30); tel({ shape: 'circle', x, y: GY - 24, r: 38, warn: (1.05 + i * 0.14) / spdM, dmg: atk * 1.1, col, fx: tl => { fx.push({ k: 'bolt', x: tl.x, col, t: 0, life: 0.3 }); part(tl.x, GY - 4, col, 8, 140, 0.4); } }); } p.step = 1; } if (p.t > 1.8 / spdM) end(1.3); break;
         case 'summon': if (p.step === 0) { p.step = 1; f.armorT = 1; for (const m of f.def_.minions.slice(0, 2)) spawn(m, clamp(f.x + rnd(-140, 140), a.x0 + 30, a.x1 - 30)); ring(f.x, cy, 90, '#a070ff', 0.6); } if (p.t > 1) end(2); break;
-        case 'beam': if (p.step === 0) { const hy = P.ground ? GY - 22 : P.y - P.h / 2; tel({ shape: 'rect', x: (a.x0 + a.x1) / 2, y: hy, w: a.x1 - a.x0, h: 34, warn: 1.05 / spdM, dmg: atk * 1.6, col, big: true, fx: tl => fx.push({ k: 'slab', x: tl.x, y: tl.y, w: tl.w, h: tl.h, col: '#ffffff', t: 0, life: 0.35 }) }); p.step = 1; } if (p.t > 1.5 / spdM) end(1.8); break;
+        case 'beam': if (p.step === 0) { const hy = P.ground ? GY - 22 : P.y - P.h / 2; tel({ shape: 'rect', x: (a.x0 + a.x1) / 2, y: hy, w: a.x1 - a.x0, h: 34, warn: 1.25 / spdM, dmg: atk * 1.6, col, big: true, fx: tl => fx.push({ k: 'slab', x: tl.x, y: tl.y, w: tl.w, h: tl.h, col: '#ffffff', t: 0, life: 0.35 }) }); p.step = 1; } if (p.t > 1.5 / spdM) end(1.8); break;
         case 'spin': f.x += Math.sign(dx) * 190 * spdM * dt; f.rot = (f.rot || 0) + dt * 18; if (st.t % 0.25 < dt) { arc(f.x, cy, 1, 70, col, 0.2, 2); if (Math.hypot(P.x - f.x, (P.y - 26) - cy) < 72) hurtP(atk * 0.7, f.x); } if (p.t > 2) { f.rot = 0; end(1.4); } break;
-        case 'blink': if (p.step === 0) { part(f.x, cy, '#a070ff', 16, 180, 0.4); f.x = clamp(P.x - P.face * 90, a.x0 + 30, a.x1 - 30); f.face = Math.sign(P.x - f.x) || 1; part(f.x, f.y - f.h / 2, '#a070ff', 16, 180, 0.4); p.step = 1; tel({ shape: 'rect', x: f.x + f.face * 70, y: GY - 40, w: 140, h: 80, warn: 0.5 / spdM, dmg: atk * 1.2, col }); } if (p.t > 1.1 / spdM) end(); break;
-        case 'pillar': if (p.step === 0) { const d = Math.sign(dx) || 1; const n = 6 + f.phase * 2; for (let i = 0; i < n; i++) { const x = f.x + d * (60 + i * 52); if (x < a.x0 || x > a.x1) break; tel({ shape: 'rect', x, y: GY - 36, w: 40, h: 72, warn: (0.55 + i * 0.1) / spdM, dmg: atk * 1.1, col, fx: tl => { fx.push({ k: 'spike', x: tl.x, y: GY, col, t: 0, life: 0.45 }); vfx('pillar', f.def_.el in EL_SET ? f.def_.el : 'dark', tl.x, GY - 60, 80, { life: 0.5 }); } }); } p.step = 1; } if (p.t > 1.6 / spdM) end(); break;
-        case 'nova': if (p.step === 0) { f.armorT = 1.4; tel({ shape: 'circle', x: f.x, y: cy, r: 150 + f.phase * 20, warn: 1.15 / spdM, dmg: atk * 2, col, big: true, fx: tl => { ring(tl.x, tl.y, tl.r, col, 0.5); ring(tl.x, tl.y, tl.r * 0.6, '#ffffff', 0.35); } }); p.step = 1; } if (p.t > 1.6 / spdM) end(2); break;
+        case 'blink': if (p.step === 0) { part(f.x, cy, '#a070ff', 16, 180, 0.4); f.x = clamp(P.x - P.face * 90, a.x0 + 30, a.x1 - 30); f.face = Math.sign(P.x - f.x) || 1; part(f.x, f.y - f.h / 2, '#a070ff', 16, 180, 0.4); p.step = 1; tel({ shape: 'rect', x: f.x + f.face * 70, y: GY - 40, w: 140, h: 80, warn: 0.68 / spdM, dmg: atk * 1.2, col }); } if (p.t > 1.1 / spdM) end(); break;
+        case 'pillar': if (p.step === 0) { const d = Math.sign(dx) || 1; const n = 6 + f.phase * 2; for (let i = 0; i < n; i++) { const x = f.x + d * (60 + i * 52); if (x < a.x0 || x > a.x1) break; tel({ shape: 'rect', x, y: GY - 36, w: 40, h: 72, warn: (0.72 + i * 0.11) / spdM, dmg: atk * 1.1, col, fx: tl => { fx.push({ k: 'spike', x: tl.x, y: GY, col, t: 0, life: 0.45 }); vfx('pillar', f.def_.el in EL_SET ? f.def_.el : 'dark', tl.x, GY - 60, 80, { life: 0.5 }); } }); } p.step = 1; } if (p.t > 1.6 / spdM) end(); break;
+        case 'nova': if (p.step === 0) { f.armorT = 1.4; tel({ shape: 'circle', x: f.x, y: cy, r: 150 + f.phase * 20, warn: 1.35 / spdM, dmg: atk * 2, col, big: true, fx: tl => { ring(tl.x, tl.y, tl.r, col, 0.5); ring(tl.x, tl.y, tl.r * 0.6, '#ffffff', 0.35); } }); p.step = 1; } if (p.t > 1.6 / spdM) end(2); break;
         default: end();
       }
     }
@@ -477,9 +500,17 @@ export function runStage(stage, opts = {}){
         if (st.locked && st.cur === a.i) for (const gx of [a.x0, a.x1]) { const gr = g.createLinearGradient(gx - 8, 0, gx + 8, 0); gr.addColorStop(0, 'rgba(255,90,60,0)'); gr.addColorStop(0.5, `rgba(255,120,70,${0.35 + 0.2 * Math.sin(st.t * 6)})`); gr.addColorStop(1, 'rgba(255,90,60,0)'); g.fillStyle = gr; g.fillRect(gx - 8, 40, 16, GY - 40); } }
       if (st.lamp) { const lp = img('spr/o_lamp_lit'); drawSprite(lp, st.lamp.x, GY, 46, 1); g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(st.lamp.x - 18, GY - 56, 36, 4); g.fillStyle = '#ffcf6a'; g.fillRect(st.lamp.x - 18, GY - 56, 36 * clamp(st.lamp.hp / 100, 0, 1), 4); }
       // 预警
-      for (const tl of tele) { const k = clamp(tl.t / tl.warn, 0, 1); if (tl.fired) continue; g.globalAlpha = 0.18 + 0.3 * k; g.fillStyle = tl.col; g.strokeStyle = tl.eyeEarly || st.eyeOn ? '#ffd24a' : tl.col; g.lineWidth = tl.eyeEarly || st.eyeOn ? 2.2 : 1.5;
-        if (tl.shape === 'rect') { g.fillRect(tl.x - tl.w / 2, tl.y - tl.h / 2, tl.w, tl.h); g.globalAlpha = 0.9; g.strokeRect(tl.x - tl.w / 2, tl.y - tl.h / 2, tl.w, tl.h); g.globalAlpha = 0.35; g.fillRect(tl.x - tl.w / 2, tl.y - tl.h / 2, tl.w * k, tl.h); }
-        else { g.beginPath(); g.arc(tl.x, tl.y, tl.r, 0, 6.283); g.fill(); g.globalAlpha = 0.9; g.stroke(); g.globalAlpha = 0.4; g.beginPath(); g.arc(tl.x, tl.y, tl.r * k, 0, 6.283); g.fill(); } g.globalAlpha = 1; }
+      for (const tl of tele) { const k = clamp(tl.t / tl.warn, 0, 1); if (tl.fired) continue;
+        const eye = tl.eyeEarly || st.eyeOn; const pulse = 0.15 + 0.12 * Math.sin(st.t * (8 + k * 10));
+        g.globalAlpha = 0.16 + 0.28 * k + pulse; g.fillStyle = tl.col; g.strokeStyle = eye ? '#ffd24a' : (k > 0.7 ? '#ffffff' : tl.col);
+        g.lineWidth = eye ? 2.6 : (tl.big ? 2.2 : 1.7);
+        if (tl.shape === 'rect') { g.fillRect(tl.x - tl.w / 2, tl.y - tl.h / 2, tl.w, tl.h); g.globalAlpha = 0.95; g.strokeRect(tl.x - tl.w / 2, tl.y - tl.h / 2, tl.w, tl.h);
+          g.globalAlpha = 0.4; g.fillRect(tl.x - tl.w / 2, tl.y - tl.h / 2, tl.w * k, tl.h);
+          if (k > 0.55) { g.globalAlpha = 0.55 + 0.4 * k; g.fillStyle = '#fff'; g.fillRect(tl.x - tl.w / 2, tl.y - 2, tl.w * k, 3); } }
+        else { g.beginPath(); g.arc(tl.x, tl.y, tl.r, 0, 6.283); g.fill(); g.globalAlpha = 0.95; g.stroke();
+          g.globalAlpha = 0.45; g.beginPath(); g.arc(tl.x, tl.y, tl.r * k, 0, 6.283); g.fill();
+          if (k > 0.55) { g.globalAlpha = 0.7; g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.arc(tl.x, tl.y, tl.r * k, -1.57, -1.57 + 6.283 * k); g.stroke(); } }
+        g.globalAlpha = 1; }
       for (const z of zones) { g.globalAlpha = 0.18 + 0.06 * Math.sin(st.t * 5); g.fillStyle = z.o.col; g.beginPath(); g.ellipse(z.x, GY - 2, z.k.r, 14, 0, 0, 6.283); g.fill(); g.globalAlpha = 1; }
       // 敌人
       for (const f of foes) { if (f.x < L - 60 || f.x > R + 60) continue; const base = f.im || f.def_.img; let im = img(base); let hh = f.h * 1.25;
@@ -569,7 +600,7 @@ export function runStage(stage, opts = {}){
       set('team', roster.map(r => r.id + (r.alive ? Math.round(r.hp / r.s.hp * 10) : 'x') + (r === c)).join(), () => { hud.team.replaceChildren(...roster.map((r, j) => h('div.ak-tm' + (j === ri ? '.cur' : '') + (r.alive ? '' : '.dead'), { onpointerdown: e => { e.stopPropagation(); if (j !== ri && r.alive && P.swapCd <= 0) { ri = (j - 1 + roster.length) % roster.length; swap(); } } }, h('img', { src: asset('por/' + r.id) }), h('i', { style: `width:${100 * r.hp / r.s.hp}%` })))); });
       hud.swap.style.display = roster.length > 1 ? '' : 'none';
       set('pot', st.potions, v => { hud.pot.querySelector('.t').textContent = '灵药 ' + v; hud.pot.classList.toggle('nomp', v <= 0); });
-      set('combo', st.combo, v => { if (v >= 3) { hud.combo.innerHTML = `<b>${v}</b><span>连击</span>`; hud.combo.classList.remove('pop'); void hud.combo.offsetWidth; hud.combo.classList.add('pop', 'on'); } else hud.combo.classList.remove('on'); });
+      set('combo', st.combo, v => { if (v >= 3) { const mile = v === 10 || v === 25 || v === 50 || v === 100; hud.combo.innerHTML = `<b>${v}</b><span>${mile ? '连击!' : '连击'}</span>`; hud.combo.classList.remove('pop'); void hud.combo.offsetWidth; hud.combo.classList.add('on', 'pop'); if (mile) { shake(3); say(v + ' 连击!', 0.7); } } else hud.combo.classList.remove('on'); });
       set('gold', st.gold, v => hud.gold.textContent = '✦ ' + v);
       { const bi = b => b.shieldHp > 0 || b.shield ? 'shield' : b.regen ? 'regen' : b.burnAura ? 'burn' : b.slowP ? 'slow' : b.spd ? 'haste' : b.lifesteal ? 'bleed' : b.freeze ? 'freeze' : 'rage';
         const L = P.buffs.map(b => [bi(b), b.name, Math.ceil(b.t)]); if (P.ultT > 0) L.unshift(['lamp', '变身', Math.ceil(P.ultT)]);

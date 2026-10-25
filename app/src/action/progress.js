@@ -5,6 +5,7 @@ import { ITEMS } from '../data/items.js';
 import { ACHARS, ASKILLS, ACTION_ROSTER, UNLOCK_LV, ULT_LV, SKILL_MAX, SKINS } from './data.js';
 import { AFOES } from './foes.js';
 import { STAGES, REGION_STAGES } from './stages.js';
+import { companionReactions, rollSideEvent, midClearGifts } from './midEvents.js';
 import { REGION_ORDER } from '../data/regions.js';
 import './gear.js';
 
@@ -135,6 +136,18 @@ export function applyResult(stage, res){
   for (const [id, n] of Object.entries(res.loot || {})) { if (!ITEMS[id]) continue; addItem(id, n); if (ITEMS[id].rar >= 4) ach('forge_god'); out.items.push({ id, n }); }
   for (const [b, n] of Object.entries(res.souls || {})) { A.souls[b] = (A.souls[b] || 0) + n; out.items.push({ soul:b, n }); }
   for (const id of res.team) { const st = stats(id); S.party[id].hp = st.hp; S.party[id].mp = st.mp; }
+  if (res.win) {
+    midClearGifts(stage, out.first, out);
+    out.reactions = companionReactions(stage, out.first);
+    const side = rollSideEvent(stage, out.first);
+    if (side) {
+      out.side = side;
+      out.gold += side.gold || 0;
+      if (side.item && side.n) out.items.push({ id: side.item, n: side.n });
+      if (side.dust) out.dust = (out.dust || 0) + side.dust;
+      out.unlocks.push('关间·' + side.title + '：' + side.text);
+    }
+  }
   return out;
 }
 // —— 每日 ——

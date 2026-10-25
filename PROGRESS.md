@@ -1,5 +1,52 @@
 # progress notes (for agent continuity)
 
+## 中后期关卡 / 手感 / 进度抛光 · 2026-10-25 ~12:45 Asia/Shanghai
+
+### 1. 手写招牌关（青丘→归墟）
+- 新增 `app/src/action/handStages.js`：`HAND` 覆盖 **17** 个 signature 关（`SIGNATURE_IDS`）
+  - 青丘 `qingqiu_5` 狐冢 / `qingqiu_7` 月下竹海
+  - 东海 `donghai_4` 发鸠山道 / `donghai_9` 九婴潮穴
+  - 常羊 `changyang_6` 夔鼓之台 / `changyang_10` 常羊山巅
+  - 昆仑 `kunlun_5` 悬圃 / `kunlun_8`
+  - 混沌 `hundun_6` / `hundun_10`
+  - 羽谷 `yugu_5` / `yugu_9`
+  - 北海 `beihai_5` / `beihai_9`
+  - 归墟 `guixu_3` / `guixu_8` / `guixu_10`
+- 每关含 `platsLayout`（相对坐标平台）、hazard、dreamWaves、护灯/限时/精英房、多阶段首领（`_handBossInArenas`）
+- `stages.js`：中后期程序关加密度；塔楼精英/梦层/护灯特殊层；首领连战喘息波；秘境 platsLayout；`applyHandStages`
+
+### 2. 手感（engine.js）
+- coyote 0.1s；jump/dash/atk 缓冲 0.14/0.12/0.1
+- 冲刺窗口与 CD 微调；hit-stop / shake 分层（普攻/暴击/重击/连击里程碑/首领击杀）
+- 首领 tele 预警加长 + 绘制脉冲更显眼
+- 连击里程碑反馈 10/25/50/100；PLATS 布局 0–9；`platsLayout` 优先
+
+### 3. 中后期进度
+- `foes.js` late / bossLate 曲线；`gear.js` midBoost（lv≥14）；中期掉装倍率
+- `data.js`：皮肤解锁提前（8/18/30/tower15/48/tower40）；技能 UNLOCK_LV `[1,1,3,5,7,10,14,18]`
+- 塔楼有意义层、秘境更难、rush 喘息节奏
+
+### 4. 内容密度
+- 新增 `midEvents.js`：同伴 REACT、关间 SIDE、midClearGifts（金币/材料/软 flag）
+- `progress.js` 通关后挂反应与关间事件；`hub.js` result 显示 `.rs-react`
+
+### 5. UX / 截图
+- `action.css`：烛瞳/闭目/共鸣手机横屏可读；连击 pop
+- `style.css`：`.rs-react` / `.rs-rline`
+- `docs/polish_mid/`：01_hub / 02_qingqiu_map / 03_signature_detail / 04_action_fox_tomb / 05_eye_ux / 06_dream_ux / 07_result_reactions（844×390@2x）
+- `__zlj` 暴露 `launch` / `STAGES` / `SIGNATURE_IDS`（便于截图与调试）
+
+### 校验
+- `npm run build` OK；`boot2` → `{"mode":"hub","errs":[]}`
+- **无 APK**；**未 push**（除非再要求）
+
+### 仍缺口
+- 非 signature 中后期关仍偏程序密度；手写关内视觉 QA（hazard/梦翻台）未逐关人工打通
+- 中后期 VN 剧情厚度仍靠既有章节 + 软 flag，未大段新写
+- 塔楼/秘境/rush 可再加专属字幕与掉落表
+
+---
+
 ## 完整向实质 Pass · 2026-10-25 ~12:40 Asia/Shanghai
 
 ### 做了什么
