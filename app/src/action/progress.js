@@ -99,10 +99,22 @@ export function claimMission(id){ const m = MISSIONS.find(x => x.id === id); if 
 export const DAILY_TRIES = 2;
 // —— 烬城建设 ——
 export const CITY = [
-  { id:'lamp', name:'长明灯塔', max:5, desc:lv => `闯关经验 +${(lv - 1) * 5}%`, mats:['m_ember','m_feather'] },
-  { id:'forge', name:'铸灯铁坊', max:5, desc:lv => `可锻造 ${['烬城','青丘','东海','常羊','昆仑','混沌','禺谷','北海','归墟'][Math.min(8, lv * 2 - 1)]} 及以下阶装备`, mats:['m_bronze','m_scale'] },
-  { id:'herb', name:'百草药庐', max:4, desc:lv => `每关灵药 ${3 + lv - 1} 瓶`, mats:['m_herb','m_cinnabar'] },
+  { id:'lamp', name:'长明灯塔', max:5, desc:lv => `闯关经验 +${(lv - 1) * 5}%`, mats:['m_feather','m_ink'] },
+  { id:'forge', name:'铸灯铁坊', max:5, desc:lv => `可锻造 ${['烬城','青丘','东海','常羊','昆仑','混沌','禺谷','北海','归墟'][Math.min(8, lv * 2 - 1)]} 及以下阶装备`, mats:['m_bone','m_bronze'] },
+  { id:'herb', name:'百草药庐', max:4, desc:lv => `每关灵药 ${3 + lv - 1} 瓶`, mats:['m_herb','m_fang'] },
   { id:'beast', name:'异兽苑', max:5, desc:lv => `喂养效率 +${(lv - 1) * 20}%`, mats:['m_fur','m_bone'] },
-  { id:'market', name:'灯市', max:5, desc:lv => `闯关金钱 +${(lv - 1) * 5}%`, mats:['m_jade','m_silk'] },
+  { id:'market', name:'灯市', max:5, desc:lv => `闯关金钱 +${(lv - 1) * 5}%`, mats:['m_silk','m_scale'] },
 ];
 export const cityCost = lv => ({ gold: 600 * lv * lv, mat: 3 * lv });
+export function cityUp(id){ const b = CITY.find(x => x.id === id); const lv = S.city[id] || 1; if (lv >= b.max) return '已满级'; const c = cityCost(lv);
+  if (S.gold < c.gold) return '星砂不足'; if ((S.inv[b.mats[0]] || 0) < c.mat || (S.inv[b.mats[1]] || 0) < Math.ceil(c.mat * 0.6)) return '材料不足';
+  addGold(-c.gold); addItem(b.mats[0], -c.mat); addItem(b.mats[1], -Math.ceil(c.mat * 0.6)); S.city[id] = lv + 1; if (lv + 1 >= b.max) ach('city'); return null; }
+// —— 铁坊 ——
+export const TIER_MAT = ['m_bone','m_fur','m_scale','m_bronze','m_jade','m_cinnabar','m_goldsand','m_frost','m_starmarrow'];
+export const TIER_NAME = ['烬城','青丘','东海','常羊','昆仑','混沌','禺谷','北海','归墟'];
+export function forgeMaxTier(){ const byCity = Math.min(8, (S.city.forge || 1) * 2 - 1); let reg = 0; REGION_ORDER.forEach((r, i) => { if (stageUnlocked(REGION_STAGES[r][0])) reg = i; }); return Math.min(byCity, reg + 1 > 8 ? 8 : reg + 1); }
+export const forgeCost = t => ({ gold: 150 + t * t * 120 + t * 100, mat: 3 + t, mat2: 2 + Math.floor(t / 2) });
+export function forge(t, slot, k){ const c = forgeCost(t); const m = TIER_MAT[t]; if (t > forgeMaxTier()) return { err:'铁坊等级或区域进度不足' }; if (S.gold < c.gold) return { err:'星砂不足' }; if ((S.inv[m] || 0) < c.mat) return { err:'材料不足' }; if ((S.inv.m_starmarrow || 0) < c.mat2 && t >= 4) return { err:'星髓晶不足' };
+  addGold(-c.gold); addItem(m, -c.mat); if (t >= 4) addItem('m_starmarrow', -c.mat2); const x = Math.random(); const rk = x < 0.05 ? 4 : x < 0.2 ? 3 : x < 0.5 ? 2 : 1;
+  const id = `g_${slot[0]}${t}${k}${rk}`; addItem(id, 1); S.stats.crafts = (S.stats.crafts || 0) + 1; if (rk >= 4) ach('forge_god'); return { id }; }
+export function salvage(id){ const it = ITEMS[id]; if (!it || !it.gen || !(S.inv[id] > 0)) return null; addItem(id, -1); const n = 1 + (it.rar || 0); const g = Math.round(it.price * 0.25); addGold(g); addItem(TIER_MAT[it.tier], n); return { gold:g, mat:TIER_MAT[it.tier], n }; }

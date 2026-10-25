@@ -2,6 +2,8 @@ import './style.css';
 import './theme.css';
 import './battle.css';
 import './explore.css';
+import './action.css';
+import './hub.css';
 import { addMember, healAll, S, settings, meta, saveMeta, newGame, setToast, load, save, AUTO, ach, slotInfo, SAVE_SLOTS } from './engine/state.js';
 import { initAudio, playBgm, stopBgm } from './engine/audio.js';
 import { h, toast, asset } from './engine/ui.js';
@@ -10,6 +12,8 @@ import { battle } from './engine/battle.js';
 import { titleScreen, worldScreen, regionScreen } from './ui/screens.js';
 import { exploreScreen } from './engine/explore.js';
 import { openMenu } from './ui/menu.js';
+import { hubScreen } from './ui/hub.js';
+import { ensureAct } from './action/progress.js';
 import { endingScreen } from './ui/ending.js';
 import { setAmbient } from './engine/fx.js';
 import { nextBond } from './data/bonds.js';
@@ -28,12 +32,15 @@ export const game = {
   newGame(){ newGame(); clearBacklog(); show(vnScreen()); restoreScene(); runMain('start'); },
   resume(){ // 根据 S.mode 恢复
     stopVN(); clearBacklog();
+    if (S.mode==='hub' || S.mode==='action') { game.hub(); return; }
     if (S.mode==='region' || S.mode==='world') { if (S.mode==='world') game.world(); else game.region(S.region); return; }
     show(vnScreen()); restoreScene(); runMain();
   },
   loadSlot(i){ if (!load(i)) { toast('存档不存在'); return false; } game.resume(); toast('读取完成'); return true; },
   world(){ stopVN(); S.mode='world'; show(worldScreen()); playBgm('dawn'); setAmbient('stars'); },
   region(id){ stopVN(); S.mode='region'; S.region=id; S.visited[id]=true; S.flags['reg_'+id]=true; show(exploreScreen(id)); },
+  hub(){ stopVN(); if (S.mode!=='hub' && S.mode!=='action' && S.mode!=='title') S.prevMode = S.mode; S.mode='hub'; ensureAct(); show(hubScreen()); playBgm('jincheng'); setAmbient('embers'); },
+  story(){ S.mode = (S.prevMode && S.prevMode!=='hub') ? S.prevMode : 'vn'; game.resume(); },
   continueMain(){ const to = S.explore?.to; S.explore = null; show(vnScreen()); restoreScene(); runMain(to); },
   battle(enc, opts){ return battle(enc, opts); },
 };

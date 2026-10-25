@@ -24,6 +24,7 @@ for (const [id, e] of Object.entries(ENEMIES)) {
 // 首领：招式池与阶段。图像沿用已有首领立绘
 // 招式：slash 连斩 / charge 冲撞 / slam 跃击震波 / fan 扇形弹幕 / rain 天降 / summon 召唤 / beam 横扫光束 / spin 旋身 / blink 瞬移 / pillar 地刺 / nova 环爆
 const B = (id, name, img, el, pat, minions, hp=1, extra={}) => [id, { id, name, img, el, boss:true, pat, minions, hp, ...extra }];
+const vimg = b => (AFOES[b]?.img || 'enemy/a0').replace('enemy/', 'enemy/v_');
 export const ABOSSES = Object.fromEntries([
   B('ab_yeguiwang','夜鬼王','boss/yeguiwang','dark',[['slash','charge','summon'],['slam','fan'],['nova']],['yegui','dengyan']),
   B('ab_humeng','狐梦之主','boss/humeng','wood',[['fan','blink','summon'],['rain','beam'],['nova','spin']],['humei','humei_e']),
@@ -41,15 +42,15 @@ export const ABOSSES = Object.fromEntries([
   B('ab_xuanming','玄冥','por/xuanming','dark',[['slash','blink','fan'],['beam','rain','summon'],['nova','pillar','spin']],['yecha_e','mengmo'],1.5),
   B('ab_zhulong','烛龙之影','por/zhulong','light',[['beam','fan','rain'],['nova','pillar','charge'],['spin','slam','blink']],['xinghai_v','mengdie'],1.6),
   // 次级首领（关卡中段 / 隐藏关）
-  B('ab_jiuying','九婴','enemy/v_heishe','water',[['fan','charge'],['rain','summon']],['heishe'],0.9),
-  B('ab_taotie','饕餮','enemy/v_kui','dark',[['charge','slam'],['nova','summon']],['toulou'],0.95),
-  B('ab_qiongqi','穷奇','enemy/v_zheng','metal',[['charge','blink'],['spin','fan']],['zheng'],0.95),
-  B('ab_taowu','梼杌','enemy/v_shamang','earth',[['slam','charge'],['pillar','spin']],['shamang'],1.0),
-  B('ab_fengxi','封豨','enemy/v_toulou','earth',[['charge','slash'],['slam','nova']],['toulou'],0.85),
-  B('ab_zaochi','凿齿','enemy/v_wushou','metal',[['slash','charge'],['spin','pillar']],['wushou'],0.9),
-  B('ab_dafeng','大风','enemy/v_gudiao','metal',[['fan','charge'],['rain','spin']],['gudiao','yuanqin'],0.9),
-  B('ab_xiushe','修蛇','enemy/v_heishe','wood',[['charge','fan'],['beam','pillar']],['heishe'],1.0),
-  B('ab_kuafu','夸父残影','enemy/v_jiaoshi','fire',[['charge','rain'],['beam','nova']],['jiaoshi'],1.05),
+  B('ab_jiuying','九婴',vimg('heishe'),'water',[['fan','charge'],['rain','summon']],['heishe'],0.9),
+  B('ab_taotie','饕餮',vimg('kui'),'dark',[['charge','slam'],['nova','summon']],['toulou'],0.95),
+  B('ab_qiongqi','穷奇',vimg('zheng'),'metal',[['charge','blink'],['spin','fan']],['zheng'],0.95),
+  B('ab_taowu','梼杌',vimg('shamang'),'earth',[['slam','charge'],['pillar','spin']],['shamang'],1.0),
+  B('ab_fengxi','封豨',vimg('toulou'),'earth',[['charge','slash'],['slam','nova']],['toulou'],0.85),
+  B('ab_zaochi','凿齿',vimg('wushou'),'metal',[['slash','charge'],['spin','pillar']],['wushou'],0.9),
+  B('ab_dafeng','大风',vimg('gudiao'),'metal',[['fan','charge'],['rain','spin']],['gudiao','yuanqin'],0.9),
+  B('ab_xiushe','修蛇',vimg('heishe'),'wood',[['charge','fan'],['beam','pillar']],['heishe'],1.0),
+  B('ab_kuafu','夸父残影',vimg('jiaoshi'),'fire',[['charge','rain'],['beam','nova']],['jiaoshi'],1.05),
 ]);
 export const BOSS_PAT_NAME = {slash:'连斩',charge:'冲撞',slam:'跃击',fan:'弹幕',rain:'天降',summon:'召唤',beam:'光束',spin:'旋身',blink:'瞬移',pillar:'地刺',nova:'环爆'};
 export const elTint = EL_TINT;

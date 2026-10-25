@@ -1,0 +1,15 @@
+import { chromium } from 'playwright-core';
+const b = await chromium.launch({ executablePath:'/usr/bin/google-chrome' });
+const p = await b.newPage({ viewport:{width:900,height:405}, hasTouch:true });
+const errs=[]; p.on('pageerror', e=>errs.push(e.message)); p.on('console', m=>{ if (m.type()==='error') errs.push(m.text()); });
+p.on('requestfailed', r=>errs.push('REQFAIL '+r.url()));
+await p.addInitScript(()=>{ window.__ZLJ_TEST={auto:true}; });
+await p.goto('http://localhost:4173/'); await p.waitForTimeout(2000);
+await p.click('text=山海闯关'); await p.waitForTimeout(500); await p.screenshot({path:'/tmp/b2_0.png'});
+await p.click('.htile.t-adv'); await p.waitForTimeout(500); await p.screenshot({path:'/tmp/b2_1.png'});
+await p.click('.snode >> nth=0'); await p.waitForTimeout(500); await p.screenshot({path:'/tmp/b2_2.png'});
+await p.click('text=出 战'); await p.waitForTimeout(600); await p.screenshot({path:'/tmp/b2_3.png'});
+const g = await p.$('text=明白了'); if (g) await g.click();
+await p.waitForTimeout(3000); await p.screenshot({path:'/tmp/b2_4.png'});
+console.log(JSON.stringify({mode: await p.evaluate(()=>window.__zlj.S.mode), errs}));
+await b.close();

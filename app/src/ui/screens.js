@@ -1,4 +1,4 @@
-import { S, settings, meta, save, load, slotInfo, SAVE_SLOTS, AUTO, stats, addItem, addGold, gainExp, affAdd, ach, healAll, has } from '../engine/state.js';
+import { S, settings, meta, save, load, newGame, slotInfo, SAVE_SLOTS, AUTO, stats, addItem, addGold, gainExp, affAdd, ach, healAll, has } from '../engine/state.js';
 import { CHARS } from '../data/characters.js';
 import { REGIONS, REGION_ORDER } from '../data/regions.js';
 import { QUESTS } from '../data/quests.js';
@@ -22,11 +22,12 @@ export function titleScreen(){
     h('div.t-menu', {},
       latest!=null ? btn('继续旅程', ()=>game.loadSlot(latest), 'tmenu') : null,
       btn('新的旅程', async ()=>{ if (latest!=null && !(await confirmBox('开始新的旅程？已有存档不会被删除。'))) return; game.newGame(); }, 'tmenu'),
+      btn('山海闯关', ()=>{ if (latest!=null) { if (!load(latest)) return; } else newGame(); game.hub(); }, 'tmenu'),
       btn('读取存档', ()=>openSaves('load'), 'tmenu'),
       btn('回忆 · 画廊', ()=>openGallery(), 'tmenu'),
       btn('成就', ()=>openAchievements(), 'tmenu'),
       btn('设置', ()=>openSettings(), 'tmenu')),
-    h('div.t-foot', {}, `已见证结局 ${meta.endings.length}/6 · v1.1 · 山海经神话原创故事`));
+    h('div.t-foot', {}, `已见证结局 ${meta.endings.length}/6 · v2.0 · 山海经神话原创故事`));
   return root;
 }
 function latestSave(){
@@ -52,7 +53,7 @@ export function worldScreen(){
   });
   return h('div.screen.world', {},
     h('div.w-map', { style:{backgroundImage:`url(${asset('ui/worldmap')})`} }, ...pins),
-    topBar('九州山海图', [S.explore ? h('span.hint', {}, '主线：'+REGIONS[S.explore.region].name) : null]));
+    topBar('九州山海图', [btn('山海闯关', ()=>game.hub(), 'sm gold'), S.explore ? h('span.hint', {}, '主线：'+REGIONS[S.explore.region].name) : null]));
 }
 
 // —— 区域地图 ——
@@ -139,7 +140,7 @@ export function regionScreen(id){
   return h('div.screen.region', {},
     h('div.r-bg', { style:{backgroundImage:`url(${asset('bg/'+R.bg)})`} }), h('div.r-shade'),
     h('div.r-nodes', {}, ...nodes, ...qs, main),
-    topBar(R.name, [anyWorld ? btn('山海图', ()=>game.world(), 'sm') : null]),
+    topBar(R.name, [btn('闯关', ()=>game.hub(), 'sm'), anyWorld ? btn('山海图', ()=>game.world(), 'sm') : null]),
     h('div.r-desc', {}, R.desc), party,
     S.explore && S.explore.region!==id ? h('div.r-hint', {}, '主线在：'+REGIONS[S.explore.region].name) : null);
 }
