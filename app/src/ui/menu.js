@@ -24,9 +24,10 @@ export function openMenu(tab='party'){
   const go = (k) => {
     for (const b of tabs.children) b.classList.toggle('on', b.dataset.k===k);
     p.body.replaceChildren(); p.body.scrollTop=0;
-    ({party:tabParty, bag:tabBag, craft:tabCraft, quest:tabQuest, codex:tabCodex, ach:(b)=>achList(b), save:(b)=>saveList(b,'save'), load:(b)=>saveList(b,'load'), settings:(b)=>settingsBody(b), title:tabTitle})[k](p.body, p);
+    ({party:tabParty, bag:tabBag, craft:tabCraft, quest:tabQuest, codex:tabCodex, ach:(b)=>achList(b), save:(b)=>saveList(b,'save'), load:(b)=>saveList(b,'load'), settings:(b)=>settingsBody(b), title:tabTitle, home:tabHome})[k](p.body, p);
   };
-  for (const [k,n] of TABS) tabs.append(h('button.tab', { 'data-k':k, onclick:(e)=>{ e.stopPropagation(); sfx('click'); go(k); } }, n));
+  const tabsNow = S && S.mode !== 'hub' && S.mode !== 'title' && S.mode !== 'action' ? [...TABS.slice(0, -1), ['home','回主城'], TABS[TABS.length-1]] : TABS;
+  for (const [k,n] of tabsNow) tabs.append(h('button.tab', { 'data-k':k, onclick:(e)=>{ e.stopPropagation(); sfx('click'); go(k); } }, n));
   go(tab); return p;
 }
 
@@ -154,6 +155,9 @@ function saveList(body, mode, pp){
   h('div.row.center', {},
     mode==='save' ? btn('导出存档码', async ()=>{ const c=exportCode(); try { await navigator.clipboard.writeText(c); toast('存档码已复制到剪贴板'); } catch(e){ promptBox('复制下面的存档码', '', c, true); } }, 'sm') : null,
     btn('导入存档码', async ()=>{ const c = await promptBox('粘贴存档码', '', '', true); if (!c) return; try { importCode(c); document.querySelectorAll('.panel-wrap').forEach(p=>p.remove()); game.resume(); toast('导入成功'); } catch(e){ toast('存档码无效'); } }, 'sm')));
+}
+function tabHome(body){
+  body.append(h('p.confirm-text', {}, '回到烬城主城（闯关、伙伴、铸坊）。剧情进度会保留，之后从主城「剧情」继续。'), h('div.row.center', {}, btn('回主城', ()=>{ document.querySelectorAll('.panel-wrap').forEach(p=>p.remove()); game.hub(); }, 'gold')));
 }
 function tabTitle(body){
   body.append(h('p.confirm-text', {}, '返回标题画面？未保存的进度将会丢失（自动存档会保留最近的章节开头）。'), h('div.row.center', {}, btn('返回标题', ()=>{ document.querySelectorAll('.panel-wrap').forEach(p=>p.remove()); game.title(); }, 'gold')));

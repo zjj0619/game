@@ -13,7 +13,7 @@ import { STAGES, REGION_STAGES, towerStage, rushStage, DAILY, dailyStage, KEY_SE
 import { GEAR, RARITY, GAFF, fxName, rarOf } from '../action/gear.js';
 import { runStage } from '../action/engine.js';
 import * as AP from '../action/progress.js';
-import { game, show } from '../main.js';
+import { game, show, clearScreens } from '../main.js';
 import { openMenu } from './menu.js';
 import { portrait as posePor, hubPose, resultPose } from '../engine/pose.js';
 
@@ -143,9 +143,10 @@ export function stageDetail(stage, opts = {}){
   }; render();
 }
 export async function launch(stage, opts = {}){
-  AP.ensureAct(); if (!S.act.tut.controls) { await controlsGuide(true); S.act.tut.controls = true; if(stage.id==='jincheng_1') S.act.tut.lamp=true; }
+  AP.ensureAct(); const noTut = window.__ZLJ_TEST && !window.__ZLJ_TEST.tut; if (noTut) { S.act.tut.controls = S.act.tut.lamp = S.act.tut.eye = S.act.tut.dream = S.act.tut.reso = true; }
+  if (!S.act.tut.controls) { await controlsGuide(true); S.act.tut.controls = true; if(stage.id==='jincheng_1') S.act.tut.lamp=true; }
   await signatureTutorials(stage);
-  const prev = S.mode; S.mode = 'action'; const res = await runStage(stage, opts); if(res.abandoned) return; S.mode = 'hub';
+  clearScreens(); const prev = S.mode; S.mode = 'action'; const res = await runStage(stage, opts); if(res.abandoned) return; S.mode = 'hub';
   if (res.quit) { opts.back ? opts.back() : show(adventureScreen(stage.region)); return; }
   if (res.retry) return launch(stage, opts);
   if (opts.hard && res.win) { res.gold *= 2; res.exp *= 2; }

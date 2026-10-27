@@ -33,6 +33,7 @@ export function vnScreen(){
   D.tools = h('div.vn-tools', {},
     btn('记录', ()=>openBacklog(), 'tool'), D.autoBtn, D.skipBtn, D.voiceBtn,
     btn('隐藏', ()=>{ D.root.classList.add('hideui'); }, 'tool'),
+    btn('主城', (e)=>{ e && e.stopPropagation && e.stopPropagation(); hooks.toHub && hooks.toHub(); }, 'tool home'),
     btn('菜单', ()=>hooks.openMenu && hooks.openMenu(), 'tool'));
   D.box = h('div.vn-box', {}, D.face, D.name, D.text, D.next);
   D.choices = h('div.vn-choices'); D.card = h('div.vn-card');

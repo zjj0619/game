@@ -84,6 +84,7 @@ export function tutorial(key, steps, flags){
     const show = () => {
       const s = steps[i]; const el = s.el || (s.sel && document.querySelector(s.sel));
       tip.replaceChildren(h('div.tut-n', {}, `${i+1}/${steps.length}`), h('div.tut-t', {}, s.text), h('div.tut-tap', {}, '点击继续'));
+      if (!ov.querySelector('.tut-skip')) ov.append(h('button.tut-skip', { type:'button', onclick:(e)=>{ e.stopPropagation(); sfx('click'); ov.remove(); if (flags) flags['tut_'+key]=true; res(); } }, '跳过'));
       if (el) { const r = el.getBoundingClientRect(); const p=6;
         Object.assign(ring.style, { display:'block', left:(r.left-p)+'px', top:(r.top-p)+'px', width:(r.width+p*2)+'px', height:(r.height+p*2)+'px' });
         const below = r.top + r.height/2 < innerHeight/2; const tw = Math.min(360, innerWidth*0.42);

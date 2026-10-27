@@ -282,10 +282,10 @@ export function exploreScreen(id){
     const fol = S.formation.slice(1); st.fol = st.fol || fol.map((_,i)=>st.x - st.face*13*(i+1));
     for (let i=fol.length-1;i>=0;i--){ const lead = i ? st.fol[i-1] : st.x; let fx = st.fol[i]; const d = fx - lead; if (Math.abs(d) > 13) fx = lead + Math.sign(d)*13; else if (!st.vx && Math.abs(d) < 9) fx += Math.sign(d||-st.face)*0.15; st.fol[i] = fx;
       const fface = lead >= fx ? 1 : -1; const bob = st.vx ? Math.abs(Math.sin(st.walk + i*1.3))*0.8 : 0;
-      shadow(fx, 3.5); sprite('spr/p_'+fol[i], fx, 25, { flip: fface<0, y: GROUND - bob, alpha: 0.95 }); }
+      shadow(fx, 3.5); sprite('spr/p_'+fol[i], fx, 25, { flip: (fface<0) !== (fol[i]==='yangui'), y: GROUND - bob, alpha: 0.95 }); }
     // 玩家
     const bob = Math.abs(Math.sin(st.walk))*1.2; shadow(st.x, 5);
-    sprite('spr/p_'+S.formation[0], st.x, 29, { flip: st.face<0, y: GROUND - bob, sq: st.vx ? Math.sin(st.walk*2)*0.015 : Math.sin(st.t*2)*0.008 });
+    sprite('spr/p_'+S.formation[0], st.x, 29, { flip: (st.face<0) !== (S.formation[0]==='yangui'), y: GROUND - bob, sq: st.vx ? Math.sin(st.walk*2)*0.015 : Math.sin(st.t*2)*0.008 });
     glow(st.x + st.face*3, GROUND-16, 7+S.lamp, 'rgba(255,214,140,.55)', 0.8);
     if (st.strike>0) { const sx=(st.x + st.face*10 - st.cam)*U, sy=(GROUND-14)*U; ctx.save(); ctx.translate(sx,sy); ctx.scale(st.face,1); ctx.strokeStyle='rgba(255,231,160,'+(st.strike/0.35)+')'; ctx.lineWidth=4*dpr; ctx.beginPath(); ctx.arc(0,0,14*U*(1.2-st.strike), -1.2, 1.2); ctx.stroke(); ctx.restore(); }
     // 暗夜与灯光

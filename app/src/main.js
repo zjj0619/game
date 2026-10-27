@@ -8,7 +8,7 @@ import './premium.css';
 import './improvements.css';
 import { addMember, healAll, S, settings, meta, saveMeta, newGame, setToast, load, save, AUTO, ach, slotInfo, SAVE_SLOTS } from './engine/state.js';
 import { initAudio, playBgm, stopBgm } from './engine/audio.js';
-import { h, toast, asset } from './engine/ui.js';
+import { h, toast, asset, confirmBox } from './engine/ui.js';
 import { vnScreen, runMain, restoreScene, hooks, stopVN, clearBacklog, STORY } from './engine/vn.js';
 import { battle } from './engine/battle.js';
 import { titleScreen, worldScreen, regionScreen } from './ui/screens.js';
@@ -62,6 +62,7 @@ window.__zlj = { get S(){ return S; }, game, STORY, meta, settings, openMenu, ne
 hooks.battle = (enc, opts) => battle(enc, opts);
 hooks.toRegion = (id) => game.region(id);
 hooks.toTitle = () => game.title();
+hooks.toHub = async () => { if (S.inSub && !(await confirmBox('支线剧情进行中，现在回主城将从本段支线开头重来。确定离开？'))) return; for (const p of [...app.querySelectorAll('.panel-wrap')]) p.remove(); game.hub(); };
 hooks.openMenu = (tab) => openMenu(tab);
 hooks.ending = async (x) => { await endingScreen(x); game.title(); };
 
@@ -69,10 +70,22 @@ hooks.ending = async (x) => { await endingScreen(x); game.title(); };
 setInterval(()=>{ if (S && S.mode!=='title') S.playtime = (S.playtime||0) + 1; }, 1000);
 // 返回键（Android）
 window.__handleBack = () => {
-  const p=app.querySelector('.panel-wrap:last-of-type .close');
-  if(p) { p.click(); return true; }
-  if(app.querySelector('.screen.action')) { window.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'})); return true; }
-  if(S && S.mode!=='title') { openMenu(); return true; }
+  const last = sel => { const a = app.querySelectorAll(sel); return a.length ? a[a.length - 1] : null; };
+  // 由上到下：大图查看 → 奖励弹窗 → 新手引导 → 面板 → 当前画面
+  const viewer = last('.viewer'); if (viewer) { viewer.click(); return true; }
+  const rw = last('.reward'); if (rw) { rw.click(); return true; }
+  const tut = last('.tut'); if (tut) { (tut.querySelector('.tut-skip') || tut).click(); return true; }
+  const pw = [...app.querySelectorAll('.panel-wrap')].filter(p => !p.classList.contains('closing')).pop();
+  if (pw) { const c = pw.querySelector('.panel-head .close'); if (c) c.click(); else pw.remove(); return true; }
+  const scr = last('.screen');
+  if (!scr) return false;
+  if (scr.classList.contains('action')) { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); return true; }
+  if (scr.classList.contains('title')) return false;
+  if (scr.classList.contains('vn') && scr.classList.contains('hideui')) { scr.classList.remove('hideui'); return true; }
+  const back = scr.querySelector('.hb-back, .rs-back, [data-back]'); if (back) { back.click(); return true; }
+  if (scr.classList.contains('result')) { const b = scr.querySelector('.rs-btns button:last-child'); if (b) { b.click(); return true; } }
+  if (scr.classList.contains('ending')) { scr.click(); return true; }
+  if (S && S.mode !== 'title') { openMenu(); return true; }
   return false;
 };
 document.addEventListener('backbutton',window.__handleBack,false);

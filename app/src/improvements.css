@@ -48,3 +48,6 @@
 .screen.action .ak-msg{font-size:clamp(14px,2vw,18px);padding:0 24vw}
 @media(max-height:380px){.screen.action .ak-pad,.screen.action .ak-joy{transform:scale(calc(var(--control-scale,1)*.85))!important}.screen.action .ak-goals{top:calc(var(--st) + 45px)}}
 @media(prefers-reduced-motion:reduce){.zlj-trans,#zlj-dust,.t-tap-bar{animation:none!important}.screen,.panel.glow-on{animation:none!important}}
+
+/* 2026-10-26：引导可跳过 */
+.tut-skip{position:fixed;top:max(10px,env(safe-area-inset-top));right:max(14px,env(safe-area-inset-right));z-index:2;padding:.35rem .9rem;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(10,10,14,.55);color:#e9e2cf;font-size:12px;letter-spacing:.1em}
