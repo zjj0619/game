@@ -1,7 +1,7 @@
 {
   "name": "lingjing-game",
   "private": true,
-  "version": "2.1.0",
+  "version": "2.2.0",
   "type": "module",
   "scripts": {
     "story": "node tools/compile_story.mjs",
