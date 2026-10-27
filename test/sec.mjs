@@ -1,0 +1,11 @@
+import { p, b, errs, log, sleep } from './pt.mjs';
+await p.addInitScript(()=>{ window.__ZLJ_TEST={ lineMs:0, tut:false }; });
+await p.goto('http://127.0.0.1:4173/'); await sleep(2000);
+await p.touchscreen.tap(450,200); await sleep(1500);
+await p.evaluate(()=>{ window.__zlj.launch(window.__zlj.STAGES.jincheng_7, {}); }); await sleep(1500);
+log(await p.evaluate(()=>window.__act.st.secrets.map(s=>[s.kind,s.ai,Math.round(s.x),s.ord||'',s.key||''].join(':'))));
+await p.evaluate(()=>{ const a=window.__act; const s=a.st.secrets.find(s=>s.kind==='wall'); a.P.x=s.x-60; a.st.eyeOn=true; a.st.eyeT=20; });
+await sleep(500); await p.screenshot({path:'/tmp/pt/wall.png'});
+await p.evaluate(()=>{ const a=window.__act; const s=a.st.secrets.find(s=>s.kind==='stone'); a.P.x=s.x-30; });
+await sleep(500); await p.screenshot({path:'/tmp/pt/stone.png'});
+log(errs); await b.close();
