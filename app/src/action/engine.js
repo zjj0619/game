@@ -69,7 +69,7 @@ export function runStage(stage, opts = {}){
       dream: 0, dreamCd: 0, eyeOn: false, eyeCd: 0, eyeT: 0, eyeMarks: 0, reso: 0, resoReady: false, resoUsed: 0, dreamSeen: false, awakeSeen: true, dreamFlips: 0, secrets: HK.seedSecrets(stage.arenas || [], stage), secretChests: 0, secretGates: 0, secretPaths: 0, dust: 0,
       layerClears:[0,0], perfectDodges:0, dodgeRewardAt:-10, relayWindow:0, relayCd:0 };
     const foes = [], shots = [], fx = [], zones = [], pickups = [], nums = [], allies = [], tele = [];
-    const mk = id => { const s = actStats(id); return { id, s, hp: s.hp, mp: s.mp, rage: 0, cds: {}, alive: true }; };
+    const SM = opts.mods || {}; const mk = id => { const s = { ...actStats(id) }; if (SM.atk) { s.atk = Math.round(s.atk * SM.atk); if (s.mag) s.mag = Math.round(s.mag * SM.atk); } if (SM.hp) s.hp = Math.round(s.hp * SM.hp); return { id, s, hp: s.hp, mp: s.mp, rage: 0, cds: {}, alive: true }; };
     const roster = team.map(mk);
     let ri = 0; const P = { x: 60, y: GY, vx: 0, vy: 0, w: 22, h: 52, face: 1, ground: true, jumps: 0, dashT: 0, dashCd: 0, iT: 0, atkT: 0, atkCd: 0, combo: 0, comboT: 0,
       hurtT: 0, lock: 0, ultT: 0, buffs: [], swapCd: 0, slamming: null, whirl: null, beam: null,
@@ -267,13 +267,15 @@ export function runStage(stage, opts = {}){
     function spawn(id, x, y){
       const def_ = AFOES[id] || ABOSSES[id]; if (!def_) { console.warn('无此敌', id); return null; }
       const fs = foeStats(def_, stage.lv + lvAdj, hard); const sz = def_.boss ? 1.9 : def_.size || 1;
-      const f = { id, def_, x, y: y ?? GY, vx: 0, vy: 0, w: 30 * sz, h: 52 * sz, face: -1, hp: fs.hp, max: fs.hp, atk: fs.atk, def: fs.def, state: 'idle', stT: 0.5 + Math.random() * 0.6, cd: 1 + Math.random(),
+      const fhp = Math.round(fs.hp * (SM.foeHp || 1)); const f = { id, def_, x, y: y ?? GY, vx: 0, vy: 0, w: 30 * sz, h: 52 * sz, face: -1, hp: fhp, max: fhp, atk: fs.atk, def: fs.def, state: 'idle', stT: 0.5 + Math.random() * 0.6, cd: 1 + Math.random(),
         air: false, fly: def_.ai === 'flyer' || def_.ai === 'healer', baseY: GY - 110 - Math.random() * 30, ph: Math.random() * 6, guard: def_.ai === 'shield' ? 5 : 0, inv: 0.4, burn: 0, poison: 0, frozen: 0, stun: 0, slow: 0, brk: 0, weak: 0, charm: 0, phase: 0, armorT: 0, pat: null };
       f.im = !def_.boss && !def_.tier ? regionImg(def_.img, stage.ri || 0) : def_.img; preloadAnim(animKey(f.im)); if (!def_.boss && (def_.el === 'dark' || def_.ai === 'assassin') && Math.random() < 0.35) { f.stealth = true; f.reveal = false; } if (st.dream && !def_.boss) setFoeLayer(f, true);
       if (f.fly) f.y = f.baseY; if (def_.boss) { st.bossBar = f; hud.boss.classList.add('on'); hud.boss.querySelector('b').textContent = def_.name; }
       foes.push(f); part(x, f.y - f.h / 2, '#222222', 14, 120, 0.6, 5); return f;
     }
     function startArena(a){
+      if (a.boss && opts.onBoss && !a._talked) { a._talked = true; st.talk = true; Promise.resolve(opts.onBoss(a.boss)).catch(() => {}).finally(() => { st.talk = false; last = performance.now(); if (!ended) startArena(a); }); return; }
+      if (!a.boss && opts.barks?.[a.i] && opts.onBark) opts.onBark(opts.barks[a.i], root);
       a.started = true; st.locked = true; st.cur = a.i; hud.go.classList.remove('on');
       a.waveLayerKills=[0,0]; a.waveRecorded=false;
       if (stage.obj === 'guard' && !st.lamp) { st.lamp = { x: a.x0 + 60, hp: 100, max: 100 }; say('守住灯火！'); }
@@ -765,7 +767,7 @@ export function runStage(stage, opts = {}){
     }
     // —— 暂停 / 结算 ——
     let pbox = null;
-    function pause(){ if (st.over) return; st.paused = !st.paused; if (!st.paused) { pbox && pbox.remove(); pbox = null; return; }
+    function pause(){ if (st.over || st.talk) return; st.paused = !st.paused; if (!st.paused) { pbox && pbox.remove(); pbox = null; return; }
       const sl = slotsOf(C().id).map(id => ASKILLS[id]).filter(Boolean);
       pbox = h('div.ak-pausebox', {}, h('div.ak-pcard', {},
         h('div.ak-pl', {}, h('div.ak-pt', {}, '暂 停'), h('div.ak-ps', {}, stage.name),
@@ -832,12 +834,13 @@ export function runStage(stage, opts = {}){
       for (let i = foes.length - 1; i >= 0; i--) if (foes[i].dead && foes[i].deadT > 0.6) foes.splice(i, 1);
       updShots(dt); updTele(dt); updPickups(dt); updFlow(dt);
       const tgt = clamp(P.x - VW * 0.4, 0, Math.max(0, worldEnd - VW)); const lk = st.locked && st.cur >= 0 ? arenas[st.cur] : null;
-      let cam = tgt; if (lk) cam = clamp(cam, lk.x0 - 10, Math.max(lk.x0 - 10, lk.x1 - VW + 10)); st.cam += (cam - st.cam) * Math.min(1, dt * 6);
+      let cam = tgt; if (lk) { /* 竞技场边缘留出虚拟按键区域，角色贴墙时不被按键挡住 */ const pl = VW * 0.16, pr = VW * 0.3; cam = clamp(cam, lk.x0 - pl, Math.max(lk.x0 - pl, lk.x1 - VW + pr)); } st.cam += (cam - st.cam) * Math.min(1, dt * 6);
     }
     function loop(now){
       if (!root.isConnected) { end({quit:true,abandoned:true}); return; }
       raf = requestAnimationFrame(loop); const rawDt=(now-last)/1000; let dt = Math.min(0.05, rawDt); last = now; if (dt > 0) fpsAvg += (1 / dt - fpsAvg) * 0.05;
       if (st.paused) return;
+      if (st.talk) { draw(); return; }
       if (ended) return;
       frameTimes.push(rawDt*1000); if(frameTimes.length>600) frameTimes.shift();
       const ts = (T().actSpeed || 1) * st.slow;

@@ -15,6 +15,9 @@ import { runStage } from '../action/engine.js';
 import * as AP from '../action/progress.js';
 import { game, show, clearScreens } from '../main.js';
 import { openMenu } from './menu.js';
+import { beatsFor, storyMods, REGION_STORY } from '../action/storyBeats.js';
+import { playDialogue, chapterCard, bark } from './dialogue.js';
+import { applyEffects } from '../engine/state.js';
 import { portrait as posePor, hubPose, resultPose } from '../engine/pose.js';
 
 const EL_NAME = { fire:'火', water:'水', wood:'木', metal:'金', earth:'土', light:'光', dark:'暗', none:'无' };
@@ -129,6 +132,7 @@ export function stageDetail(stage, opts = {}){
       h('div.sd-l', {},
         h('div.sd-card', { style: { backgroundImage: `url(${stageCard(stage)})` } }, h('b', {}, stage.name), stage.desc ? h('small', {}, stage.desc) : null),
         h('div.sd-meta', {}, chip('推荐等级 ' + (stage.lv + (hard ? 8 : 0))), chip(OBJ_NAME[stage.obj] + (stage.time ? ` · ${stage.time}秒` : ''), 'obj'), best ? chip('最佳 ' + best, 'best') : chip('首通奖励 ✦' + (80 + stage.lv * 25), 'first'), chip('约 2–4 分钟', 'time'), chip('评价：速通·少伤；巧战额外加分', 's')),
+        storyChip(stage),
         boss ? h('div.sd-boss', {}, h('img', { src: asset(boss.img) }), h('div', {}, h('b', {}, '首领 · ' + boss.name), h('small', {}, `${elChip(boss.el)?.textContent || ''}属性 · ${boss.pat.length} 阶段`), h('p', {}, '留意地面的红色预警，在它出招之前闪开。冲刺时短暂无敌。'))) : null,
         h('div.sd-foes', {}, h('div.sd-h', {}, '出没异兽'), h('div.sd-fl', {}, ...foeChips(stage).map(f => h('div.sd-f', { title: f.desc || '' }, h('img', { src: asset(f.img), style: f.tint ? { filter: 'drop-shadow(0 0 3px ' + f.tint + ')' } : null }), h('span', {}, f.name), h('small', {}, AI_NAME[f.ai] + (f.tier === 1 ? '·精英' : ''))))))
       ),
@@ -142,11 +146,58 @@ export function stageDetail(stage, opts = {}){
           btn('出 战', () => { S.act.team = team.slice(); p.close(); launch(stage, { team, hard, ...opts }); }, 'gold big')))));
   }; render();
 }
+const STORY_KINDS = new Set(['normal', 'boss', 'hidden']);
+function storyChip(stage){
+  if (!STORY_KINDS.has(stage.kind)) return null;
+  const B = beatsFor(stage); const tags = storyMods().tag;
+  const seen = S.act.storySeen?.[stage.id];
+  const bits = [];
+  if (B && (B.intro || B.bossPre || B.choice) && !seen) bits.push(B.choice ? '◆ 剧情抉择' : '◆ 剧情');
+  bits.push(...tags);
+  return bits.length ? h('div.sd-story', {}, ...bits.map(t => h('span', {}, t))) : null;
+}
+
+/** 关卡前后的剧情（首次）：章节卡、开场对白、首领战前对白（由引擎在进入首领场地时触发）、战后对白 + 抉择 */
+async function storyBefore(stage){
+  const B = beatsFor(stage); if (!B) return null;
+  const seen = (S.act.storySeen ||= {});
+  if (!seen[stage.id + ':in']) {
+    const bg = stageCard(stage);
+    if (B.card) await chapterCard(B.card.t, B.card.s, bg);
+    if (B.intro) await playDialogue(B.intro, { boss: stage.boss, bg });
+    seen[stage.id + ':in'] = true;
+  }
+  return B;
+}
+async function storyAfter(stage, B){
+  if (!B) return;
+  const seen = (S.act.storySeen ||= {});
+  if (seen[stage.id]) return;
+  seen[stage.id] = true;
+  if (B.outro || B.choice) {
+    const pick = await playDialogue(B.outro || [], { boss: stage.boss, choice: B.choice, bg: stageCard(stage) });
+    const o = pick != null ? B.choice?.opts?.[pick] : null;
+    if (o) { (S.act.storyChoices ||= {})[stage.id] = pick; applyEffects(o.fx, (m, k) => toast(m)); }
+  }
+  if (B.nextCard) await chapterCard(B.nextCard.t, B.nextCard.s, stageCard(stage));
+}
+
 export async function launch(stage, opts = {}){
   AP.ensureAct(); const noTut = window.__ZLJ_TEST && !window.__ZLJ_TEST.tut; if (noTut) { S.act.tut.controls = S.act.tut.lamp = S.act.tut.eye = S.act.tut.dream = S.act.tut.reso = true; }
   if (!S.act.tut.controls) { await controlsGuide(true); S.act.tut.controls = true; if(stage.id==='jincheng_1') S.act.tut.lamp=true; }
   await signatureTutorials(stage);
-  clearScreens(); const prev = S.mode; S.mode = 'action'; const res = await runStage(stage, opts); if(res.abandoned) return; S.mode = 'hub';
+  clearScreens(); const prev = S.mode; S.mode = 'action';
+  const story = STORY_KINDS.has(stage.kind);
+  const B = story ? await storyBefore(stage) : null;
+  const firstTime = B && !S.act.storySeen?.[stage.id];
+  const runOpts = { ...opts };
+  if (story) {
+    runOpts.mods = storyMods();
+    if (B?.barks && firstTime) { runOpts.barks = B.barks; runOpts.onBark = (ln, host) => bark(ln, host); }
+    if (B?.bossPre && firstTime) runOpts.onBoss = () => playDialogue(B.bossPre, { boss: stage.boss });
+  }
+  const res = await runStage(stage, runOpts); if(res.abandoned) return; S.mode = 'hub';
+  if (res.win && B) { await storyAfter(stage, B); }
   if (res.quit) { opts.back ? opts.back() : show(adventureScreen(stage.region)); return; }
   if (res.retry) return launch(stage, opts);
   if (opts.hard && res.win) { res.gold *= 2; res.exp *= 2; }
@@ -214,6 +265,14 @@ export function controlsGuide(quick=false){ return new Promise(res => { const p 
     row('灯 T', '灯火共鸣', '共鸣槽满后触发同伴合击；好感越高威力与字幕越华丽。'),
     h('p.gd-tip', {}, '评价按用时、受击和连击计算；双层清波、精准闪避和看破弱点额外加分：S 评价额外技能点与丰厚赏赐。')), h('div.row.center', {}, btn('明白了', () => p.close(), 'gold')));
 }); }
+function failAdvice(stage, res){
+  const team = (S.act.team || []).filter(id => S.party[id]); const lv = team.length ? Math.round(team.reduce((n, id) => n + S.party[id].lv, 0) / team.length) : 1;
+  const rows = [['等级', `队伍平均 Lv ${lv} / 推荐 Lv ${stage.lv}` + (lv < stage.lv ? ' · 先去前几关或试炼刷经验' : '')]];
+  rows.push(['受击', res.hits > 8 ? `被击中 ${res.hits} 次：看到红色预警就冲刺穿过（冲刺无敌）` : '红圈预警后再出手，闪避成功会进入子弹时间']);
+  rows.push(['破绽', '用烛瞳标记弱点，敌人出招后摇或被背刺时露出「破绽」，命中必定暴击']);
+  rows.push(['装备', '铸铁坊可锻造与强化兵器，护符能补足短板']);
+  return rows;
+}
 function resultScreen(stage, res, out, opts){
   const win = res.win; const lvl = Object.entries(out.ups);
   sfx(win ? 'win' : 'lose'); playBgm(win ? 'warm' : 'sad'); haptic(win ? 'success' : 'warn');
@@ -228,7 +287,8 @@ function resultScreen(stage, res, out, opts){
         win ? h('div.rs-rank.r' + res.rating, {}, res.rating) : h('div.rs-rank.rF', {}, '败'),
         win ? h('div.rs-stars', {}, ...[0,1,2].map(i => h('i' + (i < AP.stars(res.rating) ? '.on' : ''), { style: 'animation-delay:' + (0.15 + i * 0.12) + 's' }, '★'))) : null,
         h('div.rs-name', {}, stage.name + (res.hard ? ' · 困难' : '')),
-        h('div.rs-stats', {}, h('span', {}, '用时 ' + Math.floor(res.time / 60) + ':' + String(res.time % 60).padStart(2, '0')), h('span', {}, '最高连击 ' + res.combo), h('span', {}, '击败 ' + res.kills), h('span', {}, '受击 ' + res.hits)),
+        h('div.rs-stats', {}, ...[['用时', Math.floor(res.time / 60) + ':' + String(res.time % 60).padStart(2, '0')], ['连击', res.combo], ['击败', res.kills], ['受击', res.hits]].map(([k, v]) => h('div', {}, h('b', {}, String(v)), k))),
+        win ? h('div.rs-mini', {}, ...[['烛瞳破绽', res.eyeMarks || 0], ['秘匣', res.secrets || 0], ['灯火共鸣', res.resoUsed || 0], ['梦层切换', res.dreamFlips || 0]].map(([k, v]) => h('div', {}, h('em', {}, k), h('b', {}, String(v))))) : null,
         win ? h('div.rs-card', { id: 'clear-card' },
           h('img.rs-card-bg', { src: asset('cg/key_clearcard'), alt: '' }),
           h('div.rs-card-t', {}, '通 关 札'),
@@ -245,15 +305,15 @@ function resultScreen(stage, res, out, opts){
           h('div.rs-card-s', {}, '《烛龙纪·长夜山海》'),
           h('button.rs-share', { type: 'button', onclick: (e) => { e.stopPropagation(); shareClearCard(stage, res); } }, '✦ 收进画廊')) : null,
         !win ? h('p.rs-tip', {}, tipFor(stage, res)) : null),
-      h('div.rs-r', {},
-        win ? h('img.rs-reward', { src: asset('cg/key_reward_popup'), alt: '' }) : null,
+      h('div.rs-r', {}, h('div.rs-scroll', {},
         h('div.rs-gain', {}, h('b', {}, '✦ ' + out.gold), h('b', {}, '经验 +' + out.exp), (res.dust||out.dust) ? h('b.dust', {}, '梦屑 +' + (out.dust || res.dust || 0)) : null, out.sp ? h('b.sp', {}, '技能点 +1') : null, res.rating === 'S' && win ? h('em.sbonus', {}, 'S · 丰厚赏赐') : null, out.first ? h('em', {}, '首次通关') : null, out.newBest && win ? h('em', {}, '新纪录') : null),
         lvl.length ? h('div.rs-ups', {}, ...lvl.map(([id, l]) => h('div', {}, h('img', { src: portrait(id) }), `${CHARS[id].name} 升至 Lv ${l[l.length - 1]}`))) : null,
         out.unlocks.length ? h('div.rs-unl', {}, ...out.unlocks.map(u => h('div', {}, '✧ ' + u))) : null,
         (out.reactions && out.reactions.length) ? h('div.rs-react', {}, ...out.reactions.map(r => h('div.rs-rline', {}, h('b', {}, r.name + '：'), r.line))) : null,
         win ? h('div.rs-next', {}, nextUnlockTeaser(stage, out)) : null,
-        h('div.rs-items', {}, ...(items.length ? items : [h('div.rs-none', {}, win ? '本关没有掉落' : '失败时不保留掉落，仅获得部分星砂与经验')])),
-        h('div.rs-btns', {}, btn('返回', back, ''), btn(win ? '再战一次' : '重新挑战', () => launch(stage, opts), ''), next && win ? btn('下一关 ▶', () => stageDetail(next, opts), 'gold') : null))));
+        !win ? h('div.rs-advice', {}, h('div.sd-h', {}, '复盘'), ...failAdvice(stage, res).map(([k, v]) => h('div', {}, h('em', {}, k), h('span', {}, v)))) : null,
+        h('div.rs-items', {}, ...(items.length ? items : [h('div.rs-none', {}, win ? '本关没有掉落' : '失败时不保留掉落，仅获得部分星砂与经验')]))),
+        h('div.rs-btns', {}, win ? btn('收进画廊', () => shareClearCard(stage, res), 'ghost') : null, btn('返回', back, ''), btn(win ? '再战一次' : '重新挑战', () => launch(stage, opts), ''), next && win ? btn('下一关 ▶', () => stageDetail(next, opts), 'gold') : null))));
   show(root);
 }
 

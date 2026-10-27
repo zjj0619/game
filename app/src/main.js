@@ -70,6 +70,7 @@ hooks.ending = async (x) => { await endingScreen(x); game.title(); };
 setInterval(()=>{ if (S && S.mode!=='title') S.playtime = (S.playtime||0) + 1; }, 1000);
 // 返回键（Android）
 window.__handleBack = () => {
+  { const d = [...document.querySelectorAll('.dlg, .dlg-card')].pop(); if (d) { d._back && d._back(); return true; } }
   const last = sel => { const a = app.querySelectorAll(sel); return a.length ? a[a.length - 1] : null; };
   // 由上到下：大图查看 → 奖励弹窗 → 新手引导 → 面板 → 当前画面
   const viewer = last('.viewer'); if (viewer) { viewer.click(); return true; }
