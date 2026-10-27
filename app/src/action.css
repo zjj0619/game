@@ -149,3 +149,19 @@
 
 /* —— combat VFX overlays (polish3) —— */
 .ak-combo.on.pop b{text-shadow:0 0 18px #ff7a2a,0 0 36px #ffb03a,2px 2px 0 #5a1a00}
+
+/* 暂停面板（2026-10-26 重排：左侧操作按钮，右侧可滚动说明，小图标） */
+.ak-pausebox{padding:max(14px,var(--st)) max(18px,var(--sr)) max(14px,var(--sb)) max(18px,var(--sl))}
+.ak-pcard{display:flex;gap:22px;width:min(760px,100%);max-height:100%;background:rgba(12,12,20,.92);border:1px solid rgba(243,223,169,.18);border-radius:10px;padding:18px 20px;box-sizing:border-box}
+.ak-pl{display:flex;flex-direction:column;gap:9px;min-width:150px;justify-content:center}
+.ak-pl .btn{width:100%}
+.ak-pt{font-family:var(--title);color:#f3dfa9;font-size:26px;letter-spacing:10px;text-align:center}
+.ak-ps{color:#b9b2a0;font-size:12px;text-align:center;margin-bottom:6px;letter-spacing:2px}
+.ak-pr{flex:1;overflow:auto;min-width:0;color:#d8d2c2;font-size:12px;line-height:1.6;padding-right:4px}
+.ak-pr p{margin:0 0 6px}
+.ak-ph{color:#f3dfa9;font-size:13px;letter-spacing:3px;margin:4px 0 4px;border-bottom:1px solid rgba(243,223,169,.15);padding-bottom:2px}
+.ak-sklist{display:flex;flex-direction:column;gap:6px}
+.ak-ski{display:flex;gap:8px;align-items:center}
+.ak-ski img{width:34px;height:34px;flex:none;border-radius:6px;object-fit:cover;border:1px solid rgba(255,255,255,.12)}
+.ak-ski b{color:#f0e6cc;margin-right:6px}
+.ak-ski span{color:#a9a294}

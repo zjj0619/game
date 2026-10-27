@@ -83,8 +83,16 @@ export function toggleEye(ctx){
 }
 
 /** 命中时消费弱点 → 必暴 */
-export function consumeWeak(f){
+/** 弱点需要「破绽」才吃得到：敌人出招后摇、被弹反/眩晕/冻结、或从背后打 */
+export function weakOpen(f, P){
+  if (!f) return false;
+  if (f.state === 'atk' || f.state === 'hurt' || f.state === 'down' || (f.stun || 0) > 0 || (f.frozen || 0) > 0 || (f.stagger || 0) > 0) return true;
+  if (P && f.face && Math.sign(P.x - f.x) === -Math.sign(f.face)) return true;
+  return false;
+}
+export function consumeWeak(f, P){
   if (!f || !(f.weakMark >= 1)) return false;
+  if (P && !weakOpen(f, P)) return false;
   f.weakMark = 0; f._marked = false; return true;
 }
 
@@ -223,7 +231,7 @@ export function drawHooks(g, ctx, camHelpers){
         const a = Math.min(1, f.weakMark); const y = f.y - f.h - 10;
         g.globalAlpha = 0.5 + 0.5 * a; g.fillStyle = '#ff3a3a';
         g.beginPath(); g.arc(f.x, y, 3.5 + a * 2, 0, 6.283); g.fill();
-        if (f.weakMark >= 1) { g.globalAlpha = 1; g.fillStyle = '#ffe08a'; g.font = 'bold 9px sans-serif'; g.textAlign = 'center'; g.fillText('弱点', f.x, y - 10); }
+        if (f.weakMark >= 1) { const op = weakOpen(f, P); g.globalAlpha = op ? 1 : 0.6; g.fillStyle = op ? '#ffe08a' : '#c9a0a0'; g.font = 'bold 9px sans-serif'; g.textAlign = 'center'; if (op) g.fillText('破绽！', f.x, y - 10); }
       }
     }
     g.restore();
@@ -234,32 +242,36 @@ export function drawHooks(g, ctx, camHelpers){
     f._alphaMul = f.reveal || st.eyeOn ? 1 : 0.15;
   }
 
-  // 秘径 / 秘箱 / 梦门：灯照或烛瞳才显形；烛瞳画金线轮廓
+  // 机关绘制：裂墙/灯石常显（是地形），烛瞳只给提示（裂缝高亮、灯石次序）
   const secrets = st.secrets || [];
   for (const s of secrets) {
-    if (s.taken) continue;
-    const d = Math.hypot(s.x - P.x, s.y - (P.y - 26));
-    const lit = d < Rlamp || st.eyeOn;
-    s.revealed = lit;
-    if (!lit && !st.eyeOn) continue;
+    if (s.taken || s.x == null) continue;
     g.save();
-    if (st.eyeOn) {
-      g.strokeStyle = 'rgba(255,210,100,0.85)'; g.lineWidth = 1.5; g.setLineDash([4, 3]);
-      g.strokeRect(s.x - s.w / 2 - 2, s.y - s.h - 2, s.w + 4, s.h + 4);
-      g.setLineDash([]);
-      g.fillStyle = '#ffe08a'; g.font = 'bold 8px sans-serif'; g.textAlign = 'center';
-      g.fillText(s.kind === 'chest' ? '秘匣' : s.kind === 'gate' ? '梦门' : '秘径', s.x, s.y - s.h - 8);
-    }
-    if (lit) {
-      g.globalAlpha = st.eyeOn ? 1 : 0.75;
+    if (s.kind === 'wall') {
+      const jx = (s.shakeT > 0 ? (Math.random() - 0.5) * 3 : 0); s.shakeT = Math.max(0, (s.shakeT || 0) - 1 / 60);
+      const x = s.x - s.w / 2 + jx, y = s.y - s.h;
+      g.fillStyle = '#4a4440'; g.fillRect(x, y, s.w, s.h);
+      g.fillStyle = '#5c5550'; for (let r = 0; r < s.h; r += 9) g.fillRect(x + ((r / 9) % 2 ? 0 : 5), y + r, s.w - 5, 4);
+      g.strokeStyle = st.eyeOn ? 'rgba(255,214,120,0.95)' : 'rgba(20,16,14,0.8)'; g.lineWidth = st.eyeOn ? 1.6 : 1;
+      g.beginPath(); g.moveTo(s.x - 4, y + 4); g.lineTo(s.x + 3, y + s.h * 0.35); g.lineTo(s.x - 3, y + s.h * 0.6); g.lineTo(s.x + 4, y + s.h - 4); g.stroke();
+      if (st.eyeOn) { g.fillStyle = '#ffe08a'; g.font = 'bold 8px sans-serif'; g.textAlign = 'center'; g.fillText(s.key ? '裂墙 · 残图' : '裂墙 · 重击', s.x, y - 5); }
+    } else if (s.kind === 'stone') {
+      g.fillStyle = s.lit ? '#ffcf6a' : '#3c3a44'; g.beginPath(); g.ellipse(s.x, s.y - 4, 9, 5, 0, 0, 6.283); g.fill();
+      g.strokeStyle = s.lit ? '#fff1c0' : '#6b6878'; g.lineWidth = 1; g.stroke();
+      if (s.lit) { g.globalAlpha = 0.35; g.fillStyle = '#ffcf6a'; g.beginPath(); g.arc(s.x, s.y - 8, 14, 0, 6.283); g.fill(); g.globalAlpha = 1; }
+      if (st.eyeOn && !s.lit) { g.fillStyle = '#ffe08a'; g.font = 'bold 9px sans-serif'; g.textAlign = 'center'; g.fillText(String(s.ord), s.x, s.y - 14); }
+    } else {
+      const d = Math.hypot(s.x - P.x, s.y - (P.y - 26));
+      const lit = s.kind === 'gate' ? true : (s.revealed || d < Rlamp);
+      if (s.kind !== 'gate') s.revealed = s.revealed || lit;
+      if (!lit) { g.restore(); continue; }
       if (s.kind === 'chest') {
-        g.fillStyle = '#c9a227'; g.fillRect(s.x - 8, s.y - 14, 16, 12);
-        g.fillStyle = '#ffe08a'; g.fillRect(s.x - 8, s.y - 14, 16, 3);
+        g.fillStyle = '#8a6a2a'; g.fillRect(s.x - 8, s.y - 14, 16, 12);
+        g.fillStyle = '#d8b65a'; g.fillRect(s.x - 8, s.y - 14, 16, 3);
       } else if (s.kind === 'gate') {
-        g.strokeStyle = st.dream ? '#7ec8ff' : '#ffcf6a'; g.lineWidth = 2;
+        g.globalAlpha = st.dream ? 0.9 : 0.35;
+        g.strokeStyle = st.dream ? '#7ec8ff' : '#c9b9ff'; g.lineWidth = 2;
         g.beginPath(); g.ellipse(s.x, s.y - 20, 12, 22, 0, 0, 6.283); g.stroke();
-      } else {
-        g.fillStyle = 'rgba(255,200,100,0.35)'; g.fillRect(s.x - s.w / 2, s.y - 4, s.w, 4);
       }
     }
     g.restore();
@@ -296,24 +308,89 @@ export function sGoals(stage, st){
 }
 
 
-/** 关卡开局埋藏秘匣 / 秘径 / 梦门 */
+/** 关卡机关（地形/交互型，非「开瞳即得」）：
+ *  - wall  裂墙：只有重击（连段终结/技能/冲刺突刺）才能击碎，碎后露出秘匣；第 7 关的裂墙藏「秘境残图」，集齐才开隐藏关
+ *  - stones 灯石阵：三块灯石须按正确次序踩亮（烛瞳可看次序），错则全灭；成功升起窄台，需精准二段跳取高处秘匣
+ *  - gate  梦门：清场后闭目（梦层）方可进入
+ *  位置用比例 fx 记录，placeSecrets 在每次排布场地后换算成世界坐标 */
 export function seedSecrets(arenas, stage){
   const out = [];
-  for (const a of arenas) {
-    const mid = (a.x0 + a.x1) / 2;
-    out.push({ kind: 'chest', x: mid + 80, y: 232, w: 20, h: 14, taken: false, reward: a.i });
-    out.push({ kind: 'path', x: a.x0 + 40, y: 180, w: 48, h: 6, taken: false, arena: a.i });
-    if (!a.boss && a.i < arenas.length - 1 && (stage.dream || a.i % 2 === 0)) out.push({ kind: 'gate', x: a.x1 - 70, y: 232, w: 24, h: 40, taken: false, arena: a.i });
+  if (!stage || !arenas?.length || stage.kind === 'tower') return out;
+  const seed = [...String(stage.id)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+  const normal = arenas.map((a, i) => ({ a, i })).filter(o => !o.a.boss);
+  if (!normal.length) return out;
+  const wA = normal[0].i;
+  out.push({ kind: 'wall', ai: wA, fx: 0.68, w: 22, h: 46, hp: 3, taken: false });
+  if (stage.idx === 6 && !stage.hidden) {
+    const last = normal[normal.length - 1].i;
+    out.push({ kind: 'wall', ai: last, fx: last === wA ? 0.6 : 0.8, w: 24, h: 52, hp: 4, taken: false, key: true });
+  }
+  if (stage.idx >= 1 || stage.hidden) {
+    const sA = (normal[1] || normal[0]).i;
+    const orders = [[1, 2, 3], [2, 3, 1], [3, 1, 2], [1, 3, 2], [2, 1, 3], [3, 2, 1]][seed % 6];
+    [0.22, 0.48, 0.7].forEach((fx, k) => out.push({ kind: 'stone', ai: sA, fx, w: 16, h: 10, ord: orders[k], lit: false, taken: false, group: sA }));
+  }
+  for (const { a, i } of normal) {
+    if (i < arenas.length - 1 && (stage.dream || i % 2 === 0)) out.push({ kind: 'gate', ai: i, arena: i, fx: 0.92, w: 24, h: 40, taken: false });
   }
   return out;
 }
 
-/** 拾取秘匣（灯照或烛瞳显形后走近） */
+export function placeSecrets(st, arenas){
+  for (const s of st.secrets || []) {
+    const a = arenas[s.ai]; if (!a || s.fx == null) continue;
+    s.x = a.x0 + s.fx * (a.x1 - a.x0); if (s.y == null) s.y = 232; s.arena = s.ai;
+  }
+}
+
+/** 近战/技能命中区域检测裂墙。power: 0 普通 1 重击 */
+export function hitWalls(ctx, x0, x1, power){
+  const { st, say, sfx, part, shake, num } = ctx;
+  for (const s of st.secrets || []) {
+    if (s.kind !== 'wall' || s.taken || s.x == null) continue;
+    if (s.x + s.w / 2 < x0 || s.x - s.w / 2 > x1) continue;
+    if ((s.cd || 0) > st.t) continue; s.cd = st.t + 0.18;
+    if (!power) { part && part(s.x, s.y - 24, '#9a8f80', 4, 90, 0.3, 2); if (st.t > (s.hintAt || 0)) { say('墙体坚硬 · 需重击（连段终结 / 冲刺突刺 / 技能）', 1.4); s.hintAt = st.t + 5; } sfx && sfx('hit'); continue; }
+    s.hp--; s.shakeT = 0.2; shake && shake(2.5); sfx && sfx('heavy');
+    part && part(s.x, s.y - 24, '#b8a68a', 10, 170, 0.45, 3);
+    if (s.hp > 0) { num && num(s.x, s.y - s.h - 6, '裂', '#e6d3a8'); continue; }
+    s.taken = true; sfx && sfx('secret'); part && part(s.x, s.y - 20, '#ffd24a', 18, 200, 0.6, 3);
+    st.secretWalls = (st.secretWalls || 0) + 1;
+    if (s.key) {
+      const rid = ctx.stage?.region;
+      if (rid && S.act) { S.act.hkeys = S.act.hkeys || {}; S.act.hkeys[rid] = true; }
+      st.foundKey = true;
+      say('裂墙崩落 · 得「秘境残图」——本域隐藏关的入口显现了', 2.4);
+    } else say('裂墙崩落 · 内藏秘匣', 1.4);
+    st.secrets.push({ kind: 'chest', x: s.x, y: 232, w: 20, h: 14, taken: false, revealed: true });
+  }
+}
+
+/** 拾取秘匣 / 灯石 / 梦门 */
 export function trySecretPickup(ctx){
   const { st, P, say, sfx, part } = ctx;
   if (!st.secrets) return null;
   for (const s of st.secrets) {
-    if (s.taken || !s.revealed) continue;
+    if (s.taken || s.x == null) continue;
+    if (s.kind === 'wall') continue;
+    if (s.kind === 'stone') {
+      if (s.lit || !P.ground || Math.abs(s.x - P.x) > 14) continue;
+      const grp = st.secrets.filter(o => o.kind === 'stone' && o.group === s.group);
+      const next = grp.filter(o => o.lit).length + 1;
+      if (s.ord === next) {
+        s.lit = true; sfx && sfx('bell'); part && part(s.x, s.y - 6, '#ffcf6a', 8, 110, 0.4, 2);
+        if (next === grp.length) {
+          grp.forEach(o => { o.taken = true; });
+          st.secretPaths = (st.secretPaths || 0) + 1;
+          return { kind: 'path', x: grp.reduce((m, o) => Math.max(m, o.x), 0) - 60, arena: s.ai };
+        }
+      } else {
+        grp.forEach(o => { o.lit = false; }); s.failT = 0.5; sfx && sfx('warn');
+        if (st.t > (s.hintAt || 0)) { say('灯石次序错乱 · 全部熄灭（开烛瞳可见次序）', 1.6); s.hintAt = st.t + 3; }
+      }
+      continue;
+    }
+    if (!s.revealed && s.kind !== 'gate') continue;
     if (Math.abs(s.x - P.x) > 22 || Math.abs(s.y - P.y) > 40) continue;
     if (s.kind === 'gate' && (!st.dream || !ctx.arenas[s.arena]?.done)) {
       if (st.t > (s.hintAt || 0)) { say(!st.dream ? '梦门微亮 · 清场后闭目走入，可挑战额外灵魄' : '先肃清此地，再进入梦门', 1); s.hintAt=st.t+4; }
@@ -321,7 +398,7 @@ export function trySecretPickup(ctx){
     }
     s.taken = true;
     if (s.kind === 'chest') {
-      say('秘匣 · 灯下现形', 1.2); sfx && sfx('secret');
+      say('秘匣开启', 1.2); sfx && sfx('secret');
       part && part(s.x, s.y - 10, '#ffd24a', 16, 160, 0.6, 3);
       st.secretChests = (st.secretChests || 0) + 1;
       return { kind: 'chest', gold: 40 + Math.round(Math.random() * 60), dust: st.dream ? 2 : 0 };
@@ -330,11 +407,6 @@ export function trySecretPickup(ctx){
       say('梦门开启 · 击退梦魇，赢取灵魄', 1.4); sfx && sfx('portal');
       st.secretGates = (st.secretGates || 0) + 1;
       return { kind: 'gate', arena:s.arena };
-    }
-    if (s.kind === 'path') {
-      say('秘径显形', 1); sfx && sfx('bell');
-      st.secretPaths = (st.secretPaths || 0) + 1;
-      return { kind: 'path', x:s.x, arena:s.arena };
     }
   }
   return null;

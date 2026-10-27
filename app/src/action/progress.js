@@ -78,7 +78,7 @@ export function stageUnlocked(id){ const st = STAGES[id]; if (!st) return false;
     const gate = REGION_STAGES[st.region]?.[4];
     return gate ? !!S.act.cleared[gate] : true;
   }
-  if (st.hidden) return REGION_STAGES[st.region].slice(0, 10).every(x => S.act.cleared[x]);
+  if (st.hidden) return !!S.act.cleared[st.id] || (REGION_STAGES[st.region].slice(0, 10).every(x => S.act.cleared[x]) && !!S.act.hkeys?.[st.region]);
   if (st.idx > 0) return !!S.act.cleared[REGION_STAGES[st.region][st.idx - 1]]; if (st.ri === 0) return true; return !!S.act.cleared[REGION_STAGES[REGION_ORDER[st.ri - 1]][9]]; }
 export const regionUnlocked = rid => stageUnlocked(REGION_STAGES[rid][0]);
 export const stars = r => ({ S:3, A:2, B:1, C:1 })[r] || 0;

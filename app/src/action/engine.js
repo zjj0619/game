@@ -33,6 +33,9 @@ function colEl(col){ if (!col || col[0] !== '#') return 'light'; const n = parse
   return hh < 25 || hh >= 335 ? 'fire' : hh < 50 ? 'earth' : hh < 70 ? 'light' : hh < 165 ? 'wood' : hh < 250 ? 'water' : 'dark'; }
 // 程序化动画帧：assets/anim/<key>/<state><i>.webp（tools/gen/anim.py 生成），未加载时回退到静态立绘
 const ANIM_N = { idle:6, run:8, atk:6, jump:2, hurt:2, cast:4 }, FANIM_N = { idle:4, walk:6, atk:4, hurt:2 };
+/** 部分立绘素材原生朝左：绘制时反向，保证「面朝移动方向」。 */
+export const HERO_NATIVE_LEFT = new Set(['yangui']);
+export const heroFlip = id => HERO_NATIVE_LEFT.has(id) ? -1 : 1;
 function animKey(p){ return p.replace(/\//g, '_'); }
 function frame(key, state, i, fallback){ const im = img('anim/' + key + '/' + state + i); return ok(im) ? im : null; }
 export function preloadAnim(key, hero){ const N = hero ? ANIM_N : FANIM_N; for (const s in N) for (let i = 0; i < N[s]; i++) img('anim/' + key + '/' + s + i); }
@@ -59,11 +62,11 @@ export function runStage(stage, opts = {}){
       a._platsBase = raw.map(([fx, y, w]) => ({ x: a.x0 + fx * W_AR() - w / 2, y, w }));
       const dreamRaw = a.dreamPlatsLayout || raw.map(([fx,y,w],i)=>[Math.min(0.92,Math.max(0.08,1-fx)),Math.max(95,y-(i%2?0:25)),w]);
       a._dreamPlats = dreamRaw.map(([fx,y,w])=>({x:a.x0+fx*W_AR()-w/2,y,w,dream:true}));
-      a.plats = (st.dream ? a._dreamPlats : a._platsBase).map(p=>({...p})); x = a.x1; } }
+      a.plats = (st.dream ? a._dreamPlats : a._platsBase).map(p=>({...p})); x = a.x1; } HK.placeSecrets(st, arenas); }
     let worldEnd = 0;
     const st = { t: 0, hitstop: 0, shake: 0, combo: 0, comboT: 0, maxCombo: 0, hitsTaken: 0, kills: 0, over: false, paused: false, cur: -1, locked: false, cam: 0,
       gold: 0, loot: {}, souls: {}, exp: 0, slow: 1, lamp: null, bossBar: null, potions: 3 + Math.max(0, (S.city?.herb || 1) - 1), timeLeft: stage.time || 0,
-      dream: 0, dreamCd: 0, eyeOn: false, eyeCd: 0, eyeT: 0, eyeMarks: 0, reso: 0, resoReady: false, resoUsed: 0, dreamSeen: false, awakeSeen: true, dreamFlips: 0, secrets: [], secretChests: 0, secretGates: 0, secretPaths: 0, dust: 0,
+      dream: 0, dreamCd: 0, eyeOn: false, eyeCd: 0, eyeT: 0, eyeMarks: 0, reso: 0, resoReady: false, resoUsed: 0, dreamSeen: false, awakeSeen: true, dreamFlips: 0, secrets: HK.seedSecrets(stage.arenas || [], stage), secretChests: 0, secretGates: 0, secretPaths: 0, dust: 0,
       layerClears:[0,0], perfectDodges:0, dodgeRewardAt:-10, relayWindow:0, relayCd:0 };
     const foes = [], shots = [], fx = [], zones = [], pickups = [], nums = [], allies = [], tele = [];
     const mk = id => { const s = actStats(id); return { id, s, hp: s.hp, mp: s.mp, rage: 0, cds: {}, alive: true }; };
@@ -83,7 +86,7 @@ export function runStage(stage, opts = {}){
     const btnA = (cls, glyph, label, fn, hold) => h('button.ak-btn.' + cls, { onpointerdown: e => { e.preventDefault(); e.stopPropagation(); fn(true); }, onpointerup: () => { hold && fn(false); }, onpointercancel: () => { hold && fn(false); }, onpointerleave: () => { hold && fn(false); } }, h('span.g', {}, glyph), h('span.t', {}, label));
     const keys = { l: false, r: false, u: false, d: false, atk: false };
     hud.atk = btnA('ak-atk', '⚔', '攻击', v => { keys.atk = v; if (v) attack(); }, true);
-    hud.jump = btnA('ak-jump', '⤒', '跳跃', v => v && jump());
+    hud.jump = btnA('ak-jump', '⤒', '跳跃', v => { keys.jumpHeld = !!v; if (v) jump(); }, true);
     hud.dash = btnA('ak-dash', '➤', '冲刺', v => v && dash());
     hud.ult = btnA('ak-ult', '龍', '变身', v => v && ult());
     hud.swap = btnA('ak-swap', '⇄', '换人', v => v && swap());
@@ -119,9 +122,9 @@ export function runStage(stage, opts = {}){
     const ro = new ResizeObserver(resize); ro.observe(root); resize();
     const kmap = { a: 'l', arrowleft: 'l', d: 'r', arrowright: 'r', w: 'u', arrowup: 'u', s: 'd', arrowdown: 'd' };
     const kd = e => { if (st.over) return; const k = e.key.toLowerCase(); if (kmap[k]) keys[kmap[k]] = true;
-      if (k === 'j') { keys.atk = true; attack(); } if (k === ' ' || k === 'k') jump(); if (k === 'l' || k === 'shift') dash();
+      if (k === 'j') { keys.atk = true; attack(); } if (k === ' ' || k === 'k') { if (!e.repeat) { keys.jumpHeld = true; jump(); } } if (k === 'l' || k === 'shift') dash();
       const si = ['u','i','o','p','h'].indexOf(k); if (si >= 0) useSkill(si); if (k === 'y') ult(); if (k === 'q') swap(); if (k === 'e') HK.toggleEye(hk()); if (k === 'r') HK.toggleDream(hk()); if (k === 't') HK.fireReso(hk()); if (k === 'escape') pause(); };
-    const ku = e => { const k = e.key.toLowerCase(); if (kmap[k]) keys[kmap[k]] = false; if (k === 'j') keys.atk = false; };
+    const ku = e => { const k = e.key.toLowerCase(); if (kmap[k]) keys[kmap[k]] = false; if (k === 'j') keys.atk = false; if (k === ' ' || k === 'k') keys.jumpHeld = false; };
     addEventListener('keydown', kd); addEventListener('keyup', ku);
     let joy = null; const knob = hud.joy.firstChild;
     hud.joy.addEventListener('pointerdown', e => { joy = { id: e.pointerId, x: e.clientX, y: e.clientY }; hud.joy.setPointerCapture(e.pointerId); });
@@ -130,7 +133,7 @@ export function runStage(stage, opts = {}){
     const joyEnd = () => { joy = null; knob.style.transform = ''; keys.l = keys.r = keys.u = keys.d = false; };
     hud.joy.addEventListener('pointerup', joyEnd); hud.joy.addEventListener('pointercancel', joyEnd);
     function say(text, t = 1.6){ hud.msg.textContent = text; hud.msg.classList.remove('on'); void hud.msg.offsetWidth; hud.msg.classList.add('on'); }
-    function hk(){ return { C, P, st, foes, roster, ri, arenas, say, sfx, shake, ring, part, heal, hitCircle, num, GY, VH, U, VW, eyeOn: st.eyeOn, root, h, shock, crack, sparks, vfx, flashHit }; }
+    function hk(){ return { stage, C, P, st, foes, roster, ri, arenas, say, sfx, shake, ring, part, heal, hitCircle, num, GY, VH, U, VW, eyeOn: st.eyeOn, root, h, shock, crack, sparks, vfx, flashHit }; }
     function num(x, y, v, kind){ if (nums.length > 60) nums.shift(); nums.push({ x, y, v, kind, t: 0 }); }
     function fxLv(){ const v = settings?.fx; return v == null ? 1 : +v; }
     function fxCap(){ return [0, 90, 220][fxLv()] || 220; }
@@ -139,9 +142,12 @@ export function runStage(stage, opts = {}){
     // 序列帧特效（assets/vfx/<type>_<el>/0..11）：叠加混合播放
     function vfx(type, el, x, y, size, o = {}){ if (fxLv() <= 0) return; if (fx.length > fxCap()) return; fx.push({ k: 'vfx', type, el: el || 'light', x, y, size, face: o.face || 1, t: 0, life: o.life || 0.4, rot: o.rot || 0, add: type !== 'smoke' }); }
     function ring(x, y, r, col, life = 0.28){ if (fxLv() <= 0) return; fx.push({ k: 'ring', x, y, r: Math.min(r, 90), col, t: 0, life: Math.min(life, 0.4) }); if (r >= 40 && fxLv() >= 2) vfx('burst', colEl(col), x, y, Math.min(r * 1.6, 110), { life: life * 0.9 }); }
-    function arc(x, y, face, r, col, life = 0.16, wide = 1){ if (fxLv() <= 0) return; const rot = rnd(-0.4, 0.4); fx.push({ k: 'arc', x, y, face, r, col, t: 0, life, wide, rot });
-      if (fxLv() >= 2) { fx.push({ k: 'arc', x: x + face * 6, y: y + rnd(-4, 4), face, r: r * 0.72, col: '#ffffff', t: 0, life: life * 0.85, wide: wide * 0.55, rot: rot + rnd(-0.2, 0.2) }); }
-      vfx('slash', colEl(col), x, y, r * 2.5 * Math.min(1.6, wide), { face, life: Math.max(0.2, life * 1.5), rot }); }
+    // 刀光：一道干净的新月弧（白芯 + 元素色描边），起点在角色身前，不盖住角色本体
+    function arc(x, y, face, r, col, life = 0.16, wide = 1){ if (fxLv() <= 0) return; const rot = rnd(-0.25, 0.25);
+      fx.push({ k: 'slash', x: x + face * r * 0.18, y, face, r: Math.min(r, 120), col, t: 0, life: Math.max(0.14, Math.min(life, 0.26)), wide: Math.min(1.7, wide), rot }); }
+    // 命中火花：几道锐利放射线 + 一瞬白色十字星
+    function hitSpark(x, y, dir, col, big){ if (fxLv() <= 0) return; const n = big ? 7 : 4; for (let i = 0; i < n; i++) { const a = (dir > 0 ? 0 : Math.PI) + rnd(-0.9, 0.9); fx.push({ k: 'streak', x, y, a, len: rnd(14, big ? 34 : 22), col: i % 2 ? '#ffffff' : col, t: 0, life: rnd(0.09, 0.16) }); }
+      fx.push({ k: 'star', x, y, r: big ? 22 : 13, col, t: 0, life: big ? 0.13 : 0.09 }); }
     function shock(x, y, r, col, life = 0.22){ if (fxLv() <= 0) return; fx.push({ k: 'shock', x, y, r: Math.min(r, 70), col, t: 0, life: Math.min(life, 0.32) }); }
     function crack(x, y, w = 80, life = 0.9){ if (fxLv() < 2) return; fx.push({ k: 'crack', x, y: y || GY, w, t: 0, life }); }
     function speedLines(face, n = 6){ if (fxLv() < 2) return; n = fxMul(n); for (let i = 0; i < n; i++) fx.push({ k: 'speed', x: P.x - face * rnd(10, 70), y: P.y - rnd(8, P.h), face, len: rnd(28, 70), t: 0, life: 0.18 + rnd(0, 0.12), col: 'rgba(255,240,200,.55)' }); }
@@ -164,8 +170,14 @@ export function runStage(stage, opts = {}){
       if (ps.freezeDmg && (f.frozen > 0 || f.slow > 0)) base *= 1 + ps.freezeDmg;
       if (f.def_.boss) base *= 1 + (s.bossDmg || 0); if (f.def_.tier === 1) base *= 1 + (s.eliteDmg || 0);
       if (f.brk > 0) base *= 1.3;
+      let combo2 = '';
+      if (f.air && !f.def_.boss && (o.air || o.skill)) { base *= o.skill ? 1.3 : 1.15; combo2 = o.skill ? '空中追击' : ''; }
+      if (o.st && f.frozen > 0 && (o.st[0] === 'burn' || o.el === 'fire')) { base *= 1.6; f.frozen = 0; combo2 = '融 解'; }
+      else if (o.st && f.poison > 0 && o.st[0] === 'burn') { base *= 1.35; combo2 = '毒 燃'; }
+      else if (f.stun > 0 && o.skill) { base *= 1.25; combo2 = combo2 || '破 绽'; }
+      if (combo2 && st.t - (st.comboTagT || 0) > 0.5) { st.comboTagT = st.t; num(f.x, f.y - f.h - 26, combo2, 'st'); st.synergy = (st.synergy || 0) + 1; }
       if (f.def_.ai === 'shield' && !o.skill && !o.launch && Math.sign(P.x - f.x) === f.face && f.guard > 0 && f.state !== 'hurt' && !f.air) { f.guard -= 1; num(f.x, f.y - f.h, '格挡', 'blk'); part(f.x + f.face * 14, f.y - f.h / 2, '#ffffff', 6, 120, 0.25, 2); sfx('hit'); if (f.guard <= 0) { f.stun = 1.4; num(f.x, f.y - f.h - 14, '破盾!', 'crit'); } return 0; }
-      let crit = Math.random() < (s.crit || 0.06) + (ps.critPct || 0) + (ps.critBurn && f.burn > 0 ? ps.critBurn : 0); if (HK.consumeWeak(f)) { crit = true; st.eyeMarks = (st.eyeMarks||0)+1; st.relayWindow=2; HK.gainReso(hk(),12); }
+      let crit = Math.random() < (s.crit || 0.06) + (ps.critPct || 0) + (ps.critBurn && f.burn > 0 ? ps.critBurn : 0); if (HK.consumeWeak(f, P)) { crit = true; st.eyeMarks = (st.eyeMarks||0)+1; st.relayWindow=2; HK.gainReso(hk(),12); }
       let d = base * 100 / (100 + f.def * 2 * HK.lampDefMul(f)) * rnd(0.92, 1.08); if (crit) d *= 1.6 + (s.critDmg || 0);
       d = Math.max(1, Math.round(d));
       f.hp -= d; f.hitT = 0.12; st.combo++; st.comboT = 2.2; st.maxCombo = Math.max(st.maxCombo, st.combo);
@@ -176,8 +188,11 @@ export function runStage(stage, opts = {}){
       const ls = buffV('lifesteal') + (s.lifesteal || 0); if (ls) heal(d * ls, true);
       { let nk = crit ? 'crit' : o.skill ? 'sk' : (o.el === 'fire' || o.col === '#ff9a4a' || o.col === '#ff7a3a') ? 'fire' : (o.el === 'ice') ? 'ice' : (o.brk || o.lamp) ? 'brk' : 'atk';
       num(f.x + rnd(-8, 8), f.y - f.h - 6, d, nk); }
-      part(f.x, f.y - f.h / 2, o.col || '#ffd890', crit ? 10 : 5, crit ? 220 : 140, 0.28, crit ? 2.6 : 2); sparks(f.x + (o.dir || 1) * 8, f.y - f.h / 2, o.col || '#ffd890', crit ? 8 : 4, o.dir || Math.sign(f.x - P.x) || 1); if (fxLv() >= 2) vfx(crit ? 'shards' : 'spark', colEl(o.col || '#ffd890'), f.x, f.y - f.h / 2, crit ? 64 : 40, { life: 0.22, rot: rnd(0, 6) }); if (crit) { shock(f.x, f.y - f.h / 2, 36, '#ffd24a', 0.2); if (fxLv() >= 2) flashHit('crit'); } else if (o.heavy) { shock(f.x, f.y - f.h * 0.4, 24, o.col || '#ffd890', 0.16); }
-      st.hitstop = Math.max(st.hitstop, crit ? 0.065 : o.heavy ? 0.08 : 0.025); if (crit || o.heavy) shake(crit ? 6 : 4.5); else if (st.combo >= 10 && st.combo % 5 === 0) shake(2);
+      { const dir = o.dir || Math.sign(f.x - P.x) || 1; const hx = f.x - dir * f.w * 0.25, hy = f.y - f.h * rnd(0.4, 0.6);
+        hitSpark(hx, hy, dir, o.col || '#ffd890', crit || o.heavy); sparks(hx, hy, o.col || '#ffd890', crit ? 6 : 3, dir);
+        if (crit) { shock(f.x, f.y - f.h / 2, 30, '#ffe7a0', 0.16); if (fxLv() >= 2) flashHit('crit'); } else if (o.heavy) shock(f.x, f.y - f.h * 0.45, 20, o.col || '#ffd890', 0.14); }
+      // 顿帧：普攻短促、重击/暴击更重；震屏克制
+      st.hitstop = Math.max(st.hitstop, crit ? 0.075 : o.heavy ? 0.085 : o.skill ? 0.04 : 0.045); if (crit || o.heavy) shake(crit ? 4.5 : 3.5); else shake(1.2);
       if (o.st) { const [k2, ch] = o.st; if (Math.random() < ch) applyStatus(f, k2, s); }
       if (P.ultT > 0 && ultDef().freezeAll && Math.random() < 0.15) applyStatus(f, 'freeze', s);
       const armor = f.def_.boss ? (f.armorT > 0 || !!f.pat) : (f.def_.tier === 1 && f.state === 'atk');
@@ -283,7 +298,7 @@ export function runStage(stage, opts = {}){
       if (P.ground || canCoyote || P.jumps < max) {
         const fromGround = P.ground || canCoyote;
         if (fromGround) P.jumps = 0;
-        P.vy = fromGround ? -560 : -500; P.ground = false; P.coyote = 0; P.jumpBuf = 0; P.jumps++;
+        P.vy = fromGround ? -600 : -520; P.atkT = Math.min(P.atkT, 0); P.ground = false; P.coyote = 0; P.jumpBuf = 0; P.jumps++;
         part(P.x, P.y, '#ffffff', 5, 80, 0.3, 2); sfx('jump');
         if (P.jumps > 1) ring(P.x, P.y, 16, AC().col, 0.25);
       } else P.jumpBuf = 0.14;
@@ -299,7 +314,7 @@ export function runStage(stage, opts = {}){
         if (S.act.lampPath==='keeper' || !S.act.lampPath) heal(C().s.hp*0.05,true);
         say('精准闪避 · 接力时机',0.8); ring(P.x,P.y-26,42,'#9fe8ff',0.3);
       }
-      P.dashT = 0.18; P.dashCd = 0.62; P.vx = P.face * 640; P.vy = 0; P.iT = Math.max(P.iT, 0.28); P.dashBuf = 0;
+      { const mv = (keys.r ? 1 : 0) - (keys.l ? 1 : 0); if (mv) P.face = mv; } P.dashT = 0.17; P.thrustT = 0.35; P.dashCd = 0.5; P.vx = P.face * 700; P.vy = 0; P.iT = Math.max(P.iT, 0.3); P.dashBuf = 0; P.atkCd = Math.min(P.atkCd, 0.04); P.comboT = Math.max(P.comboT, 0.35);
       sfx('dash'); haptic('light'); ring(P.x, P.y - P.h / 2, 18, AC().col, 0.18);
     }
     function attack(){
@@ -326,16 +341,28 @@ export function runStage(stage, opts = {}){
     function meleeHit(mult, launch, kb, fin){
       const w = WP(); const reach = w.reach * (P.ultT > 0 && ultDef().scale ? ultDef().scale : 1);
       const hx = P.x + P.face * (reach / 2 + 8), hy = P.y - P.h / 2;
+      HK.hitWalls(hk(), hx - reach / 2 - 8, hx + reach / 2 + 8, (fin || P.thrustT > 0) ? 1 : 0);
       { const col = P.ultT > 0 ? ultDef().aura : AC().col;
         arc(P.x + P.face * 10, hy, P.face, reach + 10, col, fin ? 0.26 : 0.16, fin ? 1.55 : 1.1);
         if (fxLv() >= 2) { arc(P.x + P.face * 4, hy - 8, P.face, reach * 0.75, '#ffffff', 0.12, 0.7); speedLines(P.face, fin ? 8 : 4); }
         if (fin) { shock(hx, hy, 42, col, 0.28); crack(hx, GY, 60, 0.7); }
         sparks(P.x + P.face * (reach * 0.6), hy, col, fin ? 12 : 5, P.face);
       }
-      hitBox(hx, hy, reach + 14, P.h + 18, mult, { launch: launch > 0 ? 430 : 0, kb: kb * 12 + 60, heavy: fin, dir: P.face });
+      // 斩弹：普攻可斩碎带「斩」标的弹幕；敌人出手瞬间出刀 = 弹反
+      let cut = 0; for (const s2 of shots) if (s2.owner === 'e' && s2.slash && !s2.dead && Math.abs(s2.x - hx) < (reach + 30) / 2 + s2.r && Math.abs(s2.y - hy) < (P.h + 30) / 2 + s2.r) { s2.dead = true; cut++; hitSpark(s2.x, s2.y, P.face, '#ffffff', false); }
+      if (cut) { st.hitstop = Math.max(st.hitstop, 0.05); sfx('parry'); num(P.x + P.face * 30, P.y - P.h - 8, cut > 1 ? '斩弹 ×' + cut : '斩弹', 'blk'); HK.gainReso(hk(), 3 * cut); }
+      for (const f of foes) { if (f.dead || f.def_.boss || f.state !== 'wind' || f.stT > 0.2) continue; if (Math.abs(f.x - hx) < (reach + 40 + f.w) / 2 && Math.abs((f.y - f.h / 2) - hy) < (P.h + f.h) / 2 + 10) parry(f); }
+      const thrust = P.thrustT > 0; if (thrust) P.thrustT = 0;
+      hitBox(hx, hy, reach + 14 + (thrust ? 20 : 0), P.h + 18, mult * (thrust ? 1.3 : 1), { launch: launch > 0 || thrust ? 430 : 0, kb: kb * 12 + 60, heavy: fin || thrust, dir: P.face, air: !P.ground });
+      if (thrust) { say('突刺 · 挑空', 0.6); speedLines(P.face, 6); }
     }
-    function hitBox(cx, cy, w, hh, mult, o = {}){ let n = 0; for (const f of foes) { if (f.dead) continue; if (Math.abs(f.x - cx) < (w + f.w) / 2 && Math.abs((f.y - f.h / 2) - cy) < (hh + f.h) / 2) { if (dmgTo(f, mult, o)) n++; } } return n; }
-    function hitCircle(cx, cy, r, mult, o = {}){ let n = 0; for (const f of foes) { if (f.dead) continue; if (Math.hypot(f.x - cx, (f.y - f.h / 2) - cy) < r + f.w / 2) { if (dmgTo(f, mult, { ...o, dir: Math.sign(f.x - cx) || 1 })) n++; } } return n; }
+    function parry(f){ if (f.parried && st.t - f.parried < 0.6) return; f.parried = st.t; f.state = 'hurt'; f.stT = 0.2; f.stun = f.def_.boss ? 0 : 1.1; if (f.def_.boss) { f.stagger = 0.7; f.pat = null; tele.length = 0; } f.weak = 4; f.vx = P.face * 160;
+      st.perfectDodges = (st.perfectDodges || 0) + 1; st.parries = (st.parries || 0) + 1; st.relayWindow = 2; HK.gainReso(hk(), 15); C().mp = Math.min(C().s.mp, C().mp + 5);
+      st.hitstop = Math.max(st.hitstop, 0.12); shake(3); sfx('parry'); haptic('medium'); flashHit('crit');
+      hitSpark(f.x - P.face * f.w * 0.3, f.y - f.h * 0.55, P.face, '#ffffff', true); ring(f.x, f.y - f.h / 2, 46, '#ffffff', 0.25);
+      num(f.x, f.y - f.h - 18, '弹 反!', 'crit'); }
+    function hitBox(cx, cy, w, hh, mult, o = {}){ let n = 0; if (o.skill) HK.hitWalls(hk(), cx - w / 2, cx + w / 2, 1); for (const f of foes) { if (f.dead) continue; if (Math.abs(f.x - cx) < (w + f.w) / 2 && Math.abs((f.y - f.h / 2) - cy) < (hh + f.h) / 2) { if (dmgTo(f, mult, o)) n++; } } return n; }
+    function hitCircle(cx, cy, r, mult, o = {}){ let n = 0; if (o.skill) HK.hitWalls(hk(), cx - r, cx + r, 1); for (const f of foes) { if (f.dead) continue; if (Math.hypot(f.x - cx, (f.y - f.h / 2) - cy) < r + f.w / 2) { if (dmgTo(f, mult, { ...o, dir: Math.sign(f.x - cx) || 1 })) n++; } } return n; }
     function shot(o){ if (shots.length > 140) return; shots.push({ owner: 'p', t: 0, hit: new Set(), ...o }); }
     function useSkill(i){
       if (busy() || P.whirl || P.beam || P.slamming) return; const c = C(); const sid = slotsOf(c.id)[i]; const k = ASKILLS[sid]; if (!k) return;
@@ -390,13 +417,16 @@ export function runStage(stage, opts = {}){
       if (st.dreamCd > 0) st.dreamCd -= dt;
       HK.tickLamp(hk(), dt); HK.tickEye(hk(), dt); HK.tickReso(hk(), dt);
       const spd = 210 * (1 + buffV('spd') + (ps.runSpd || 0)) * (P.buffs.some(b => b.slowP) ? 0.6 : 1);
+      if (P.thrustT > 0) P.thrustT -= dt;
       if (P.dashT > 0) { P.dashT -= dt; if (P.ultT <= 0 || !ultDef().fly) P.vy = Math.min(P.vy, 0); if (st.t % 0.03 < dt) { fx.push({ k: 'ghost', x: P.x, y: P.y, face: P.face, id: c.id, t: 0, life: 0.32 }); if (fxLv() >= 2) speedLines(P.face, 3); } }
-      else if (P.hurtT <= 0 && P.lock <= 0) { const mv = (keys.r ? 1 : 0) - (keys.l ? 1 : 0); if (mv) P.face = mv; const tgt = mv * spd; P.vx += (tgt - P.vx) * Math.min(1, dt * (P.ground ? 14 : 6)); }
+      else if (P.hurtT <= 0 && P.lock <= 0) { const mv = (keys.r ? 1 : 0) - (keys.l ? 1 : 0); if (mv) P.face = mv; const tgt = mv * spd; P.vx += (tgt - P.vx) * Math.min(1, dt * (P.ground ? (mv ? 22 : 26) : 11)); }
       else P.vx *= Math.pow(0.02, dt);
       if (P.whirl) { const w = P.whirl; w.t += dt; P.vx = w.mv; if (w.t > w.n * 0.11) { w.n++; hitCircle(P.x, P.y - P.h / 2, w.k.r, w.pw, { ...w.o, kb: 40 }); arc(P.x, P.y - P.h / 2, w.n % 2 ? 1 : -1, w.k.r, w.o.col, 0.12, 1.6); } if (w.n >= w.k.hits) P.whirl = null; }
       if (P.beam) { const b = P.beam; b.t += dt; b.tick -= dt; P.vx = 0; P.vy = Math.min(P.vy, 30); if (b.tick <= 0) { b.tick = b.k.tick || 0.1; const len = b.k.len || 320; hitBox(P.x + P.face * len / 2, P.y - P.h * 0.6, len, 26, b.pw, { ...b.o, kb: 30, dir: P.face }); } if (b.t >= b.dur) P.beam = null; }
       const fly = P.ultT > 0 && ultDef().fly;
-      P.vy += GRAV * dt * (fly && keys.u ? 0.25 : 1) * (P.slamming && P.vy > 0 ? 2.2 : 1);
+      { const held = keys.jumpHeld || keys.u; let gm = 1;
+        if (!fly && !P.dashT) { if (P.vy < 0 && !held) gm = 2.4; else if (Math.abs(P.vy) < 90 && held) gm = 0.55; else if (P.vy > 0) gm = 1.55; }
+        P.vy += GRAV * dt * gm * (fly && keys.u ? 0.25 : 1) * (P.slamming && P.vy > 0 ? 2.2 : 1); if (!P.slamming) P.vy = Math.min(P.vy, keys.d ? 1100 : 820); }
       const yPrev = P.y; P.x += P.vx * dt; P.y += P.vy * dt;
       const minX = st.locked && st.cur >= 0 ? arenas[st.cur].x0 + 12 : 12; const maxX = st.locked && st.cur >= 0 ? arenas[st.cur].x1 - 12 : worldEnd;
       P.x = clamp(P.x, minX, maxX);
@@ -423,7 +453,7 @@ export function runStage(stage, opts = {}){
       for (let i = zones.length - 1; i >= 0; i--) if (zones[i].t >= zones[i].dur) zones.splice(i, 1);
     }
     // —— 飞行道具 ——
-    function eShot(f, x, y, a, sp, mult = 1, r = 7, o = {}){ if (shots.length > 160) return; shots.push({ owner: 'e', x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r, dmg: f.atk * mult * (f.weak > 0 ? 0.7 : 1), col: elTint[f.def_.el] || '#ff6060', life: 3, t: 0, ...o }); }
+    function eShot(f, x, y, a, sp, mult = 1, r = 7, o = {}){ if (shots.length > 160) return; let ne = 0; for (const s0 of shots) if (s0.owner === 'e') ne++; if (ne >= (hard ? 18 : f.def_.boss ? 12 : 8)) return; shots.push({ owner: 'e', slash: r <= 10 && !o.ground, x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r, dmg: f.atk * mult * (f.weak > 0 ? 0.7 : 1), col: elTint[f.def_.el] || '#ff6060', life: 3, t: 0, ...o }); }
     function updShots(dt){
       for (const s of shots) {
         s.t += dt; if (s.grav) s.vy += 900 * dt;
@@ -473,18 +503,18 @@ export function runStage(stage, opts = {}){
           const want = ai === 'ranged' ? 200 : ai === 'summoner' || ai === 'healer' ? 240 : ai === 'charger' ? 180 : 34 + f.w / 2;
           if (ai === 'flyer' || ai === 'healer') { const hx = tx - f.face * (ai === 'healer' ? 200 : 90); f.x += clamp(hx - f.x, -1, 1) * sp * dt; }
           else if (Math.abs(tdx) > want + 8) f.x += Math.sign(tdx) * sp * dt; else if ((ai === 'ranged' || ai === 'summoner') && Math.abs(tdx) < want - 60) f.x -= Math.sign(tdx) * sp * 0.8 * dt;
-          if (f.cd <= 0 && foes.filter(other=>!other.dead && other!==f && (other.pat || ['wind','atk','charge','dive'].includes(other.state))).length < (hard ? 3 : 2) && (Math.abs(tdx) < want + 30 || ai === 'ranged' || ai === 'summoner' || ai === 'healer' || ai === 'flyer')) { f.state = 'wind'; f.stT = (ai === 'charger' ? 0.65 : ai === 'bomber' ? 0.55 : 0.45) * (hard ? 0.8 : 1); f.face = Math.sign(tdx) || f.face; }
+          if (f.cd <= 0 && foes.filter(other=>!other.dead && other!==f && (other.pat || ['wind','atk','charge','dive'].includes(other.state))).length < (hard ? 3 : 2) && (Math.abs(tdx) < want + 30 || ai === 'ranged' || ai === 'summoner' || ai === 'healer' || ai === 'flyer')) { f.state = 'wind'; f.stT = f.windMax = (ai === 'charger' ? 0.85 : ai === 'bomber' ? 0.75 : ai === 'ranged' || ai === 'summoner' ? 0.6 : 0.62) * (hard ? 0.85 : 1); f.face = Math.sign(tdx) || f.face; if (Math.abs(f.x - P.x) < 520) sfx('warn'); if (f.stealth && !f.reveal) { f.seenT = 1.2; ring(f.x, f.y - f.h / 2, 30, '#c9a0ff', 0.3); part(f.x, GY, '#b9a6d8', 8, 90, 0.4, 2); } }
           if (st.lamp && Math.abs(st.lamp.x - f.x) < 36) { st.lamp.hp -= dt * (f.def_.tier ? 7 : 4); f.lampT = (f.lampT || 0) - dt; }
           break; }
-        case 'wind': if (f.stT <= 0) { f.state = 'atk'; f.stT = 0.3;
+        case 'wind': if (f.stT <= 0) { f.state = 'atk'; f.stT = f.def_.tier ? 0.45 : 0.55;
           if (ai === 'melee' || ai === 'shield') { frontHit(f, 46 + f.w / 2, 1); f.vx = f.face * 120; sfx('swing'); }
-          else if (ai === 'charger') { f.state = 'charge'; f.stT = 0.7; }
-          else if (ai === 'ranged') { const ang = Math.atan2((P.y - 30) - (f.y - f.h / 2), dx); eShot(f, f.x, f.y - f.h / 2, ang, 300, 0.9); if (f.def_.tier) { eShot(f, f.x, f.y - f.h / 2, ang - 0.2, 300, 0.7); eShot(f, f.x, f.y - f.h / 2, ang + 0.2, 300, 0.7); } }
+          else if (ai === 'charger') { f.state = 'charge'; f.stT = 0.6; }
+          else if (ai === 'ranged') { const ang = Math.atan2((P.y - 30) - (f.y - f.h / 2), dx); eShot(f, f.x, f.y - f.h / 2, ang, 300, 0.9); if (f.def_.tier && hard) { eShot(f, f.x, f.y - f.h / 2, ang - 0.2, 300, 0.7); eShot(f, f.x, f.y - f.h / 2, ang + 0.2, 300, 0.7); } else if (f.def_.tier) eShot(f, f.x, f.y - f.h / 2, ang + 0.16, 280, 0.7); }
           else if (ai === 'flyer') { f.state = 'dive'; f.stT = 0.7; f.dv = { x: P.x, y: P.y - 20 }; }
           else if (ai === 'summoner') { if (aliveFoes().length < 8) { const id = (a && a.waves[0] || []).find(x => AFOES[x] && AFOES[x].ai !== 'summoner') || 'yegui'; for (let k = 0; k < (f.def_.tier ? 2 : 1); k++) spawn(id, f.x + (k ? 30 : -30)); ring(f.x, f.y - f.h / 2, 50, '#a070ff', 0.4); } else eShot(f, f.x, f.y - f.h / 2, Math.atan2((P.y - 30) - (f.y - f.h / 2), dx), 220, 1, 9, { home: false }); }
           else if (ai === 'healer') { const low = aliveFoes().filter(o => o !== f && o.hp < o.max).sort((p, q) => p.hp / p.max - q.hp / q.max)[0]; if (low) { low.hp = Math.min(low.max, low.hp + low.max * 0.15); ring(low.x, low.y - low.h / 2, 30, '#8fe0a0', 0.4); num(low.x, low.y - low.h, '+' + Math.round(low.max * 0.15), 'heal'); } else eShot(f, f.x, f.y - f.h / 2, Math.atan2((P.y - 30) - (f.y - f.h / 2), dx), 260, 0.8); }
           else if (ai === 'bomber') { explode(f); }
-          f.cd = (ai === 'summoner' ? 5 : ai === 'healer' ? 3.2 : ai === 'ranged' ? 2.2 : 1.5) * rnd(0.8, 1.3) * (hard ? 0.8 : 1);
+          f.cd = (ai === 'summoner' ? 5.5 : ai === 'healer' ? 3.4 : ai === 'ranged' ? 2.9 : 1.7) * rnd(0.8, 1.3) * (hard ? 0.8 : 1);
         } break;
         case 'charge': f.stT -= 0; f.x += f.face * 430 * dt; if (Math.abs(P.x - f.x) < f.w / 2 + 12 && Math.abs((P.y - 26) - (f.y - f.h / 2)) < f.h / 2 + 20) { hurtP(f.atk * 1.3, f.x); f.stT = 0; } if (st.t % 0.05 < dt) part(f.x, GY, '#d8cfb8', 2, 60, 0.3); if (f.stT <= 0 || (a && (f.x <= a.x0 + 12 || f.x >= a.x1 - 12))) { f.state = 'hurt'; f.stT = 0.6; } break;
         case 'dive': { const d = f.dv; const ang = Math.atan2(d.y - f.y, d.x - f.x); f.x += Math.cos(ang) * 420 * dt; f.y += Math.sin(ang) * 420 * dt; if (Math.abs(P.x - f.x) < 24 && Math.abs((P.y - 26) - f.y) < 34) { hurtP(f.atk * 1.1, f.x); f.stT = 0; } if (f.stT <= 0 || Math.hypot(d.x - f.x, d.y - f.y) < 12 || f.y > GY - 10) { f.state = 'hurt'; f.stT = 0.5; } break; }
@@ -546,10 +576,11 @@ export function runStage(stage, opts = {}){
       if (sec?.kind==='path') {
         const a=arenas[sec.arena];
         if(a) {
-          const bridge=[{x:sec.x+40,y:180,w:80},{x:sec.x+130,y:145,w:80}];
+          const bridge=[{x:sec.x-10,y:182,w:46},{x:sec.x+70,y:140,w:40},{x:sec.x+140,y:100,w:44}];
           a.plats.push(...bridge); a._platsBase.push(...bridge); a._dreamPlats.push(...bridge);
-          st.secrets.push({kind:'chest',x:sec.x+170,y:145,w:20,h:14,taken:false,revealed:true});
-          say('秘径升起 · 跃上高台寻找秘匣',1.5);
+          st.secrets.push({kind:'chest',x:sec.x+162,y:100,w:20,h:14,taken:false,revealed:true});
+          part(sec.x+60, 160, '#ffcf6a', 14, 140, 0.5, 2);
+          say('灯石齐明 · 窄台升起，跃上最高处取秘匣',1.8);
         }
       }
       if (sec?.kind==='gate') {
@@ -622,13 +653,20 @@ export function runStage(stage, opts = {}){
           else if (Math.abs(f.vx || 0) > 8 || (f.lx !== undefined && Math.abs(f.x - f.lx) > 0.3)) fr = frame(akey, 'walk', Math.floor((st.t * 10 + f.ph) % 6));
           else fr = frame(akey, 'idle', Math.floor((st.t * 5 + f.ph) % 4));
           f.lx = f.x; if (fr) { im = fr; hh *= 1.08; f.anim = true; } else f.anim = false; }
-        let alpha = 1; if (f.stealth && !f.reveal && !st.eyeOn) alpha = 0.12; if (f.dead) { alpha = 1 - f.deadT / 0.5; if (alpha <= 0) continue; }
+        if (f.seenT > 0) f.seenT -= 1 / 60;
+        if (f.stealth && !f.reveal && !st.eyeOn && !f.dead && !(f.seenT > 0) && f.hitT <= 0 && !['wind', 'atk', 'charge', 'dive', 'hurt', 'down'].includes(f.state) && !(f.stun > 0) && !(f.frozen > 0)) {
+          if (Math.abs(f.x - (f.dustX ?? f.x)) > 26) { f.dustX = f.x; if (fxLv() > 0) part(f.x, GY - 1, 'rgba(200,190,170,.5)', 2, 26, 0.35, 1.5); } else if (f.dustX == null) f.dustX = f.x;
+          continue; }
+        let alpha = 1; if (f.dead) { alpha = 1 - f.deadT / 0.5; if (alpha <= 0) continue; }
         g.fillStyle = 'rgba(0,0,0,.35)'; g.beginPath(); g.ellipse(f.x, GY + 1, f.w * 0.7, 4, 0, 0, 6.283); g.fill();
         if (f.def_.aura) { g.globalAlpha = 0.25 + 0.1 * Math.sin(st.t * 4); g.fillStyle = f.def_.aura; g.beginPath(); g.ellipse(f.x, f.y - f.h * 0.55, f.w * 0.9, f.h * 0.75, 0, 0, 6.283); g.fill(); g.globalAlpha = 1; }
         const bob = Math.sin(st.t * 6 + f.ph) * 1.5; const wind = f.state === 'wind' || (f.pat && f.pat.t < 0.3);
         let filter = f.hitT > 0 ? 'brightness(2.4)' : f.frozen > 0 ? 'saturate(.3) brightness(1.4) hue-rotate(160deg)' : f.def_.tint && !ok(im) ? '' : '';
         drawSprite(im, f.x, f.y + (f.dead ? f.deadT * 30 : 0), hh, f.face > 0 ? -1 : 1, { sy: f.anim ? 1 : 1 + bob * 0.01 + (wind ? 0.04 : 0), sx: f.anim ? 1 : wind ? 0.95 : 1, rot: f.rot ? Math.sin(f.rot) * 0.3 : (f.air ? Math.sin(st.t * 12) * 0.3 : f.state === 'hurt' ? -f.face * 0.12 : 0), alpha, filter });
-        if (f.state === 'wind' && !f.def_.boss) { g.fillStyle = '#ff4a3a'; g.font = 'bold 16px sans-serif'; g.textAlign = 'center'; g.fillText('!', f.x, f.y - hh - 6); }
+        if (f.state === 'wind' && !f.def_.boss) { const k = 1 - Math.max(0, f.stT) / (f.windMax || 0.6); const late = f.stT <= 0.2;
+          g.save(); g.globalAlpha = 0.18 + 0.32 * k; g.fillStyle = late ? '#ffffff' : '#ff3a2a'; g.beginPath(); g.ellipse(f.x + f.face * f.w * 0.6, GY - 2, 18 + 30 * k, 5, 0, 0, 6.283); g.fill();
+          g.globalAlpha = 0.9; g.strokeStyle = late ? '#ffffff' : '#ff4a3a'; g.lineWidth = 2; g.beginPath(); g.arc(f.x, f.y - hh - 10, 7, -1.57, -1.57 + 6.283 * k); g.stroke();
+          g.fillStyle = late ? '#ffffff' : '#ff4a3a'; g.font = 'bold 13px sans-serif'; g.textAlign = 'center'; g.fillText('!', f.x, f.y - hh - 5.5); g.restore(); }
         if (!f.def_.boss && !f.dead && f.hp < f.max) { g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(f.x - 16, f.y - hh - 4, 32, 3); g.fillStyle = f.def_.tier === 1 ? '#ffb030' : '#ff5a4a'; g.fillRect(f.x - 16, f.y - hh - 4, 32 * f.hp / f.max, 3); }
         if (f.guard > 0 && f.def_.ai === 'shield') { g.fillStyle = 'rgba(200,220,255,.8)'; for (let i = 0; i < f.guard; i++) g.fillRect(f.x - 10 + i * 4.5, f.y - hh - 9, 3, 3); }
         if (f.burn > 0 && st.t % 0.2 < 0.02) part(f.x + rnd(-8, 8), f.y - f.h * 0.5, '#ff8a3a', 1, 40, 0.4, 2);
@@ -638,7 +676,7 @@ export function runStage(stage, opts = {}){
       for (const a of allies) { const im = img(a.what === 'clone' ? 'spr/p_baiji' : a.what === 'leopard' ? 'enemy/a3' : 'spr/p_baiji'); drawSprite(im, a.x, GY, a.what === 'leopard' ? 40 : 46, a.face, { alpha: 0.65, filter: a.what === 'icefox' ? 'hue-rotate(150deg) brightness(1.3)' : 'brightness(1.3)' }); }
       if (pet) drawSprite(img(pet.d.img), pet.x, pet.y + 18, 34, pet.face > 0 ? -1 : 1, { sy: 1 + Math.sin(st.t * 8) * 0.04 });
       // 玩家
-      for (const e of fx) if (e.k === 'ghost') drawSprite(img('spr/p_' + e.id), e.x, e.y, 56, e.face, { alpha: 0.35 * (1 - e.t / e.life), filter: 'brightness(2) sepia(1) hue-rotate(-20deg)' });
+      for (const e of fx) if (e.k === 'ghost') drawSprite(img('spr/p_' + e.id), e.x, e.y, 56, e.face * heroFlip(e.id), { alpha: 0.35 * (1 - e.t / e.life), filter: 'brightness(2) sepia(1) hue-rotate(-20deg)' });
       for (const e of fx) if (e.k === 'ghostF') drawSprite(img(e.f.def_.img), e.x, e.y, e.f.h * 1.25, e.face > 0 ? -1 : 1, { alpha: 0.3 * (1 - e.t / e.life) });
       const c = C(); g.fillStyle = 'rgba(0,0,0,.4)'; g.beginPath(); g.ellipse(P.x, GY + 1, 14, 3.5, 0, 0, 6.283); g.fill();
       if (P.ultT > 0) { const u = ultDef(); g.globalAlpha = 0.3 + 0.12 * Math.sin(st.t * 8); g.fillStyle = u.aura; g.beginPath(); g.ellipse(P.x, P.y - 30, 26 * (u.scale || 1), 40 * (u.scale || 1), 0, 0, 6.283); g.fill(); g.globalAlpha = 1; }
@@ -652,12 +690,12 @@ export function runStage(stage, opts = {}){
       else if (run) him = frame(hkey, 'run', Math.floor(st.t * 14) % 8);
       else him = frame(hkey, 'idle', Math.floor(st.t * 6) % 6);
       const hAnim = !!him; const hsc = 56 * (P.ultT > 0 && ultDef().scale ? ultDef().scale : 1);
-      drawSprite(him || img('spr/p_' + c.id), P.x, P.y + (!hAnim && run ? -Math.abs(Math.sin(st.t * 14)) * 2 : 0), hAnim ? hsc * 1.08 : hsc, P.face, { rot: P.whirl ? Math.sin(st.t * 30) * 0.4 : hAnim ? 0 : P.hurtT > 0 ? -P.face * 0.2 : run ? P.face * 0.08 : atkK ? P.face * 0.12 * atkK : !P.ground ? P.face * 0.06 : 0,
+      drawSprite(him || img('spr/p_' + c.id), P.x, P.y + (!hAnim && run ? -Math.abs(Math.sin(st.t * 14)) * 2 : 0), hAnim ? hsc * 1.08 : hsc, P.face * heroFlip(c.id), { rot: P.whirl ? Math.sin(st.t * 30) * 0.4 : hAnim ? 0 : P.hurtT > 0 ? -P.face * 0.2 : run ? P.face * 0.08 : atkK ? P.face * 0.12 * atkK : !P.ground ? P.face * 0.06 : 0,
         sy: hAnim ? 1 : P.ground ? 1 + Math.sin(st.t * 4) * 0.012 : 1.04, sx: hAnim ? 1 : P.ground ? 1 : 0.96, alpha: blink ? 0.45 : 1, filter: P.hurtT > 0.2 ? 'brightness(2) saturate(0)' : P.ultT > 0 ? 'brightness(1.25) saturate(1.3)' : '' });
       if (P.beam) { const len = P.beam.k.len || 320; const y = P.y - P.h * 0.6; const gr = g.createLinearGradient(0, y - 12, 0, y + 12); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.5, P.beam.o.col); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.globalAlpha = 0.85; g.fillRect(P.face > 0 ? P.x + 10 : P.x - 10 - len, y - 12, len, 24); g.fillStyle = '#fff'; g.fillRect(P.face > 0 ? P.x + 10 : P.x - 10 - len, y - 2, len, 4); g.globalAlpha = 1; }
       // 飞行道具
       for (const s of shots) { g.fillStyle = s.col; g.globalAlpha = 0.35; g.beginPath(); g.arc(s.x - s.vx * 0.02, s.y - s.vy * 0.02, s.r * 1.6, 0, 6.283); g.fill(); g.globalAlpha = 1; g.beginPath(); g.arc(s.x, s.y, s.r, 0, 6.283); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(s.x, s.y, s.r * 0.45, 0, 6.283); g.fill();
-        if (s.owner === 'e') { g.strokeStyle = 'rgba(255,60,60,.9)'; g.lineWidth = 1.2; g.beginPath(); g.arc(s.x, s.y, s.r + 1.5, 0, 6.283); g.stroke(); } }
+        if (s.owner === 'e') { g.strokeStyle = s.slash ? 'rgba(255,255,255,.85)' : 'rgba(255,60,60,.9)'; g.lineWidth = s.slash ? 1.6 : 1.2; g.beginPath(); g.arc(s.x, s.y, s.r + 1.5, 0, 6.283); g.stroke(); if (s.slash) { g.strokeStyle = 'rgba(255,90,70,.9)'; g.beginPath(); g.moveTo(s.x - s.r, s.y + s.r); g.lineTo(s.x + s.r, s.y - s.r); g.stroke(); } } }
       // 拾取
       for (const p of pickups) { if (p.k === 'dust') { g.fillStyle = '#a8d8ff'; g.beginPath(); g.arc(p.x, p.y, 4, 0, 6.283); g.fill(); g.fillStyle = '#e8f6ff'; g.beginPath(); g.arc(p.x, p.y, 2, 0, 6.283); g.fill(); }
         else if (p.k === 'gold') { g.fillStyle = '#ffd24a'; g.beginPath(); g.arc(p.x, p.y, 3, 0, 6.283); g.fill(); }
@@ -667,6 +705,12 @@ export function runStage(stage, opts = {}){
       for (const e of fx) { const k = e.t / e.life; if (k >= 1) continue; g.globalAlpha = 1 - k;
         if (e.k === 'p') { g.fillStyle = e.col; g.beginPath(); g.arc(e.x, e.y, Math.max(0.8, e.sz * 0.55), 0, 6.283); g.fill(); }
         else if (e.k === 'vfx') { g.globalAlpha = Math.min(1, (1 - k) * 2.5); const fi = Math.min(11, Math.floor(k * 12)); const im = img('vfx/' + e.type + '_' + e.el + '/' + fi); if (ok(im)) { g.save(); if (e.add) g.globalCompositeOperation = 'lighter'; g.translate(e.x, e.y); if (e.rot) g.rotate(e.rot); g.scale(e.face < 0 ? -1 : 1, 1); const sz = e.size; const ar = e.type === 'pillar' ? 1.5 : 1; g.drawImage(im, -sz / 2, -sz * ar / 2, sz, sz * ar); g.restore(); } }
+        else if (e.k === 'slash') { const a = Math.min(1, k / 0.35), fade = k < 0.35 ? 1 : 1 - (k - 0.35) / 0.65; g.save(); g.globalCompositeOperation = 'lighter'; g.translate(e.x, e.y); g.rotate(e.rot); g.scale(e.face, 1);
+          const R = e.r * (0.92 + 0.12 * k), th = Math.max(3, R * 0.2 * e.wide), a0 = -1.15, a1 = a0 + 2.3 * a; g.globalAlpha = fade * 0.9;
+          g.beginPath(); g.arc(0, 0, R, a0, a1); g.arc(th * 0.9, 0, R - th, a1, a0, true); g.closePath(); const gr = g.createLinearGradient(-R, 0, R, 0); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.55, e.col); gr.addColorStop(1, '#ffffff'); g.fillStyle = gr; g.fill();
+          g.globalAlpha = fade; g.strokeStyle = '#ffffff'; g.lineWidth = Math.max(1, th * 0.22); g.lineCap = 'round'; g.beginPath(); g.arc(0, 0, R, Math.max(a0, a1 - 0.9), a1); g.stroke(); g.restore(); }
+        else if (e.k === 'streak') { const kk = Math.min(1, k * 1.6); g.strokeStyle = e.col; g.lineCap = 'round'; g.lineWidth = 2.4 * (1 - k) + 0.4; const d0 = e.len * kk * 0.35, d1 = e.len * (0.4 + kk * 0.6); g.beginPath(); g.moveTo(e.x + Math.cos(e.a) * d0, e.y + Math.sin(e.a) * d0); g.lineTo(e.x + Math.cos(e.a) * d1, e.y + Math.sin(e.a) * d1); g.stroke(); }
+        else if (e.k === 'star') { g.save(); g.globalCompositeOperation = 'lighter'; g.fillStyle = '#ffffff'; const r = e.r * (0.6 + 0.6 * k), w = Math.max(1.2, e.r * 0.12 * (1 - k)); g.translate(e.x, e.y); g.rotate(0.35); g.fillRect(-r, -w / 2, r * 2, w); g.fillRect(-w / 2, -r * 0.7, w, r * 1.4); g.globalAlpha = (1 - k) * 0.35; g.fillStyle = e.col; g.beginPath(); g.arc(0, 0, r * 0.45, 0, 6.283); g.fill(); g.restore(); }
         else if (e.k === 'ring') { g.strokeStyle = e.col; g.lineWidth = 1.6 * (1 - k) + 0.4; g.beginPath(); g.arc(e.x, e.y, e.r * (0.35 + 0.65 * Math.sqrt(k)), 0, 6.283); g.stroke(); }
         else if (e.k === 'arc') { g.strokeStyle = e.col; g.lineCap = 'round'; g.lineWidth = 3.2 * e.wide * (1 - k); g.beginPath(); const a0 = e.face > 0 ? -1.3 : Math.PI + 1.3; g.save(); g.translate(e.x, e.y); g.rotate(e.rot); g.arc(0, 0, e.r * (0.7 + 0.3 * k), e.face > 0 ? -1.2 : Math.PI - 1.2 + 0, e.face > 0 ? 1.2 : Math.PI + 1.2, false); g.stroke(); g.strokeStyle = '#fff'; g.lineWidth = 1.5 * (1 - k); g.stroke(); g.restore(); }
         else if (e.k === 'line') { g.strokeStyle = e.col; g.lineWidth = 8 * (1 - k); g.beginPath(); g.moveTo(e.x0, e.y); g.lineTo(e.x1, e.y); g.stroke(); }
@@ -723,10 +767,14 @@ export function runStage(stage, opts = {}){
     let pbox = null;
     function pause(){ if (st.over) return; st.paused = !st.paused; if (!st.paused) { pbox && pbox.remove(); pbox = null; return; }
       const sl = slotsOf(C().id).map(id => ASKILLS[id]).filter(Boolean);
-      pbox = h('div.ak-pausebox', {}, h('div.ak-pin', {}, h('h3', {}, '暂停 · ' + stage.name),
-        h('div.ak-keys', {}, h('p', {}, '左摇杆移动，上推跳跃，下推穿过平台。⚔ 连按出连击，空中可追击；➤ 冲刺带无敌帧，可穿过预警。'), h('p', {}, '招牌：瞳(E)烛瞳见弱点 · 梦(R)闭目/睁眼切换梦层 · 灯(T)灯火共鸣合击。怒气满「龍」变身；终结或破弱点后换人可获得接力共鸣。'),
-          h('div.ak-sklist', {}, ...sl.map(k => h('div', {}, h('img', { src: asset('icon/sk/' + k.id) }), h('b', {}, k.name), h('span', {}, k.desc))))),
-        h('div.ak-row', {}, h('button.btn', { onclick: () => pause() }, '继续'), h('button.btn.ghost', { onclick: () => { st.paused = false; end({ win: false, retry: true }); } }, '重来'), h('button.btn.ghost', { onclick: () => { st.paused = false; end({ win: false, quit: true, why: '撤退' }); } }, '撤退'))));
+      pbox = h('div.ak-pausebox', {}, h('div.ak-pcard', {},
+        h('div.ak-pl', {}, h('div.ak-pt', {}, '暂 停'), h('div.ak-ps', {}, stage.name),
+          h('button.btn.gold', { onclick: () => pause() }, '继续'), h('button.btn.ghost', { onclick: () => { st.paused = false; end({ win: false, retry: true }); } }, '重来'), h('button.btn.ghost', { onclick: () => { st.paused = false; end({ win: false, quit: true, why: '撤退' }); } }, '撤退')),
+        h('div.ak-pr', {}, h('div.ak-ph', {}, '操作'),
+          h('p', {}, '摇杆移动 · 跳跃键按住跳得更高，空中可二段跳 · ➤ 冲刺带无敌帧，可取消攻击收招 · 敌人出手前会闪红并有起手音，此时冲刺/格挡'),
+          h('p', {}, '挑飞（上+攻击）后接空中技能伤害提升 · 冲刺中攻击出突刺 · 带「斩」标的弹幕可被普攻斩碎'),
+          h('div.ak-ph', {}, '技能'),
+          h('div.ak-sklist', {}, ...sl.map(k => h('div.ak-ski', {}, h('img', { src: asset('icon/sk/' + k.id), alt: '' }), h('div', {}, h('b', {}, k.name), h('span', {}, k.desc))))))));
       root.append(pbox); }
     function fail(why){ if (st.over) return; st.over = true; say(why, 2); sfx('lose'); schedule(() => end({ win: false, why }), 1400); }
     function rating(){ const par = 50 + arenas.length * 35 + (stage.boss ? 60 : 0); let sc = 0; if (st.t < par) sc += 2; else if (st.t < par * 1.5) sc += 1; if (st.hitsTaken <= 3) sc += 2; else if (st.hitsTaken <= 10) sc += 1; if (st.maxCombo >= 30) sc += 2; else if (st.maxCombo >= 12) sc += 1; if (st.lamp && st.lamp.hp >= 70) sc += 1; sc += HK.ratingBonus(st); return sc >= 6 ? 'S' : sc >= 4 ? 'A' : sc >= 2 ? 'B' : 'C'; }

@@ -194,6 +194,8 @@ export function sfx(name){
     case 'fire': tone(120,0.5,'sawtooth',0.07,60); drum(t,'snare',0.5,sfxBus); tone(500,0.4,'triangle',0.05,1400); break;
     case 'break': drum(t,'kick',1,sfxBus); tone(1600,0.25,'square',0.06,200); tone(90,0.4,'sawtooth',0.1,40); break;
     case 'bell': if (ctx) { const g=sfxBus; bell(74,t,0.1); } break;
+    case 'warn': tone(520,0.09,'square',0.035,780); setTimeout(()=>tone(780,0.12,'square',0.03,1040),90); break;
+    case 'parry': tone(2200,0.18,'triangle',0.08,1400); tone(3300,0.12,'sine',0.05,2600); drum(t,'snare',0.6,sfxBus); break;
     case 'swing': tone(900,0.07,'triangle',0.035,260); break;
     case 'skill': tone(420,0.18,'sine',0.06,1200); tone(840,0.14,'triangle',0.03,1800); break;
     case 'jump': tone(300,0.1,'sine',0.05,620); break;
