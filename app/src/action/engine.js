@@ -11,6 +11,7 @@ import { rollGear, RARITY } from './gear.js';
 import { actStats, slotsOf, skillLv, petPower, ultOk } from './progress.js';
 import { ULT_LV } from './data.js';
 import * as HK from './hooks.js';
+import * as MX from './mechs.js';
 import { STAGE_FLAVOR } from './stages.js';
 import { StageClock, telegraphDuration, setFoeLayer } from './rules.js';
 
@@ -62,7 +63,7 @@ export function runStage(stage, opts = {}){
       a._platsBase = raw.map(([fx, y, w]) => ({ x: a.x0 + fx * W_AR() - w / 2, y, w }));
       const dreamRaw = a.dreamPlatsLayout || raw.map(([fx,y,w],i)=>[Math.min(0.92,Math.max(0.08,1-fx)),Math.max(95,y-(i%2?0:25)),w]);
       a._dreamPlats = dreamRaw.map(([fx,y,w])=>({x:a.x0+fx*W_AR()-w/2,y,w,dream:true}));
-      a.plats = (st.dream ? a._dreamPlats : a._platsBase).map(p=>({...p})); x = a.x1; } HK.placeSecrets(st, arenas); }
+      a.plats = (st.dream ? a._dreamPlats : a._platsBase).map(p=>({...p})); x = a.x1; } HK.placeSecrets(st, arenas); { const old = st.mech; st.mech = MX.seedMech(stage, arenas); if (st.mech) st.mech.solved = !!(old?.solved || S.act?.hkeys?.[stage.region]); } }
     let worldEnd = 0;
     const st = { t: 0, hitstop: 0, shake: 0, combo: 0, comboT: 0, maxCombo: 0, hitsTaken: 0, kills: 0, over: false, paused: false, cur: -1, locked: false, cam: 0,
       gold: 0, loot: {}, souls: {}, exp: 0, slow: 1, lamp: null, bossBar: null, potions: 3 + Math.max(0, (S.city?.herb || 1) - 1), timeLeft: stage.time || 0,
@@ -129,7 +130,7 @@ export function runStage(stage, opts = {}){
     let joy = null; const knob = hud.joy.firstChild;
     hud.joy.addEventListener('pointerdown', e => { joy = { id: e.pointerId, x: e.clientX, y: e.clientY }; hud.joy.setPointerCapture(e.pointerId); });
     hud.joy.addEventListener('pointermove', e => { if (!joy || e.pointerId !== joy.id) return; const dx = clamp(e.clientX - joy.x, -40, 40), dy = clamp(e.clientY - joy.y, -40, 40);
-      knob.style.transform = `translate(${dx}px,${dy}px)`; keys.l = dx < -10; keys.r = dx > 10; const wasU = keys.u; keys.u = dy < -24; keys.d = dy > 24; if (keys.u && !wasU) jump(); });
+      knob.style.transform = `translate(${dx}px,${dy}px)`; keys.l = dx < -10; keys.r = dx > 10; const wasU = keys.u; keys.u = dy < -26 && -dy > Math.abs(dx) * 1.1; keys.d = dy > 26 && dy > Math.abs(dx) * 1.1; if (keys.u && !wasU) jump(); });
     const joyEnd = () => { joy = null; knob.style.transform = ''; keys.l = keys.r = keys.u = keys.d = false; };
     hud.joy.addEventListener('pointerup', joyEnd); hud.joy.addEventListener('pointercancel', joyEnd);
     function say(text, t = 1.6){ hud.msg.textContent = text; hud.msg.classList.remove('on'); void hud.msg.offsetWidth; hud.msg.classList.add('on'); }
@@ -183,6 +184,7 @@ export function runStage(stage, opts = {}){
       if (o.st && f.frozen > 0 && (o.st[0] === 'burn' || o.el === 'fire')) { base *= 1.6; f.frozen = 0; combo2 = '融 解'; }
       else if (o.st && f.poison > 0 && o.st[0] === 'burn') { base *= 1.35; combo2 = '毒 燃'; }
       else if (f.stun > 0 && o.skill) { base *= 1.25; combo2 = combo2 || '破 绽'; }
+      if (f.def_.boss && HK.weakOpen(f, P)) { base *= 1.25; combo2 = combo2 || '破 绽'; }
       if (combo2 && st.t - (st.comboTagT || 0) > 0.5) { st.comboTagT = st.t; num(f.x, f.y - f.h - 26, combo2, 'st'); st.synergy = (st.synergy || 0) + 1; }
       if (f.def_.ai === 'shield' && !o.skill && !o.launch && Math.sign(P.x - f.x) === f.face && f.guard > 0 && f.state !== 'hurt' && !f.air) { f.guard -= 1; num(f.x, f.y - f.h, '格挡', 'blk'); part(f.x + f.face * 14, f.y - f.h / 2, '#ffffff', 6, 120, 0.25, 2); sfx('hit'); if (f.guard <= 0) { f.stun = 1.4; num(f.x, f.y - f.h - 14, '破盾!', 'crit'); } return 0; }
       let crit = Math.random() < (s.crit || 0.06) + (ps.critPct || 0) + (ps.critBurn && f.burn > 0 ? ps.critBurn : 0); if (HK.consumeWeak(f, P)) { crit = true; st.eyeMarks = (st.eyeMarks||0)+1; st.relayWindow=2; HK.gainReso(hk(),12); }
@@ -365,7 +367,7 @@ export function runStage(stage, opts = {}){
       hitBox(hx, hy, reach + 14 + (thrust ? 20 : 0), P.h + 18, mult * (thrust ? 1.3 : 1), { launch: launch > 0 || thrust ? 430 : 0, kb: kb * 12 + 60, heavy: fin || thrust, dir: P.face, air: !P.ground });
       if (thrust) { say('突刺 · 挑空', 0.6); speedLines(P.face, 6); }
     }
-    function parry(f){ if (f.parried && st.t - f.parried < 0.6) return; f.parried = st.t; f.state = 'hurt'; f.stT = 0.2; f.stun = f.def_.boss ? 0 : 1.1; if (f.def_.boss) { f.stagger = 0.7; f.pat = null; tele.length = 0; } f.weak = 4; f.vx = P.face * 160;
+    function parry(f){ if (f.parried && st.t - f.parried < 0.6) return; f.parried = st.t; f.state = 'hurt'; f.stT = 0.2; f.stun = f.def_.boss ? 0 : 1.1; if (f.def_.boss) { f.stagger = 0.7; f.pat = null; tele.length = 0; if ((f.weakRule ||= HK.bossWeakRule(f.def_)).parry) HK.openBossWeak(f, hard ? 1.1 : 1.4, 'parry', hk()); } f.weak = 4; f.vx = P.face * 160;
       st.perfectDodges = (st.perfectDodges || 0) + 1; st.parries = (st.parries || 0) + 1; st.relayWindow = 2; HK.gainReso(hk(), 15); C().mp = Math.min(C().s.mp, C().mp + 5);
       st.hitstop = Math.max(st.hitstop, 0.12); shake(3); sfx('parry'); haptic('medium'); flashHit('crit');
       hitSpark(f.x, f.y - f.h * 0.55, P.face, '#ffffff', true); shock(f.x + P.face * 6, f.y - f.h * 0.55, 26, '#dfe8ff', 0.18);
@@ -416,7 +418,7 @@ export function runStage(stage, opts = {}){
       hitCircle(P.x, P.y - P.h / 2, 80, 1.2, { kb: 200 }); say('换人 · ' + CHARS[C().id].name, 0.9); refreshHud(true); sfx('skill'); }
     function potion(){ if (st.potions <= 0 || st.over) return; st.potions--; heal(C().s.hp * 0.4); C().mp = Math.min(C().s.mp, C().mp + C().s.mp * 0.4); part(P.x, GY - 6, '#8fe0a0', 8, 90, 0.6, 2); }
     // —— 更新：玩家 ——
-    function onPlat(x, yPrev, yNow){ for (const a of arenas) for (const p of a.plats || []) if (x > p.x && x < p.x + p.w && yPrev <= p.y + 1 && yNow >= p.y) return p.y; return null; }
+    function onPlat(x, yPrev, yNow){ for (const a of arenas) for (const p of a.plats || []) if (x > p.x && x < p.x + p.w && yPrev <= p.y + 1 && yNow >= p.y) return p.y; for (const p of MX.mechPlats(st)) if (x > p.x && x < p.x + p.w && yPrev <= p.y + 1 && yNow >= p.y) return p.y; return null; }
     function updPlayer(dt){
       const c = C(); const ps = pas();
       P.iT -= dt; P.dashCd -= dt; P.atkT -= dt; P.atkCd -= dt; P.comboT -= dt; P.hurtT -= dt; P.castT = (P.castT || 0) - dt; P.lock -= dt; P.swapCd -= dt;
@@ -425,7 +427,7 @@ export function runStage(stage, opts = {}){
       for (const b of P.buffs) { b.t -= dt; if (b.regen) heal(c.s.hp * b.regen * dt, true); if (b.burnAura && st.t % 0.5 < dt) hitCircle(P.x, P.y - P.h / 2, 60, 0.3, { skill: true, kb: 10, st: ['burn', 0.4] }); if (b.cleanse) { b.cleanse = 0; } }
       P.buffs = P.buffs.filter(b => b.t > 0);
       if (st.dreamCd > 0) st.dreamCd -= dt;
-      HK.tickLamp(hk(), dt); HK.tickEye(hk(), dt); HK.tickReso(hk(), dt);
+      HK.tickLamp(hk(), dt); HK.tickEye(hk(), dt); HK.tickReso(hk(), dt); MX.tickMech(hk(), dt);
       const spd = 210 * (1 + buffV('spd') + (ps.runSpd || 0)) * (P.buffs.some(b => b.slowP) ? 0.6 : 1);
       if (P.thrustT > 0) P.thrustT -= dt;
       if (P.dashT > 0) { P.dashT -= dt; if (P.ultT <= 0 || !ultDef().fly) P.vy = Math.min(P.vy, 0); if (st.t % 0.03 < dt) { fx.push({ k: 'ghost', x: P.x, y: P.y, face: P.face, id: c.id, t: 0, life: 0.32 }); if (fxLv() >= 2) speedLines(P.face, 3); } }
@@ -441,7 +443,7 @@ export function runStage(stage, opts = {}){
       const minX = st.locked && st.cur >= 0 ? arenas[st.cur].x0 + 12 : 12; const maxX = st.locked && st.cur >= 0 ? arenas[st.cur].x1 - 12 : worldEnd;
       P.x = clamp(P.x, minX, maxX);
       let land = null; if (P.y >= GY) land = GY; else if (P.vy > 0 && !keys.d) land = onPlat(P.x, yPrev, P.y);
-      if (land != null) { if (!P.ground && P.vy > 300) part(P.x, land, '#d8cfb8', 6, 90, 0.3, 2); P.y = land; P.vy = 0; if (!P.ground) P.jumps = 0; P.ground = true; P.coyote = 0.1;
+      if (land != null) { if (!P.ground) MX.mechOnLand(hk(), P.x, P.vy); if (!P.ground && P.vy > 300) part(P.x, land, '#d8cfb8', 6, 90, 0.3, 2); P.y = land; P.vy = 0; if (!P.ground) P.jumps = 0; P.ground = true; P.coyote = 0.1;
         if (P.slamming) { const s = P.slamming; P.slamming = null; hitCircle(P.x, P.y - 20, s.k.r || 110, s.pw, { ...s.o, kb: 220, launch: 300, heavy: true }); ring(P.x, P.y - 4, s.k.r || 110, s.o.col, 0.4); fx.push({ k: 'spike', x: P.x, y: GY, col: s.o.col, t: 0, life: 0.4 }); shake(9); sfx('boom'); } }
       else if (P.y < GY) { if (P.ground && !onPlat(P.x, P.y - 2, P.y + 2) && P.y < GY - 1) P.ground = false; }
       if (P.ground && P.y < GY && !onPlat(P.x, P.y - 2, P.y + 3)) { P.ground = false; P.coyote = 0.1; }
@@ -541,7 +543,8 @@ export function runStage(stage, opts = {}){
     function bossPhase(f){ const n = f.def_.pat.length; const r = f.hp / f.max; return n >= 3 ? (r < 0.33 ? 2 : r < 0.66 ? 1 : 0) : (r < 0.5 ? 1 : 0); }
     function updBoss(f, dt){
       const ph = bossPhase(f); const a = arenas[st.cur];
-      if (ph > f.phase) { f.phase = ph; f.inv = 1.4; f.pat = null; tele.length = 0; f.armorT = 1.4; const phTxt = ['', '第二阶段 · 怒', '最终阶段 · 狂'][ph] || '狂暴'; say(phTxt, 1.6); const pe = root.querySelector('.ak-phase'); if (pe) { pe.textContent = phTxt; pe.classList.remove('on'); void pe.offsetWidth; pe.classList.add('on'); } shake(8); haptic('heavy');
+      if (!f.weakRule) f.weakRule = HK.bossWeakRule(f.def_); if (f.weakDelay > 0) f.weakDelay -= dt; else if (f.weakT > 0) f.weakT -= dt;
+      if (ph > f.phase) { f.phase = ph; f.inv = 1.4; HK.openBossWeak(f, hard ? 1.6 : 2.0, 'phase', hk()); f.pat = null; tele.length = 0; f.armorT = 1.4; const phTxt = ['', '第二阶段 · 怒', '最终阶段 · 狂'][ph] || '狂暴'; say(phTxt, 1.6); const pe = root.querySelector('.ak-phase'); if (pe) { pe.textContent = phTxt; pe.classList.remove('on'); void pe.offsetWidth; pe.classList.add('on'); } shake(8); haptic('heavy');
         const elc = elTint[f.def_.el] || '#ff6a4a';
         ring(f.x, f.y - f.h / 2, 220, elc, 0.95); ring(f.x, f.y - f.h / 2, 140, '#ffffff', 0.5); shock(f.x, GY - 4, 160, elc, 0.6);
         part(f.x, f.y - f.h / 2, elc, 14, 220, 0.45, 2.4); sparks(f.x, f.y - f.h / 2, '#ffffff', 8, 1);
@@ -556,7 +559,7 @@ export function runStage(stage, opts = {}){
         return;
       }
       const p = f.pat; p.t += dt; const atk = f.atk; const cy = f.y - f.h / 2; const col = elTint[f.def_.el] || '#ff4040';
-      const end = (cd = 1.6) => { f.pat = null; f.cd = cd / spdM * rnd(0.85, 1.15); };
+      const end = (cd = 1.6) => { if (f.weakRule.after.includes(p.k)) { HK.openBossWeak(f, hard ? 0.8 : 1.0, 'after', hk()); cd = Math.max(cd, 1.2); } f.pat = null; f.cd = cd / spdM * rnd(0.85, 1.15); };
       switch (p.k) {
         case 'slash': if (p.step < 3 && p.t > p.step * 0.45 / spdM) { if (p.step === 0) f.x += clamp(dx - f.face * 60, -120, 120); f.face = Math.sign(P.x - f.x) || f.face; tel({ shape: 'rect', x: f.x + f.face * 70, y: GY - 40, w: 130, h: 80, warn: 0.55 / spdM, dmg: atk, col }); p.step++; } if (p.t > 1.8 / spdM) end(); break;
         case 'charge': if (p.step === 0) { f.face = Math.sign(dx) || 1; const w = f.face > 0 ? a.x1 - f.x : f.x - a.x0; tel({ shape: 'rect', x: f.x + f.face * w / 2, y: GY - 34, w, h: 68, warn: 0.95 / spdM, dmg: 0, col }); p.step = 1; }
@@ -661,6 +664,7 @@ export function runStage(stage, opts = {}){
       if (ok(GRD)) { const tw = 128, th = VH - GY + 2; g.globalAlpha = 0.9; for (let x = Math.floor(L / tw) * tw; x < R; x += tw) g.drawImage(GRD, x, GY, tw, th); g.globalAlpha = 1; const gd = g.createLinearGradient(0, GY, 0, VH); gd.addColorStop(0, 'rgba(7,6,10,0)'); gd.addColorStop(1, 'rgba(7,6,10,.8)'); g.fillStyle = gd; g.fillRect(L, GY, R - L, VH - GY); }
       g.fillStyle = 'rgba(255,214,140,.22)'; g.fillRect(L, GY, R - L, 1.5);
       for (const a of arenas) { if (a.x1 < L || a.x0 > R) continue; for (const p of a.plats || []) { g.fillStyle = 'rgba(40,32,22,.92)'; g.fillRect(p.x, p.y, p.w, 7); if (ok(GRD)) g.drawImage(GRD, 0, 0, Math.min(512, p.w * 4), 28, p.x, p.y, p.w, 7); g.fillStyle = 'rgba(255,210,140,.45)'; g.fillRect(p.x, p.y, p.w, 1.5); }
+      MX.drawMech(g, st);
         if (st.locked && st.cur === a.i) for (const gx of [a.x0, a.x1]) { const gr = g.createLinearGradient(gx - 8, 0, gx + 8, 0); gr.addColorStop(0, 'rgba(255,90,60,0)'); gr.addColorStop(0.5, `rgba(255,120,70,${0.35 + 0.2 * Math.sin(st.t * 6)})`); gr.addColorStop(1, 'rgba(255,90,60,0)'); g.fillStyle = gr; g.fillRect(gx - 8, 40, 16, GY - 40); } }
       if (st.lamp) { const lp = img('spr/o_lamp_lit'); drawSprite(lp, st.lamp.x, GY, 46, 1); g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(st.lamp.x - 18, GY - 56, 36, 4); g.fillStyle = '#ffcf6a'; g.fillRect(st.lamp.x - 18, GY - 56, 36 * clamp(st.lamp.hp / 100, 0, 1), 4); }
       // 预警

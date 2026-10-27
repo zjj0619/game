@@ -1,4 +1,5 @@
 // v2.0 烬城枢纽：闯关地图、关卡详情与出战、结算、伙伴、异兽、铁坊、烬城建设、试炼、每日
+import { mechHint } from '../action/mechs.js';
 import { idbGet, idbSet } from '../engine/ai.js';
 import { S, save, AUTO, stats, addItem, addGold, expNeed, ach, has } from '../engine/state.js';
 import { CHARS, EL_COLOR } from '../data/characters.js';
@@ -114,7 +115,7 @@ export function adventureScreen(rid){
     return h('div.adv-tab' + (r === rid ? '.on' : '') + (un ? '' : '.lock'), { onclick: () => { if (!un) { toast(`通关「${REGIONS[REGION_ORDER[i - 1]].name.split('·')[0]}」第 10 关后开放`); return; } sfx('page'); show(adventureScreen(r)); } },
       h('b', {}, R && REGIONS[r].name.split('·')[0]), h('small', {}, un ? `★${AP.regionStars(r)}/33` : '未开放')); }));
   const path = h('svg', {}); const nodes = ids.map((id, i) => { const st = STAGES[id]; const un = AP.stageUnlocked(id); const best = S.act.best[id]; const [x, y] = NODE_POS[i];
-    return h('div.snode' + (st.boss ? '.boss' : '') + (st.hidden ? '.hidden' : '') + (un ? '' : '.lock') + (S.act.cleared[id] ? '.done' : '') + (un && !S.act.cleared[id] ? '.next' : ''), { style:{ left: x + '%', top: y + '%' }, onclick: () => { if (!un) { toast(st.kind==='keysecret' ? ('需要：'+(ITEMS[st.needItem]?.name||'关键道具')) : st.hidden ? (S.act.hkeys?.[st.region] ? '已得秘境残图 · 通关本区十关后开放' : '需「秘境残图」：在第 7 关寻找可击碎的裂墙（重击）') : '先通关上一关'); return; } sfx('click'); stageDetail(st); } },
+    return h('div.snode' + (st.boss ? '.boss' : '') + (st.hidden ? '.hidden' : '') + (un ? '' : '.lock') + (S.act.cleared[id] ? '.done' : '') + (un && !S.act.cleared[id] ? '.next' : ''), { style:{ left: x + '%', top: y + '%' }, onclick: () => { if (!un) { toast(st.kind==='keysecret' ? ('需要：'+(ITEMS[st.needItem]?.name||'关键道具')) : st.hidden ? (S.act.hkeys?.[st.region] ? '已得秘境残图 · 通关本区十关后开放' : '需「秘境残图」：' + mechHint(st.region)) : '先通关上一关'); return; } sfx('click'); stageDetail(st); } },
       h('div.sn-c', {}, st.boss ? h('img', { src: asset(ABOSSES[st.boss]?.img || 'enemy/a0') }) : h('span', {}, st.hidden ? '秘' : i + 1)),
       h('div.sn-n', {}, st.name), h('div.sn-s', {}, best ? '★'.repeat(AP.stars(best)) + '☆'.repeat(3 - AP.stars(best)) : un ? 'Lv ' + st.lv : '🔒'), S.act.hard[id] ? h('i.sn-h', {}, '难') : null); });
   const svgNS = 'http://www.w3.org/2000/svg'; const svg = document.createElementNS(svgNS, 'svg'); svg.setAttribute('viewBox', '0 0 100 100'); svg.setAttribute('preserveAspectRatio', 'none'); svg.classList.add('adv-path');

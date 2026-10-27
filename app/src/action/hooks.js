@@ -1,5 +1,6 @@
 // 招牌玩法：灯芯半径 / 烛瞳一瞥 / 闭目·睁眼 / 灯火共鸣
 // 被 engine.js 调用；保持无状态依赖，全部经 ctx 传入。
+import * as MX from './mechs.js';
 import { S } from '../engine/state.js';
 import { CHARS } from '../data/characters.js';
 import { LAMP_PATHS, setFoeLayer } from './rules.js';
@@ -84,8 +85,29 @@ export function toggleEye(ctx){
 
 /** 命中时消费弱点 → 必暴 */
 /** 弱点需要「破绽」才吃得到：敌人出招后摇、被弹反/眩晕/冻结、或从背后打 */
+const PAT_NAME = { slash: '连斩', charge: '冲撞', slam: '跃击', fan: '弹幕', rain: '天降', summon: '召唤', beam: '光束', spin: '旋身', blink: '瞬身' };
+/** 首领破绽规则：每个首领只在特定时机露出弱点（某招收招后 / 被弹反 / 换阶段），不再「背后打就行」 */
+export function bossWeakRule(def){
+  const id = String(def?.id || def?.name || ''); const h = [...id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 11);
+  const p0 = (def?.pat?.[0] || ['slash']).filter(k => k !== 'summon'); const p1 = (def?.pat?.[1] || []).filter(k => k !== 'summon');
+  const pick = arr => arr.length ? arr[h % arr.length] : 'slash';
+  const v = h % 4; const r = { after: [], parry: false, phase: true, v };
+  if (v === 0) r.after = [pick(p0)];
+  else if (v === 1) r.parry = true;
+  else if (v === 2) { r.after = [pick(p1.length ? p1 : p0)]; r.parry = true; }
+  else r.after = [(p0.concat(p1)).includes('charge') ? 'charge' : pick(p0.concat(p1))];
+  r.desc = [...r.after.map(k => '「' + (PAT_NAME[k] || k) + '」收招后'), r.parry ? '被弹反后' : null, '换阶段时'].filter(Boolean).join(' / ');
+  return r;
+}
+/** 打开首领破绽窗口（秒） */
+export function openBossWeak(f, sec, why, ctx){
+  if (!f?.def_?.boss) return; f.weakT = Math.max(f.weakT || 0, sec); f.weakDelay = why === 'phase' ? 1.4 : 0;
+  if (ctx?.num) ctx.num(f.x, f.y - f.h - 12, '破绽', '#e8d9a0');
+  if (ctx?.say && !f._weakTold) { f._weakTold = true; ctx.say('破绽 · ' + (f.weakRule?.desc || ''), 2); }
+}
 export function weakOpen(f, P){
   if (!f) return false;
+  if (f.def_?.boss) return (f.weakT || 0) > 0 && !((f.weakDelay || 0) > 0);
   if (f.state === 'atk' || f.state === 'hurt' || f.state === 'down' || (f.stun || 0) > 0 || (f.frozen || 0) > 0 || (f.stagger || 0) > 0) return true;
   if (P && f.face && Math.sign(P.x - f.x) === -Math.sign(f.face)) return true;
   return false;
@@ -321,7 +343,7 @@ export function seedSecrets(arenas, stage){
   if (!normal.length) return out;
   const wA = normal[0].i;
   out.push({ kind: 'wall', ai: wA, fx: 0.68, w: 22, h: 46, hp: 3, taken: false });
-  if (stage.idx === 6 && !stage.hidden) {
+  if (stage.idx === 6 && !stage.hidden && !MX.seedMech(stage, arenas.map(() => ({ x0: 0, x1: 1 })))) {
     const last = normal[normal.length - 1].i;
     out.push({ kind: 'wall', ai: last, fx: last === wA ? 0.6 : 0.8, w: 24, h: 52, hp: 4, taken: false, key: true });
   }
@@ -346,6 +368,7 @@ export function placeSecrets(st, arenas){
 /** 近战/技能命中区域检测裂墙。power: 0 普通 1 重击 */
 export function hitWalls(ctx, x0, x1, power){
   const { st, say, sfx, part, shake, num } = ctx;
+  MX.mechOnHit(ctx, x0, x1, power);
   for (const s of st.secrets || []) {
     if (s.kind !== 'wall' || s.taken || s.x == null) continue;
     if (s.x + s.w / 2 < x0 || s.x - s.w / 2 > x1) continue;
