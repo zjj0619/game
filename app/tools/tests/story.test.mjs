@@ -12,7 +12,7 @@ const EFFECT = /^(aff:\w+[+-]\d+|hope[+-]\d+|flag:\w+|var:\w+[+-]\d+|item:\w+(\*
 
 function allLines(R){
   const out = [...(R.intro || []), ...Object.values(R.barks || {})];
-  for (const k of ['mid', 'boss', 'hidden']) { const b = R[k]; if (!b) continue; out.push(...(b.pre || []), ...(b.post || [])); for (const o of b.choice?.opts || []) if (o.after) out.push(o.after); }
+  for (const k of ['mid', 'boss', 'hidden']) { const b = R[k]; if (!b) continue; out.push(...(b.pre || []), ...(b.post || [])); for (const o of b.choice?.opts || []) if (o.after) out.push(...[].concat(o.after)); }
   return out;
 }
 
@@ -63,4 +63,20 @@ test('choices change later stages via storyMods; conditional lines follow flags'
   assert.equal(parseLine('?flag:nope yangui|x'), null);
   stateMod.applyEffects(['flag:nope']);
   assert.deepEqual(parseLine('?flag:nope yangui|x'), { who: 'yangui', text: 'x' });
+});
+
+test('ordinary stages carry their own story beats, and intros switch to reunions once the VN is past', async () => {
+  const { STAGE_BEATS, KNOWN_INTRO } = await import('../../src/action/stageBeats.js');
+  stateMod.setState(stateMod.newGame());
+  const seen = new Set();
+  for (const r of Object.keys(REGION_STAGES)) for (const i of [1, 2, 3, 5, 6, 7, 8]) {
+    const b = beatsFor(STAGES[REGION_STAGES[r][i]]); assert.ok(b.intro?.length >= 2 && b.barks?.[1], `beats ${r} ${i}`);
+    const k = b.intro.join(); assert.ok(!seen.has(k), 'no repeated stage beat'); seen.add(k);
+    for (const raw of [...b.intro, b.barks[1]]) { const s = String(raw).replace(/^\?\S+ /, ''); const who = s.slice(0, s.indexOf('|')); assert.ok(who === 'n' || who === 'boss' || CHARS[who], `speaker ${who}`); }
+  }
+  const S = stateMod.S; S.chapterN = 0;
+  assert.equal(beatsFor(STAGES[REGION_STAGES.qingqiu[0]]).intro, REGION_STORY.qingqiu.intro);
+  S.vnMax = 5; assert.equal(beatsFor(STAGES[REGION_STAGES.qingqiu[0]]).intro, KNOWN_INTRO.qingqiu);
+  S.lost.push('baiji'); assert.ok(parseLine('baiji|hi') === null);
+  S.flags.fuli_killed = true; assert.ok(parseLine('fuli|hi') === null);
 });

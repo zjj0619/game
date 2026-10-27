@@ -415,3 +415,7 @@
 }
 .hub-more.filled .hm-row b,
 .hub-more.filled .hm-row .rdot{ position:relative; z-index:1; text-shadow:0 1px 6px #000; }
+/* 主线/闯关定局：已决定的选项 */
+.choice.locked{color:#d8dbe6;opacity:.92}
+.choice.locked::after{content:' · 已定';font-size:.78em;color:#9aa3b8;letter-spacing:.04em}
+.adv-lore .adv-sync{display:block;margin-top:4px;font-size:11px;color:#9aa3b8;letter-spacing:.04em}

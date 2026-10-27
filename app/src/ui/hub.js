@@ -16,6 +16,7 @@ import * as AP from '../action/progress.js';
 import { game, show, clearScreens } from '../main.js';
 import { openMenu } from './menu.js';
 import { beatsFor, storyMods, REGION_STORY } from '../action/storyBeats.js';
+import { actOptions, actApply, vnProgress, CANON, canonOf } from '../engine/canon.js';
 import { playDialogue, chapterCard, bark } from './dialogue.js';
 import { applyEffects } from '../engine/state.js';
 import { portrait as posePor, hubPose, resultPose } from '../engine/pose.js';
@@ -120,7 +121,13 @@ export function adventureScreen(rid){
   const pts = NODE_POS.slice(0, 10).map(([x, y]) => `${x},${y}`).join(' '); const pl = document.createElementNS(svgNS, 'polyline'); pl.setAttribute('points', pts); svg.append(pl);
   const hl = document.createElementNS(svgNS, 'polyline'); hl.setAttribute('points', `${NODE_POS[9][0]},${NODE_POS[9][1]} ${NODE_POS[10][0]},${NODE_POS[10][1]}`); hl.classList.add('dash'); svg.append(hl);
   return screen('adv', 'bg/' + (STAGES[ids[0]].bg), header('山海闯关 · ' + R.name, null, null), tabs,
-    h('div.adv-map', {}, svg, ...nodes, h('div.adv-lore', {}, h('b', {}, R.name), h('p', {}, R.desc || ''))));
+    h('div.adv-map', {}, svg, ...nodes, h('div.adv-lore', {}, h('b', {}, R.name), h('p', {}, R.desc || ''), syncLine(rid))));
+}
+const CH_CN = ['序章','第一章','第二章','第三章','第四章','第五章','第六章','第七章','第八章','第九章','第十章','第十一章','第十二章','终章'];
+function syncLine(rid){
+  const v = vnProgress(S); const done = REGION_ORDER.filter(r => S.act.cleared[r + '_10']).length;
+  const keys = Object.entries(CANON).filter(([, d]) => d.region === rid && canonOf(S, Object.keys(CANON).find(k => CANON[k] === d)));
+  return h('small.adv-sync', {}, `主线 ${CH_CN[Math.min(13, v)] || '序章'} · 闯关 ${done}/9 区` + (keys.length ? ' · 本区抉择已定' : ''));
 }
 function foeChips(stage){ const seen = new Set(); for (const a of stage.arenas) for (const w of a.waves || []) for (const f of w) seen.add(f); return [...seen].slice(0, 9).map(f => AFOES[f]).filter(Boolean); }
 export function stageCard(stage){ const k = stage.kind === 'tower' ? 'tower' : stage.kind === 'rush' ? 'rush' : stage.kind === 'daily' ? stage.id : stage.id; return asset('stagecard/' + k); }
@@ -175,9 +182,11 @@ async function storyAfter(stage, B){
   if (seen[stage.id]) return;
   seen[stage.id] = true;
   if (B.outro || B.choice) {
-    const pick = await playDialogue(B.outro || [], { boss: stage.boss, choice: B.choice, bg: stageCard(stage) });
-    const o = pick != null ? B.choice?.opts?.[pick] : null;
-    if (o) { (S.act.storyChoices ||= {})[stage.id] = pick; applyEffects(o.fx, (m, k) => toast(m)); }
+    const A = B.choice ? actOptions(S, B.choice) : null;
+    const shown = A ? { ...B.choice, q: B.choice.q + (A.locked ? '（主线中已做出决定）' : ''), opts: A.opts } : null;
+    const pick = await playDialogue(B.outro || [], { boss: stage.boss, choice: shown, bg: stageCard(stage) });
+    const o = pick != null ? A?.opts?.[pick] : null;
+    if (o) { (S.act.storyChoices ||= {})[stage.id] = o.i; applyEffects(actApply(S, B.choice, o), (m, k) => toast(m)); }
   }
   if (B.nextCard) await chapterCard(B.nextCard.t, B.nextCard.s, stageCard(stage));
 }

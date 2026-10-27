@@ -6,23 +6,38 @@
 @fx stars
 >晏归站在烛龙面前。
 >七片烛瞳在他手心里，安静地燃着。
+@if var:mercy>=3 -> fin_act_mercy
+*fin_act_m_back
+@if var:ruthless>=3 -> fin_act_ruth
+*fin_act_r_back
 @if hope<30 | lost>=2 -> fin_d_forced
 @note 你的选择将决定九州的结局——以及那些没有写在灯上的路
 ? [flag:ba_freed & flag:fuli_forgiven & scales>=5 & lost==0 & aff:baiji>=60 & aff:xianwei>=60 & aff:qi>=60 & aff:ali>=60 & aff:kualing>=60] 让烛龙与玄冥，各为一眼 -> fin_f
 ? [flag:fuli_forgiven & item:k_letter_sealed & party:fuli & aff:fuli>=70 & scales>=6] 把密信按在灯上，与师父共守一盏 -> fin_k
-? [aff:baiji>=80 & flag:baiji_protected & !lostc:baiji & party:baiji] 牵起白霁的手，回青丘去 -> fin_e
+? [aff:baiji>=80 & flag:baiji_protected & !lostc:baiji & party:baiji | aff:baiji>=70 & flag:baiji_protected & !lostc:baiji & party:baiji & var:mercy>=4] 牵起白霁的手，回青丘去 -> fin_e
 ? [aff:xianwei>=85 & item:k_keepsake_xianwei & flag:xw_sea_oath & party:xianwei] 同衔微去填那片海 -> fin_g
 ? [aff:qi>=85 & item:k_keepsake_qi & flag:qi_oath & party:qi] 与戚立下无头之誓 -> fin_h
 ? [aff:ali>=85 & item:k_keepsake_ali & flag:ali_wait & party:ali] 陪阿篱等到那个人来——或成为那个人 -> fin_i
 ? [aff:kualing>=85 & item:k_keepsake_kualing & flag:kl_chase & party:kualing] 跟着夸铃去追那颗没落完的日 -> fin_j
 ? [item:k_letter_sealed & item:k_scale_black & flag:read_sealed] 不争昼与夜。只把密信读完 -> fin_n
-? [flag:xiangliu_spared & item:k_scale_dream & flag:xl_bond] 接住相柳落下的那滴泪 -> fin_o
+? [flag:xiangliu_spared & item:k_scale_dream & flag:xl_bond | flag:xiangliu_spared & item:k_scale_dream & var:mercy>=5] 接住相柳落下的那滴泪 -> fin_o
 ? [item:k_lamp_cursed & flag:dream_addict & var:dream_flips>=5] 把诅咒残灯点到最亮——永不睁眼 -> fin_l
 ? [item:k_false_dawn & flag:kids_lamp & hope>=70] ……把灯交给孩子们？ -> fin_m
 ? 以我之眼，点燃烛龙 -> fin_a
 ? 接受玄冥的长夜 -> fin_b
 ? 吞下七片烛瞳，成为新的烛龙 -> fin_c
-? [hope<50 | flag:weary] 放下手中的灯。……太累了 -> fin_d
+? [hope<50 | flag:weary | var:ruthless>=4] 放下手中的灯。……太累了 -> fin_d
+# —— 闯关抉择回响（仁心 / 狠决） ——
+*fin_act_mercy
+>灯焰里浮出几缕很淡的影子——闯关路上被你超度的残魂、放走的妖、没有落下的刀。
+>它们没有说话，只是围在晏归身边，替他挡住了一点风。
+@do hope+3
+@goto fin_act_m_back
+*fin_act_ruth
+>灯焰里也有别的东西：闯关路上斩下的首级，封回去的哭声。它们很安静，却很重。
+>晏归握灯的手，比想象中更稳，也更冷。
+@do hope-3
+@goto fin_act_r_back
 # —— 结局 D：灯心已尽 ——
 *fin_d_forced
 >晏归想抬起手，可是手太沉了。

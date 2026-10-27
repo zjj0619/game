@@ -73,7 +73,7 @@ export async function playDialogue(rawLines, opts = {}){
     });
     list.remove(); el.classList.remove('choosing');
     const after = opts.choice.opts[pick]?.after;
-    if (after) { skip = false; el.remove(); await playDialogue([after], { boss: opts.boss, bg: opts.bg }); return pick; }
+    if (after) { skip = false; el.remove(); await playDialogue([].concat(after), { boss: opts.boss, bg: opts.bg }); return pick; }
   }
   el.classList.add('out'); await wait(test ? 0 : 180); el.remove();
   return pick;

@@ -6,6 +6,8 @@
  * 行格式："说话人|台词"；说话人：角色 id、boss（本关首领）、n（旁白）；前缀 "?条件 " 表示满足 cond() 才显示。
  */
 import { S, cond } from '../engine/state.js';
+import { STAGE_BEATS, KNOWN_INTRO } from './stageBeats.js';
+import { REGION_CH, vnProgress } from '../engine/canon.js';
 
 export const REGION_STORY = {
   jincheng: {
@@ -27,9 +29,10 @@ export const REGION_STORY = {
     mid: { pre: ['n|狂风卷起满山落叶，一只巨鸟的影子遮住了狐火。', 'baiji|是大风！它一扇翅膀，整片林子的火都要灭了！'], post: ['baiji|它的羽毛里也缠着梦丝……跟烬城那头一样。'] },
     boss: { pre: ['n|青丘的梦境深处，九尾的影子层层叠叠。', 'boss|白霁，回来吧。在梦里，你从来没有闯过祸。', 'baiji|……那不是真的我。', 'yangui|闭目看清楚——它在梦层里还有一条尾巴。'],
       post: ['n|狐梦碎裂，林中幼狐一只只睁开了眼。', 'baiji|族里的长老们……要来问罪了。狐火是我偷的。'],
-      choice: { q: '青丘长老质问：狐火失窃，谁来担？', opts: [
-        { t: '「是我让她带着狐火的，要罚就罚我。」', fx: ['flag:baiji_protected', 'aff:baiji+8', 'hope+2'], after: 'baiji|……笨蛋人类。' },
-        { t: '「先救幼狐，罪之后再算。」', fx: ['aff:baiji+4', 'hope+3', 'var:mercy+1'], after: 'baiji|嗯。先救它们。' } ] } },
+      choice: { key: 'qq_trial', q: '青丘长老质问：狐火失窃，谁来担？', opts: [
+        { t: '「是我让她带着狐火的，要罚就罚我。」', canon: 'protect', fx: ['flag:baiji_protected', 'aff:baiji+8', 'hope+2'], after: 'baiji|……笨蛋人类。' },
+        { t: '「先救幼狐，罪之后再算。」', canon: 'save', fx: ['aff:baiji+4', 'hope+3', 'var:mercy+1'], after: 'baiji|嗯。先救它们。' },
+        { t: '「狐火是她拿的。」', canon: 'expose', vnOnly: true, fx: ['aff:baiji-6', 'var:ruthless+1'], after: 'baiji|……嗯。是我拿的。我认。' } ] } },
     hidden: { pre: ['baiji|这里是……我小时候藏起来的狐窝。', 'baiji|里面住着一个不肯醒的梦。'], post: ['baiji|它梦见青丘一直有太阳。我把它叫醒了……对吗？', '?flag:baiji_protected yangui|你是在替它难过。这就够了。'] },
   },
   donghai: {
@@ -39,9 +42,9 @@ export const REGION_STORY = {
     mid: { pre: ['n|九个婴孩的哭声从水下同时响起。', 'xianwei|九婴！它一张嘴，海就会烧起来！'], post: ['xianwei|它守着的那片礁石下面……有我三千年前扔下的第一块石头。'] },
     boss: { pre: ['n|毒潮翻涌，一条巨蛟从黑水里抬起头。', 'boss|小鸟，你填了三千年，海还是我的。', 'xianwei|那就再填三千年。'],
       post: ['n|毒潮退去，海面第一次平静得像一面镜子。', 'xianwei|……我累了。可我不知道停下来以后，我是谁。'],
-      choice: { q: '衔微望着海面。', opts: [
-        { t: '「继续填吧。我陪你。」', fx: ['flag:xw_sea_oath', 'aff:xianwei+8'], after: 'xianwei|……一言为定。等天亮了，我们一起扔最后一块。' },
-        { t: '「你已经飞了三千年，够了。」', fx: ['aff:xianwei+3', 'hope+3', 'var:mercy+1'], after: 'xianwei|够了……原来可以说「够了」。' } ] } },
+      choice: { key: 'xw_stone', q: '衔微望着海面。', opts: [
+        { t: '「继续填吧。我陪你。」', canon: 'fill', fx: ['flag:xw_sea_oath', 'aff:xianwei+8'], after: 'xianwei|……一言为定。等天亮了，我们一起扔最后一块。' },
+        { t: '「你已经飞了三千年，够了。」', canon: 'nofill', fx: ['aff:xianwei+3', 'hope+3', 'var:mercy+1'], after: 'xianwei|够了……原来可以说「够了」。' } ] } },
     hidden: { pre: ['n|海底的石堆里，有一块刻着字的石头。', 'xianwei|那是……我当年写给父亲的话。'], post: ['xianwei|「海很大，女儿不怕。」——原来我写的是这个。', 'yangui|你从来都不怕。'] },
   },
   changyang: {
@@ -63,9 +66,9 @@ export const REGION_STORY = {
     mid: { pre: ['n|穷奇的双翼遮天，它最爱吃说真话的人。', 'baize|小心，它会把你最想听的话说给你听。'], post: ['yangui|它说师父是骗子。……我不信。'] },
     boss: { pre: ['n|天门之前，虎身九尾的神兽缓缓起身。', 'boss|昆仑不渡迷途之人。你为何而来？', 'yangui|为了让天亮——也为了问清楚一个人。'],
       post: ['boss|……你可以过去了。西王母在等你。', 'n|白泽把那一页书递了过来。纸上的字迹，是浮黎的。'],
-      choice: { q: '浮黎写下的、关于你的那一页。', opts: [
-        { t: '读', fx: ['flag:read_self', 'aff:fuli+3'], after: 'yangui|……原来我是被他从灯里捡回来的。' },
-        { t: '不读，等他亲口告诉我', fx: ['hope+3', 'aff:fuli+2', 'var:mercy+1'], after: 'baize|好孩子。有些字，要听人说才算数。' } ] } },
+      choice: { key: 'baize_page', q: '浮黎写下的、关于你的那一页。', opts: [
+        { t: '读', canon: 'read', fx: ['flag:read_self', 'aff:fuli+3'], after: 'yangui|……原来我是被他从灯里捡回来的。' },
+        { t: '不读，等他亲口告诉我', canon: 'noread', fx: ['hope+3', 'aff:fuli+2', 'var:mercy+1'], after: 'baize|好孩子。有些字，要听人说才算数。' } ] } },
     hidden: { pre: ['n|昆仑书斋的暗格里，有一封火漆未拆的信。', 'baize|那是浮黎留给你的。要不要拆，由你。'], post: ['yangui|我先收着。等找到他，当面拆。'] },
   },
   hundun: {
@@ -75,9 +78,10 @@ export const REGION_STORY = {
     mid: { pre: ['n|书页翻飞，聚成一张没有五官的脸。', 'ali|书魇！它吃掉了好多人的名字！'], post: ['ali|它吐出来一个名字……可惜不是他。'] },
     boss: { pre: ['n|混沌巨大的身形在歌声里起伏，没有眼，也没有口。', 'dijiang|（无声地跳着舞）', 'yangui|它不是在攻击——它只是在跳舞。可舞步碾过之处，什么都不剩。'],
       post: ['n|混沌停下了舞步。帝江的影子在它身上一闪而过。', 'ali|它在等你回答：要不要为它凿开七窍？'],
-      choice: { q: '凿开七窍，混沌会看见世界，也会因此死去。', opts: [
-        { t: '「不要凿。现在这样就很好。」', fx: ['flag:dj_whole', 'aff:ali+6', 'hope+3'], after: 'ali|嗯……那我陪它把这支舞跳完。我会在这里等。' },
-        { t: '「这得它自己决定。」', fx: ['aff:ali+3', 'flag:ali_wait'], after: 'ali|那我就在这里等它决定。也等他。' } ] } },
+      choice: { key: 'dj_holes', q: '凿开七窍，混沌会看见世界，也会因此死去。', opts: [
+        { t: '「不要凿。现在这样就很好。」', canon: 'no', fx: ['flag:dj_whole', 'aff:ali+6', 'hope+3'], after: 'ali|嗯……那我陪它把这支舞跳完。我会在这里等。' },
+        { t: '「这得它自己决定。」', canon: 'self', fx: ['aff:ali+3', 'flag:ali_wait'], after: 'ali|那我就在这里等它决定。也等他。' },
+        { t: '凿开七窍', canon: 'yes', vnOnly: true, fx: ['flag:dj_open', 'aff:ali-4', 'var:ruthless+1'], after: 'ali|……它看见了。然后，它不跳了。' } ] } },
     hidden: { pre: ['ali|这是我等他的地方。树上刻了三百道痕。'], post: ['ali|他不会来了吧。……但我还是想等。', 'yangui|等也是一盏灯。'] },
   },
   yugu: {
@@ -87,9 +91,9 @@ export const REGION_STORY = {
     mid: { pre: ['n|巨人的残影迈着追日的步子，大地随之开裂。', 'kualing|祖先……你还在追？'], post: ['kualing|他终于停下了。我替他追下去。'] },
     boss: { pre: ['n|赤水干涸，青衣女子立在龟裂的河床中央。', 'boss|你们也是来封印我的？', 'yangui|我们是来问你——你恨他们吗？'],
       post: ['boss|……我只是太热了。三千年，没有一个人问我渴不渴。'],
-      choice: { q: '魃跪在干涸的赤水边。', opts: [
-        { t: '解开封印，放她走', fx: ['flag:ba_freed', 'var:mercy+1', 'hope+2'], after: 'ba|……谢谢。我会去北方。那里冷，我就不会再烧着谁。' },
-        { t: '重新封印，保赤水平安', fx: ['var:ruthless+1', 'flag:kl_chase'], after: 'kualing|这样……赤水的人就能活。走，我们继续追。' } ] } },
+      choice: { key: 'ba_fate', q: '魃跪在干涸的赤水边。', opts: [
+        { t: '解开封印，放她走', canon: 'free', fx: ['flag:ba_freed', 'var:mercy+1', 'hope+2'], after: 'ba|……谢谢。我会去北方。那里冷，我就不会再烧着谁。' },
+        { t: '重新封印，保赤水平安', canon: 'seal', fx: ['flag:ba_sealed', 'var:ruthless+1', 'flag:kl_chase'], after: 'kualing|这样……赤水的人就能活。走，我们继续追。' } ] } },
     hidden: { pre: ['kualing|日骸的心口还有一点余温。', 'kualing|我想替祖先摸一摸。'], post: ['kualing|还是热的。……太阳没死，它只是睡着了。'] },
   },
   beihai: {
@@ -99,37 +103,61 @@ export const REGION_STORY = {
     mid: { pre: ['n|应龙振翼，雷雨倾盆而下。', 'boss|涿鹿的旧账，今日了结。'], post: ['yangui|它说……相柳是在替共工断后，三千年没有退过一步。'] },
     boss: { pre: ['n|九首齐鸣，北海的冰一寸寸碎裂。', 'boss|来吧。让我看看，烛龙选中的人有几斤几两。'],
       post: ['boss|……够了。你赢了。', 'n|相柳的九个头一个个垂下，冰面上落下一滴泪。'],
-      choice: { q: '相柳伏在冰上，不再抵抗。', opts: [
-        { t: '放过它', fx: ['flag:xiangliu_spared', 'var:mercy+1', 'hope+2'], after: 'xiangliu|……我欠你一次。若你去归墟，我会在海眼替你断后。' },
-        { t: '斩下最后一首', fx: ['var:ruthless+1'], after: 'n|北海安静了。安静得让人发冷。' } ] } },
+      choice: { key: 'xl_fate', q: '相柳伏在冰上，不再抵抗。', opts: [
+        { t: '放过它', canon: 'spare', fx: ['flag:xiangliu_spared', 'var:mercy+1', 'hope+2'], after: 'xiangliu|……我欠你一次。若你去归墟，我会在海眼替你断后。' },
+        { t: '斩下最后一首', canon: 'kill', fx: ['flag:xiangliu_slain', 'var:ruthless+1'], after: 'n|北海安静了。安静得让人发冷。' } ] } },
     hidden: { pre: ['n|海眼深处，梦层里漂着一封鳞片包着的信。', '?flag:xiangliu_spared xiangliu|那是共工写给我的最后一道命令。我从没敢拆。'], post: ['?flag:xiangliu_spared xiangliu|「活下去。」……原来只有这三个字。', 'n|冰面下，有什么东西轻轻发着光。'] },
   },
   guixu: {
     chapter: '第十一章 · 归墟', sub: '其下无底，名曰归墟', next: '终章',
     intro: ['n|归墟。万水归处，长夜的尽头。', 'yangui|师父的灯油味……就在下面。', '?flag:xiangliu_spared xiangliu|去吧。海眼我替你守着。', 'yangui|七片烛瞳，快齐了。'],
     barks: { 1: 'yangui|这里的梦层和现实几乎重叠了……闭目时要小心。', 3: 'xuanming|（远处）守灯人。你确定你想要的是天亮吗？' },
-    mid: { pre: ['n|归墟的漩涡中心，站着一个提灯的人。', 'fuli|归儿。你不该来的。', 'yangui|师父——为什么？'], post: ['fuli|我想替你扛下这一切。……可我错了。'],
-      choice: { q: '浮黎放下了灯。', opts: [
-        { t: '「我原谅你。回家吧，师父。」', fx: ['flag:fuli_forgiven', 'aff:fuli+10', 'hope+3'], after: 'fuli|……你长大了。' },
-        { t: '「先跟我走完这一程，再说原不原谅。」', fx: ['aff:fuli+4', 'var:mercy+1'], after: 'fuli|好。这一程，我跟着你。' } ] } },
+    mid: { pre: ['?!flag:fuli_killed n|归墟的漩涡中心，站着一个提灯的人。', '?flag:fuli_killed n|归墟的漩涡中心，只剩一盏无人提的灯。灯下守着浮黎留下的梦影。', 'fuli|归儿。你不该来的。', '?!flag:fuli_killed yangui|师父——为什么？', '?flag:fuli_killed yangui|……连你的影子，也要拦我吗。'], post: ['fuli|我想替你扛下这一切。……可我错了。', '?flag:fuli_killed n|梦影散了。灯还亮着。'],
+      choice: { key: 'fuli_fate', q: '浮黎放下了灯。', opts: [
+        { t: '「我原谅你。回家吧，师父。」', canon: 'forgive', fx: ['flag:fuli_forgiven', 'aff:fuli+10', 'hope+3'], after: 'fuli|……你长大了。' },
+        { t: '「先跟我走完这一程，再说原不原谅。」', fx: ['aff:fuli+4', 'var:mercy+1'], after: 'fuli|好。这一程，我跟着你。' },
+        { t: '「你欠的，要还。」', canon: 'kill', vnOnly: true, fx: ['hope+1'], after: 'n|灯芯轻轻一跳，熄了。你没有回头。' } ] } },
     boss: { pre: ['n|长夜之神玄冥从黑水中升起，衣袍上满是熄灭的星。', 'boss|烛龙睁眼，万物会被灼伤。闭眼，万物会在梦里安睡。', 'boss|你要替所有人选吗？', 'yangui|不。我要把灯分给所有人，让他们自己选。'],
       post: ['boss|……那就让我看看，你分出去的灯能亮多久。', 'n|最后一片烛瞳落进晏归的掌心。远方，烛龙的眼皮微微颤动。'],
-      choice: { q: '七瞳齐聚。主线终章已开启。', opts: [
-        { t: '回主城，从「剧情」见证终章', fx: ['hope+2'], after: 'n|天亮之前，还有最后一段路。' },
+      choice: { q: '七瞳齐聚。烛龙的眼皮在颤动。', opts: [
+        { t: '把七瞳收好，回主城', fx: ['hope+2'], after: ['?ch>=11 n|主线的终章，已经在前面等你。', '?!ch>=11 n|天亮之前，还有最后一段路——主线里，你还没走到这里。'] },
         { t: '再看一眼长夜', fx: ['var:mercy+1'], after: 'n|长夜也很美。只是不该永远。' } ] } },
     hidden: { pre: ['n|归墟最深处，有一张空着的座位，座位上放着一盏灯。', 'fuli|那是给你留的。三百年前就留好了。'], post: ['?flag:fuli_forgiven fuli|归儿，这盏灯……以后你来守。', 'yangui|不。我们一起守。'] },
   },
 };
 
+/** 条件：在 cond() 之上增加 ch>=N（主线进度）与 act:区域（闯关已通该区） */
+function bcond(c){
+  return c.split('|').some(or => or.split('&').every(a0 => {
+    let a = a0.trim(), neg = false; if (a.startsWith('!')) { neg = true; a = a.slice(1); }
+    let r; const m = a.match(/^ch(>=|<=|<|>|==)(\d+)$/);
+    if (m) { const v = vnProgress(S), n = +m[2]; r = m[1] === '>=' ? v >= n : m[1] === '<=' ? v <= n : m[1] === '<' ? v < n : m[1] === '>' ? v > n : v === n; }
+    else if (a.startsWith('act:')) r = !!S?.act?.cleared?.[a.slice(4) + '_10'];
+    else r = cond(a);
+    return neg ? !r : r;
+  }));
+}
+/** 说话人已不在（主线中失去 / 浮黎已被斩）时，这句台词不再出现 */
+function absent(who){
+  if (!S || !who || who === 'n' || who === 'boss' || who === 'yangui') return false;
+  if ((S.lost || []).includes(who)) return true;
+  return who === 'fuli' && !!S.flags?.fuli_killed;
+}
 /** 解析一行；不满足条件返回 null */
 export function parseLine(raw){
   let s = String(raw), c = null;
   if (s.startsWith('?')) { const sp = s.indexOf(' '); c = s.slice(1, sp); s = s.slice(sp + 1); }
-  if (c) { try { if (!cond(c)) return null; } catch (e) { return null; } }
+  if (c) { try { if (!bcond(c)) return null; } catch (e) { return null; } }
   const i = s.indexOf('|');
-  return { who: s.slice(0, i), text: s.slice(i + 1) };
+  const ln = { who: s.slice(0, i), text: s.slice(i + 1) };
+  return absent(ln.who) ? null : ln;
 }
 export const lines = arr => (arr || []).map(parseLine).filter(Boolean);
+
+/** 主线是否已经走过该区域（用于选择「重逢」开场） */
+export function vnPast(region){
+  const r = REGION_CH[region]; return !!r && region !== 'jincheng' && vnProgress(S) > r[1];
+}
 
 /** 关卡对应的剧情片段 */
 export function beatsFor(stage){
@@ -137,10 +165,15 @@ export function beatsFor(stage){
   if (!R || !stage || (stage.kind !== 'normal' && stage.kind !== 'boss' && stage.kind !== 'hidden')) return null;
   const out = { region: stage.region, R, key: stage.id };
   if (stage.hidden) { out.intro = R.hidden?.pre; out.outro = R.hidden?.post; return out; }
-  if (stage.idx === 0) { out.card = { t: R.chapter, s: R.sub }; out.intro = R.intro; }
+  if (stage.idx === 0) { out.card = { t: R.chapter, s: R.sub }; out.intro = vnPast(stage.region) && KNOWN_INTRO[stage.region] ? KNOWN_INTRO[stage.region] : R.intro; }
   if (stage.idx === 4) { out.bossPre = R.mid?.pre; out.outro = R.mid?.post; out.choice = R.mid?.choice; }
   if (stage.idx === 9) { out.bossPre = R.boss?.pre; out.outro = R.boss?.post; out.choice = R.boss?.choice; out.nextCard = R.next ? { t: '下一程 · ' + R.next, s: '主线推进' } : null; }
-  out.barks = R.barks && (stage.idx % 3 === 1 || stage.idx === 0) ? R.barks : null;
+  const SB = STAGE_BEATS[stage.region]?.[stage.idx];
+  if (SB) out.intro = SB.in;
+  const barks = {};
+  if (R.barks && (stage.idx % 3 === 1 || stage.idx === 0)) Object.assign(barks, R.barks);
+  if (SB?.lore) barks[1] = SB.lore;
+  out.barks = Object.keys(barks).length ? barks : null;
   return out;
 }
 

@@ -7,6 +7,7 @@ import { sfx, playBgm, playVoice, stopVoice } from './audio.js';
 import { shake as fxShake, flash as fxFlash, setAmbient } from './fx.js';
 import { aiReady, tts } from './ai.js';
 import story from '../gen/story.json';
+import { vnFilter, vnApply, CANON, REGION_CH } from './canon.js';
 
 export const hooks = { battle:null, toRegion:null, toTitle:null, openMenu:null, ending:null };
 export const STORY = story;
@@ -131,16 +132,19 @@ async function say(c){
   await waitTap(); clearTimeout(t);
 }
 function choose(c){
-  const opts = c.opts.filter(o => cond(o.cond));
+  const F = vnFilter(S, c.opts.filter(o => cond(o.cond))); const opts = F.opts;
+  if (F.locked) toast('闯关中已做出这个决定 · ' + CANON[F.key].name);
   mode.skip=false; updTools();
   return new Promise(res => {
-    D.choices.replaceChildren(...opts.map((o,i) => h('button.choice'+(o.cond?'.special':''), { onclick:(e)=>{ e.stopPropagation(); e.currentTarget.classList.add('picked'); sfx('choice'); setTimeout(()=>{ D.choices.classList.remove('on'); res(o); }, 90); } }, o.text)));
+    D.choices.replaceChildren(...opts.map((o,i) => h('button.choice'+(o.cond?'.special':'')+(F.locked?'.locked':''), { onclick:(e)=>{ e.stopPropagation(); e.currentTarget.classList.add('picked'); sfx('choice'); setTimeout(()=>{ D.choices.classList.remove('on'); res(o); }, 90); } }, o.text)));
     D.choices.classList.add('on');
     if (window.__ZLJ_TEST) { const pickFn = window.__ZLJ_TEST.choose; const o = pickFn ? pickFn(c, opts) : opts[0]; setTimeout(()=>{ D.choices.classList.remove('on'); res(o); }, 5); }
   });
 }
 async function chapterCard(c){
-  if (!c.inter) { S.chapter = c.title; S.chapterN = +c.n || 0; }
+  if (!c.inter) { S.chapter = c.title; S.chapterN = +c.n || 0; if (S.chapterN < 14) S.vnMax = Math.max(S.vnMax || 0, S.chapterN); }
+  const rid = !c.inter && Object.keys(REGION_CH).find(r => REGION_CH[r][0] === +c.n);
+  if (rid && S.act?.cleared?.[rid + '_10']) setTimeout(() => toast('闯关中已走过这一程——那里做过的抉择，主线会沿用'), 600);
   D.card.replaceChildren(h('div.card-n', {}, c.inter?'幕间':c.n==='0'?'序章':c.n==='13'?'终章':`第${['','一','二','三','四','五','六','七','八','九','十','十一','十二'][+c.n]||c.n}章`), h('div.card-t', {}, c.title), h('div.card-s', {}, c.sub||''));
   D.card.classList.add('on'); sfx('bell');
   try { save(AUTO); } catch(e){}
@@ -173,7 +177,7 @@ async function exec(){
     let next = ctx.pc + 1;
     switch (c.t) {
       case 'say': await say(c); break;
-      case 'choice': { const o = await choose(c); backlog.push({who:null, text:'▸ '+o.text, choice:true}); applyEffects(o.eff, logFx); next = STORY.labels[o.to]; break; }
+      case 'choice': { const o = await choose(c); backlog.push({who:null, text:'▸ '+o.text, choice:true}); applyEffects(vnApply(S, o), logFx); next = STORY.labels[o.to]; break; }
       case 'if': if (cond(c.cond)) next = STORY.labels[c.to]; break;
       case 'goto': next = STORY.labels[c.a]; break;
       case 'do': applyEffects(c.eff, logFx); break;
